@@ -1,0 +1,47 @@
+---
+/**
+ * 全ページ共通の骨組み（head・スキップリンク・ヘッダー・フッター）。
+ * - 検証用のため常に noindex（_headers の X-Robots-Tag と二重に指定）
+ * - 外部フォント・外部スクリプトは読み込まない
+ */
+import '../styles/global.css';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import { siteName, navItems, footerNote } from '../site';
+
+type Props = {
+  title: string;
+  description: string;
+};
+
+const { title, description } = Astro.props;
+const fullTitle = `${title} | ${siteName}`;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{fullTitle}</title>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main"
+      class="sr-only z-50 rounded-control bg-surface px-4 py-2 font-bold focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+    >
+      本文へ移動
+    </a>
+    <aside aria-label="このサイトについて" class="bg-ink px-4 py-1.5 text-center text-sm text-canvas">
+      <p>検証用のひな形です。配色・書体は仮テーマで、ANOM V10 の採用デザインではありません。</p>
+    </aside>
+    <Navigation items={navItems} siteName={siteName} />
+    <main id="main" tabindex="-1" class="flex-1 focus:outline-none">
+      <slot />
+    </main>
+    <Footer items={navItems} note={footerNote} />
+  </body>
+</html>

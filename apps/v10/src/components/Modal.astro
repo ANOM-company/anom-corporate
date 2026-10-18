@@ -1,0 +1,44 @@
+---
+/**
+ * モーダル（ネイティブの <dialog> を showModal() で開く）。
+ * - 開くボタン: data-modal-open="<id>" を付けた要素
+ * - 背面は操作不可になり、Tab移動はモーダル内に留まる（ブラウザー標準の挙動）
+ * - Esc・閉じるボタンで閉じ、開く前の要素へフォーカスを戻す（src/scripts/modal.ts）
+ * - JavaScript無効時は開けないため、モーダルの中身に必須の情報を置かない
+ */
+type Props = {
+  id: string;
+  title: string;
+};
+
+const { id, title } = Astro.props;
+const titleId = `${id}-title`;
+---
+
+<dialog
+  id={id}
+  aria-labelledby={titleId}
+  class="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-card border border-line bg-surface p-0 text-ink backdrop:bg-ink/50"
+  data-modal
+>
+  <div class="grid gap-4 p-6">
+    <h2 id={titleId} class="text-xl font-bold">{title}</h2>
+    <div class="text-ink-soft">
+      <slot />
+    </div>
+    <div class="flex flex-wrap justify-end gap-3">
+      <slot name="actions" />
+      <button
+        type="button"
+        class="inline-flex min-h-11 items-center rounded-control border border-line-strong bg-surface px-4 font-bold hover:bg-muted"
+        data-modal-close
+      >
+        閉じる
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  import '../scripts/modal';
+</script>

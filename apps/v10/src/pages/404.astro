@@ -1,0 +1,21 @@
+---
+/**
+ * 404（ページが見つからない）。Wrangler の 404-page 方式で、存在しないURLに 404 ステータスで返される。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+---
+
+<BaseLayout title="ページが見つかりません" description="お探しのページは見つかりませんでした。">
+  <section class="container-content grid gap-6 py-(--spacing-section)" aria-labelledby="notfound-title">
+    <p class="font-mono text-sm text-ink-soft">404</p>
+    <h1 id="notfound-title" class="text-3xl font-bold">ページが見つかりません</h1>
+    <p class="max-w-(--container-prose) text-ink-soft">
+      URLが間違っているか、ページが移動・削除された可能性があります。
+    </p>
+    <div class="flex flex-wrap gap-3">
+      <Button href="/">はじめにへ戻る</Button>
+      <Button href="/kitchen-sink/" variant="secondary">部品の確認画面</Button>
+    </div>
+  </section>
+</BaseLayout>

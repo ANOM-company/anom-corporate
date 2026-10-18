@@ -1,0 +1,21 @@
+---
+/**
+ * 行動を促す帯（問い合わせ等への導線）。ボタンは actions スロットで渡す。
+ */
+type Props = {
+  title: string;
+  body?: string;
+};
+
+const { title, body } = Astro.props;
+---
+
+<section class="bg-ink py-(--spacing-section) text-canvas" aria-labelledby="cta-title">
+  <div class="container-content grid gap-4">
+    <h2 id="cta-title" class="text-2xl font-bold">{title}</h2>
+    {body && <p class="max-w-(--container-prose) text-canvas/85">{body}</p>}
+    <div class="flex flex-wrap gap-3 pt-2">
+      <slot name="actions" />
+    </div>
+  </div>
+</section>

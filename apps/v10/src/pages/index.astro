@@ -1,0 +1,60 @@
+---
+/**
+ * トップ（/）: ひな形の案内ページ。営業用の文言は置かない。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import Services from '../components/Services.astro';
+import FAQ from '../components/FAQ.astro';
+import CTA from '../components/CTA.astro';
+import Button from '../components/Button.astro';
+
+const parts = [
+  { title: '共通の設計トークン', body: '色・書体・余白・文字サイズ・動きを src/styles/global.css に集約しています。' },
+  { title: '最小構成の部品', body: 'Button・Input・Card・Navigation・Modal・Hero・Services・FAQ・CTA・Footer を用意しています。' },
+  { title: '静的HTMLの出力', body: 'ビルド結果は dist/ の静的ファイルだけです。サーバー側のコードはありません。' },
+  { title: 'ローカル配信の設定', body: 'Wrangler でビルド済みの dist/ をローカル配信し、ヘッダーと404の挙動を確認できます。' },
+  { title: 'ブラウザーテスト', body: 'Playwright で表示幅・操作・アクセシビリティ・セキュリティヘッダーを確認します。' },
+  { title: '検証用CI', body: 'GitHub Actions で型確認・Lint・ビルド・テスト・脆弱性検査を実行します（配信はしません）。' },
+];
+
+const faq = [
+  {
+    question: 'このページは何ですか？',
+    answer: 'サイト制作の土台（ひな形）が正しく動くかを確かめるための案内ページです。実際のサイトの内容ではありません。',
+  },
+  {
+    question: '部品の見た目や状態はどこで確認できますか？',
+    answer: '「部品の確認画面」で、各部品の種類と状態（無効・エラーなど）を一覧で試せます。',
+  },
+  {
+    question: 'JavaScript が無効でも使えますか？',
+    answer: '本文・リンク・メニュー・よくある質問は HTML だけで動きます。モーダルとフォームの入力確認は JavaScript を使います。',
+  },
+];
+---
+
+<BaseLayout title="はじめに" description="ANOM Web Starter v1 の案内ページです。">
+  <Hero
+    eyebrow="ANOM Web Starter v1"
+    title="静的サイト制作のための最小のひな形"
+    lead="共通部品・設計トークン・検証の仕組みをまとめた土台です。このページはひな形の案内で、実際のサイトの内容ではありません。"
+  >
+    <Fragment slot="actions">
+      <Button href="/kitchen-sink/" size="lg">部品の確認画面を開く</Button>
+      <Button href="#starter-parts" variant="secondary" size="lg">含まれるものを見る</Button>
+    </Fragment>
+  </Hero>
+  <Services
+    id="starter-parts"
+    title="このひな形に含まれるもの"
+    intro="実案件では、この土台に内容とデザインを重ねて使います。"
+    items={parts}
+  />
+  <FAQ title="よくある質問" items={faq} />
+  <CTA title="部品の動きを確かめる" body="各部品の種類と状態、キーボード操作をまとめて試せます。">
+    <Fragment slot="actions">
+      <Button href="/kitchen-sink/" variant="secondary" size="lg">部品の確認画面へ</Button>
+    </Fragment>
+  </CTA>
+</BaseLayout>

@@ -1,0 +1,32 @@
+---
+/**
+ * フッター。会社情報など未確定の内容はここに書かない（確定後にページ側から渡す）。
+ */
+import type { NavItem } from './Navigation.astro';
+
+type Props = {
+  items: NavItem[];
+  note: string;
+};
+
+const { items, note } = Astro.props;
+---
+
+<footer class="border-t border-line bg-surface py-10">
+  <div class="container-content grid gap-4">
+    <nav aria-label="フッター">
+      <ul class="flex flex-wrap gap-x-6 gap-y-2">
+        {
+          items.map((item) => (
+            <li>
+              <a href={item.href} class="inline-flex min-h-11 items-center">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <p class="text-sm text-ink-soft">{note}</p>
+  </div>
+</footer>
