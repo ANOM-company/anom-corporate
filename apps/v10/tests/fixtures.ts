@@ -1,7 +1,7 @@
 // 共通のテスト部品。
 // - すべてのテストで、ブラウザーの実行エラー・コンソールエラー・同一オリジンの読み込み失敗を記録し、
 //   1件でもあればテストを失敗させる（CSP違反もコンソールエラーとして検出される）
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
 
 export const pages = [
   { name: 'top', path: '/' },
@@ -39,12 +39,3 @@ export const test = base.extend<Fixtures>({
 });
 
 export { expect };
-
-/** 現在フォーカスしている要素の簡単な説明（失敗時の表示用） */
-export async function describeFocus(page: Page): Promise<string> {
-  return page.evaluate(() => {
-    const el = document.activeElement;
-    if (!el) return '(なし)';
-    return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} "${(el.textContent ?? '').trim().slice(0, 30)}"`;
-  });
-}

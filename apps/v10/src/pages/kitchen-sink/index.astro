@@ -116,13 +116,13 @@ const section = 'border-b border-line py-(--spacing-section)';
     <div class="container-content grid gap-6">
       <h2 id="ks-modal" class="text-2xl font-bold">Modal（モーダル）</h2>
       <p class="max-w-(--container-prose) text-ink-soft">
-        開くと背面は操作できなくなり、Tab キーの移動はモーダル内に留まります。Esc キーか「閉じる」で閉じると、開いたボタンへフォーカスが戻ります。
+        開くと背面は操作できなくなり、Tab キーで背景のページ要素へフォーカスが移ることはありません（最後の要素の次はブラウザーの操作部へ移ることがあります）。Esc キーか「閉じる」で閉じると、開いたボタンへフォーカスが戻ります。中のリンクを選ぶと、モーダルを閉じてリンク先へ移動します。
       </p>
       <div>
         <Button data-modal-open="ks-dialog">モーダルを開く</Button>
       </div>
       <Modal id="ks-dialog" title="モーダルの見本">
-        <p>これはモーダルの見本です。中の操作も Tab キーで移動できます。</p>
+        <p>これはモーダルの見本です。下のリンクを選ぶと、モーダルを閉じて「よくある質問」の見本へ移動します。</p>
         <Fragment slot="actions">
           <Button variant="ghost" href="#ks-faq-title">よくある質問の見本へ</Button>
         </Fragment>

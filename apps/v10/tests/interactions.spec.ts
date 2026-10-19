@@ -1,5 +1,6 @@
 // 操作の確認: ナビゲーション・モーダル・FAQ・フォーム・Tab移動とフォーカス表示。
-import { test, expect, describeFocus } from './fixtures';
+import type { Page } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('ナビゲーション', () => {
   test('スマホ幅: メニューを開閉でき、Escで閉じるとメニューボタンへ戻る', async ({ page }) => {
@@ -41,7 +42,73 @@ test.describe('ナビゲーション', () => {
 });
 
 test.describe('モーダル', () => {
-  test('キーボードで開き、Tabは内側に留まり、Escで閉じてフォーカスが戻る', async ({ page }) => {
+  type FocusState = { index: number; isBody: boolean; label: string };
+
+  /** 現在のフォーカスが、モーダル内の何番目の要素か（-1 = モーダル外）。body/なし は isBody */
+  async function focusState(page: Page): Promise<FocusState> {
+    return page.evaluate(() => {
+      const dialog = document.querySelector('dialog[open]');
+      const items = dialog
+        ? [...dialog.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, textarea, select, summary')]
+        : [];
+      const active = document.activeElement;
+      return {
+        index: active ? items.indexOf(active as HTMLElement) : -1,
+        isBody: !active || active === document.body,
+        label: active ? `${active.tagName.toLowerCase()} "${(active.textContent ?? '').trim().slice(0, 20)}"` : '(なし)',
+      };
+    });
+  }
+
+  /**
+   * Tab（または Shift+Tab）を繰り返し、次を確かめる。
+   * - 背景のページ要素へは一度もフォーカスが移らない
+   * - body になる（= ブラウザーの操作部へ出た）のは、端の要素の直後だけで、次の操作で反対側の端へ戻る
+   * - モーダル内の操作可能な要素をすべて通る
+   */
+  async function walk(page: Page, key: 'Tab' | 'Shift+Tab', count: number): Promise<void> {
+    const total = await page.evaluate(
+      () =>
+        document
+          .querySelector('dialog[open]')
+          ?.querySelectorAll('a[href], button:not([disabled]), input, textarea, select, summary').length ?? 0,
+    );
+    expect(total).toBeGreaterThanOrEqual(2);
+    const forward = key === 'Tab';
+    const edgeBefore = forward ? total - 1 : 0;
+    const edgeAfter = forward ? 0 : total - 1;
+    const visited = new Set<number>();
+    let previous = await focusState(page);
+    expect(previous.index, `開始位置: ${previous.label}`).toBeGreaterThanOrEqual(0);
+    visited.add(previous.index);
+
+    for (let i = 0; i < count; i += 1) {
+      await page.keyboard.press(key);
+      const current = await focusState(page);
+      const step = `${key} ${i + 1} 回目: ${previous.label} → ${current.label}`;
+      if (current.isBody) {
+        // ブラウザーの操作部へ出るのは、端の要素からだけ
+        expect(previous.index, step).toBe(edgeBefore);
+      } else {
+        expect(current.index, `背景のページ要素へ移っていないこと ${step}`).toBeGreaterThanOrEqual(0);
+        if (previous.isBody) {
+          // ブラウザーの操作部から戻ると、モーダルの反対側の端へ戻る
+          expect(current.index, step).toBe(edgeAfter);
+        } else {
+          const expected = forward ? (previous.index + 1) % total : (previous.index - 1 + total) % total;
+          expect(current.index, step).toBe(expected);
+        }
+        visited.add(current.index);
+      }
+      previous = current;
+    }
+    expect(visited.size, 'モーダル内の要素をすべて通ること').toBe(total);
+    // 最後はモーダル内に戻っている
+    if (previous.isBody) await page.keyboard.press(key);
+    expect((await focusState(page)).index).toBeGreaterThanOrEqual(0);
+  }
+
+  test('Tab・Shift+Tabで背景のページ要素へフォーカスが移らず、Escで開くボタンへ戻る', async ({ page }) => {
     await page.goto('/kitchen-sink/');
     const trigger = page.getByRole('button', { name: 'モーダルを開く' });
     const dialog = page.getByRole('dialog', { name: 'モーダルの見本' });
@@ -51,16 +118,8 @@ test.describe('モーダル', () => {
     await page.keyboard.press('Enter');
     await expect(dialog).toBeVisible();
 
-    for (let i = 0; i < 6; i += 1) {
-      const inside = await page.evaluate(() => {
-        const active = document.activeElement;
-        const modal = document.querySelector('dialog[open]');
-        // 最後の要素の次はブラウザーUIへ抜けることがある（body扱い）が、背面の要素には移らない
-        return active === document.body || Boolean(modal?.contains(active));
-      });
-      expect(inside, `Tab ${i} 回目: ${await describeFocus(page)}`).toBe(true);
-      await page.keyboard.press('Tab');
-    }
+    await walk(page, 'Tab', 7);
+    await walk(page, 'Shift+Tab', 7);
 
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
@@ -82,6 +141,58 @@ test.describe('モーダル', () => {
     await page.mouse.click(5, 5);
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();
+  });
+
+  test.describe('モーダル内のページ内リンク', () => {
+    async function expectMovedToFaq(page: Page): Promise<void> {
+      const dialog = page.locator('#ks-dialog');
+      await expect(dialog).toBeHidden();
+      expect(await dialog.evaluate((el) => (el as HTMLDialogElement).open)).toBe(false);
+      await expect(page).toHaveURL(/#ks-faq-title$/);
+      const heading = page.getByRole('heading', { level: 2, name: 'FAQ（よくある質問）' });
+      await expect(heading).toBeFocused();
+      await expect(heading).toBeInViewport();
+    }
+
+    test('キーボード: リンクでモーダルを閉じ、FAQ見出しへ移り、続けてFAQを開閉できる', async ({ page }) => {
+      await page.goto('/kitchen-sink/');
+      const trigger = page.getByRole('button', { name: 'モーダルを開く' });
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      const link = page.getByRole('dialog').getByRole('link', { name: 'よくある質問の見本へ' });
+      await link.focus();
+      await page.keyboard.press('Enter');
+      await expectMovedToFaq(page);
+
+      // 見出しの次の Tab で最初の質問へ進み、Enter で開閉できる
+      await page.keyboard.press('Tab');
+      const firstItem = page.locator('#ks-faq [data-faq-item]').first();
+      await expect(firstItem.locator('summary')).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(firstItem).toHaveAttribute('open');
+      await page.keyboard.press('Enter');
+      await expect(firstItem).not.toHaveAttribute('open');
+    });
+
+    test('マウス: リンクでモーダルを閉じ、FAQ見出しへ移り、FAQを開ける。その後のEscでは開くボタンへ戻る', async ({ page }) => {
+      await page.goto('/kitchen-sink/');
+      const trigger = page.getByRole('button', { name: 'モーダルを開く' });
+      await trigger.click();
+      await page.getByRole('dialog').getByRole('link', { name: 'よくある質問の見本へ' }).click();
+      await expectMovedToFaq(page);
+
+      const firstItem = page.locator('#ks-faq [data-faq-item]').first();
+      await firstItem.locator('summary').click();
+      await expect(firstItem).toHaveAttribute('open');
+
+      // リンクで閉じた後も、通常の閉じ方では従来どおり開くボタンへ戻る
+      await trigger.click();
+      const dialog = page.getByRole('dialog', { name: 'モーダルの見本' });
+      await expect(dialog).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden();
+      await expect(trigger).toBeFocused();
+    });
   });
 });
 

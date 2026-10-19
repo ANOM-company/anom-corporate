@@ -21,7 +21,8 @@
   --color-on-brand: #ffffff; /* brand の上の文字 */
   --color-danger: #a4161a; /* エラー表示 */
   --color-danger-soft: #fbeaea; /* エラーの背景 */
-  --color-focus: #1a5fd0; /* フォーカスリング */
+  --color-focus: #1a5fd0; /* フォーカス表示の輪郭（白とのコントラスト比 5.8:1） */
+  --color-focus-halo: #ffffff; /* 輪郭の内外を縁取る白（暗い地とのコントラスト比 17:1） */
 
   /* 書体: 端末の標準書体（日本語を優先） */
   --font-sans:
@@ -87,10 +88,17 @@
     min-height: 100vh;
     overflow-wrap: anywhere;
   }
-  /* キーボード操作時のフォーカスを常にはっきり見せる */
+  /*
+   * キーボード操作時のフォーカス表示（二重輪郭）
+   * 要素 | 白 2px | 青の輪郭 3px | 白 2px | 地 の順に描く。
+   * - 明るい地: 青の輪郭が地・白の両方と 3:1 以上
+   * - 暗い地: 外側の白が地と 3:1 以上、青の輪郭は内外の白と 3:1 以上
+   * どの地の上でも、輪郭が隣り合う色と見分けられる。
+   */
   :focus-visible {
     outline: 3px solid var(--color-focus);
     outline-offset: 2px;
+    box-shadow: 0 0 0 7px var(--color-focus-halo);
   }
   a {
     color: var(--color-brand);
