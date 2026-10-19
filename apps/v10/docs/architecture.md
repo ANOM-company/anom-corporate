@@ -36,7 +36,7 @@ apps/v10/
 |---|---|---|
 | 冒頭 | `top` | 見出し・説明・「提供サービスを見る」と、3つの画面デモ（AI・DX／Web／システム）の切替 |
 | 提供サービス | `services`・`service-ai`・`service-web` | AI・DX支援と Web制作・運用保守を同じ構成・同じ大きさで並べる |
-| システム開発 | `service-system` | 独立した区画と相談ボタン |
+| システム開発 | `service-system` | 独立した区画と相談ボタン。スマホ幅は 本文→図→相談ボタン の縦順、PC は本文と図を左右に置き相談ボタンは本文の下（HTML の順も 本文→図→相談ボタン） |
 | 支援のイメージ | `examples` | 説明用の例（実績ではないことを明示し、操作できる要素を置かない） |
 | ANOMの考え方 | `about` | |
 | 相談からの進め方 | `process` | 4つの段階 |
@@ -85,6 +85,7 @@ apps/v10/
 | 図形の色 | `--color-shape`, `--color-shape-line`, `--color-shape-accent` など | 画面デモ・サービスの図の SVG（`fill-shape` など） |
 | 書体 | `--font-sans`（LINE Seed JP）, `--font-heading`（Outfit → LINE Seed JP）, `--font-latin`（Outfit） | `font-sans`, `font-latin` |
 | 文字サイズ | `--text-base` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
+| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12` |
 | 余白 | `--spacing`（基準 0.25rem）, `--spacing-section` | `p-4`, `py-(--spacing-section)` |
 | 幅 | `--container-content`, `--container-prose`, `--container-menu`, `--container-bar` | `.container-content`, `max-w-(--container-prose)` |
 | 角丸 | `--radius-control`, `--radius-card`, `--radius-demo` | `rounded-control` など |
@@ -94,7 +95,13 @@ apps/v10/
 
 フォーカス表示は「要素 | 白 2px | 青の輪郭 3px | 白 2px | 地」の二重輪郭です。明るい地では青の輪郭が、暗い地では外側の白が、隣り合う色と 3:1 以上になります。
 
-動き低減の設定（`prefers-reduced-motion: reduce`）では、時間の値を 0 にし、すべての transition / animation を止めます。
+動き低減の設定（`prefers-reduced-motion: reduce`）では、時間の値を 0 にし、すべての要素の `animation` と `transition` を `none` にします。時間を極小にするだけでは動きの1コマ目（透明・ずれた位置）が残ることがあるため、動きそのものを外して完成した状態をすぐに表示します（各 `@keyframes` の終わりは要素の通常の状態と同じです）。
+
+### 文字サイズと文字の拡大
+
+- 文字サイズはすべて rem で指定し、見出し（`--text-display` / `--text-heading` / `--text-subheading` / `--text-3xl`）は画面幅の区切り（640 / 768 / 1024 / 1280px）ごとに段階で大きくします（値は `global.css` の `:root`）。画面幅（vw）や列幅（cqi）を混ぜないため、ブラウザーの文字サイズ設定を上げると見出しも本文と同じ比率で大きくなります。
+- 冒頭・ANOMの考え方・相談・フッターの12列の区画は、`@container` を付けたセクションの幅が `--container-split`（56rem）以上で、かつ画面幅 1024px 以上のときだけ左右に分けます。rem は文字サイズに比例するため、文字サイズ設定を大きくすると1列に戻り、大きな見出しを広い幅で折り返します（通常の文字サイズでは従来どおり 1024px 以上で左右）。
+- トップの H1「技術を、／仕事の力に。」は、最大幅（6.5em）で常に文節ごとの2行にします。後半の文節（約6em）は入り、2つの文節を合わせた長さ（字幅の狭い端末の書体でも約8.7em）は入らない幅のため、書体の読み込みの前後や端末の書体の違いで改行位置と高さが変わりません。
 
 ## セキュリティヘッダーと CSP
 
@@ -120,14 +127,14 @@ apps/v10/
 | HTTPステータス・ヘッダー・404・`_headers` 非公開、生成HTMLにインライン要素がない | `tests/pages.spec.ts` |
 | 320 / 360 / 390 / 768 / 1440px の横はみ出し（スクリーンショット保存） | `tests/pages.spec.ts` |
 | リンク・CSS・JS・画像の読み込み、表示中の通信がすべて同一オリジン | `tests/pages.spec.ts` |
-| トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、下部バーとの重なり（Tab 全巡回・文字 200%・短い画面） | `tests/home.spec.ts` |
+| トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、システム開発の並び順（スマホ: 本文→図→相談ボタン、PC: 左右）、下部バーとの重なり（Tab 全巡回・文字 200%: 見出しの実寸が2倍・はみ出し・重なり・区画の1列化・短い画面） | `tests/home.spec.ts` |
 | 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更） | `tests/menu.spec.ts` |
 | 書体（実際に描画された書体・外部通信なし・読み込み量・読み込めないときの表示・ライセンス・分割ファイルの収録文字・見出しの改行） | `tests/fonts.spec.ts` |
-| 表示のずれ（初回表示・デモ切替・メニュー）と操作の応答。通常と通信制限＋CPU 4倍遅延の両方で計測し、数値を添付 | `tests/loading.spec.ts` |
+| 表示のずれ（初回表示・デモ切替・メニュー）と操作の応答。通常と通信制限＋CPU 4倍遅延の両方で計測し、数値を添付。字幅の狭い端末の書体（Windows: Yu Gothic UI／Meiryo UI、Linux: IPA Pゴシック）で先に表示し、自己配信の書体に切り替わっても H1 の改行と高さが変わらないこと | `tests/loading.spec.ts` |
 | 部品見本: ナビ、モーダル（Tab・Shift+Tab で背景へ移らない・Esc とフォーカス復帰・内部のページ内リンク）、FAQ、フォームのラベルとエラー、Tab移動・本文へ移動 | `tests/interactions.spec.ts` |
 | フォーカス表示と隣り合う色のコントラスト（全Tab停止位置の計算値。展開メニューの中を含む。明暗の地の撮影ピクセル） | `tests/focus-contrast.spec.ts` |
-| JavaScript無効時の本文・リンク・メニュー・画面デモ・相談フォーム、動き低減 | `tests/no-js-and-motion.spec.ts` |
-| axe による自動検査（各ページ、部品見本のエラー・モーダル表示中、トップの展開メニュー表示中・相談分野の引継ぎ後。重大・深刻は0件で合格、全指摘を添付） | `tests/accessibility.spec.ts` |
+| JavaScript無効時の本文・リンク・メニュー・画面デモ・相談フォーム、動き低減（動きがなく、切替・メニューを開いた直後から完成した表示） | `tests/no-js-and-motion.spec.ts` |
+| axe による自動検査（各ページ、部品見本のエラー・モーダル表示中、トップの展開メニュー表示中・相談分野の引継ぎ後。開閉などの動きが終わってから判定。重大・深刻は0件で合格、全指摘を該当要素とともに添付） | `tests/accessibility.spec.ts` |
 | 監査・目視確認用の画面記録（PC・スマホのトップ全体、メニュー、フォームの表示見本） | `tests/screens.spec.ts` |
 
 すべてのテストで、ブラウザーの実行エラー・コンソールエラー（CSP違反を含む）・同一オリジンの読み込み失敗が1件でもあれば失敗します（`tests/fixtures.ts`）。
