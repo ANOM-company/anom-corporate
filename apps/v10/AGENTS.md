@@ -13,7 +13,8 @@
 
 - Astro の静的HTML出力 + TypeScript + Tailwind CSS（`@tailwindcss/vite`）。
 - Node の版は `.nvmrc`、依存の版は `package.json`（`^` なしの固定）と `package-lock.json` で固定する。依存を追加・更新したら理由と版を PR に書く。
-- 今は入れないもの: React などのUIライブラリ、CMS、DB、認証、外部フォーム、3D、動画、外部フォント、Cloudflare アダプター、サーバーコード。必要になったら別途合意してから追加する。
+- 今は入れないもの: React などのUIライブラリ、CMS、DB、認証、外部フォーム、3D、動画、外部から読み込むフォント、Cloudflare アダプター、サーバーコード。必要になったら別途合意してから追加する。
+- 書体はオーナー指定の Outfit と LINE Seed JP の2書体だけを使う。どちらも公式配布元から取得した WOFF2 を `public/fonts/` に置いて自己配信し、ライセンス全文と取得元・版の記録（`public/fonts/README.txt`）を同梱する。分割・変換は `tools/fonts/build-fonts.py` で行い、ビルドやCIでは実行しない。Google Fonts・外部CDNから閲覧時に読み込む方式や、ほかの書体の追加はしない。読み込めない場合は端末の標準書体で表示する。
 
 ## 3. デザインの決め方
 
