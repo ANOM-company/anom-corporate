@@ -165,6 +165,27 @@ test.describe('フォームの見本', () => {
     await expect(page.getByText('このフォームは入力とエラー表示の見本です。送信ボタンを押しても、入力内容はどこにも送信されません。')).toBeVisible();
   });
 
+  test('相談フォームの状態の表示見本: 4つすべてに「表示見本」と示し、実際の結果として通知しない', async ({ page }) => {
+    await page.goto('/kitchen-sink/');
+    const section = page.locator('section[aria-labelledby="ks-form-states"]');
+    await expect(section.getByRole('heading', { level: 2 })).toHaveText('相談フォームの表示見本');
+    await expect(section.getByText('実際の送信結果ではなく、入力内容はどこにも送信されません。')).toBeVisible();
+    const cards = section.locator('article');
+    await expect(cards).toHaveCount(4);
+    for (const [index, title] of ['入力不備（エラー要約）', '送信中', '受付完了', '送信失敗・通信切断'].entries()) {
+      const card = cards.nth(index);
+      await expect(card.getByRole('heading', { level: 3 })).toHaveText(title);
+      await expect(card.getByText('表示見本', { exact: true })).toBeVisible();
+    }
+    // 見本の文言を、読み上げの通知（status・alert・aria-live）として出さない
+    await expect(section.locator('[role="status"], [role="alert"], [aria-live]')).toHaveCount(0);
+    await expect(section.getByRole('button', { name: '送信しています…' })).toBeDisabled();
+    // トップの相談フォームには、成功・失敗の表示を置かない
+    await page.goto('/');
+    await expect(page.getByText('お問い合わせを受け付けました')).toHaveCount(0);
+    await expect(page.getByText('送信を完了できませんでした')).toHaveCount(0);
+  });
+
   test('エラー表示と案内を出し、どこにも送信しない', async ({ page }) => {
     await page.goto('/kitchen-sink/');
     const sent = trackSends(page);
