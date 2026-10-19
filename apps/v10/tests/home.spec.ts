@@ -109,6 +109,51 @@ test.describe('サービスの扱い', () => {
     expect(ai && web && web.y >= ai.y + ai.height).toBe(true);
   });
 
+  test('システム開発: スマホ幅は 本文→図→相談ボタン の縦順、PC は本文と図を左右に置き相談ボタンは本文の下。HTMLの順も同じ', async ({
+    page,
+  }, testInfo) => {
+    const layout = async () =>
+      page.locator('#service-system').evaluate((section) => {
+        const box = (el: Element | null) => {
+          const rect = el!.getBoundingClientRect();
+          return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right };
+        };
+        const heading = section.querySelector('#service-system-title');
+        const examples = section.querySelector('ul');
+        const figure = section.querySelector('ol');
+        const cta = section.querySelector('a[data-consult-field="system"]');
+        // HTML（読み上げ・Tab）の順: 前の要素の後ろに次の要素があるか
+        const follows = (a: Element | null, b: Element | null) => Boolean(a!.compareDocumentPosition(b!) & Node.DOCUMENT_POSITION_FOLLOWING);
+        return {
+          domOrder: follows(heading, examples) && follows(examples, figure) && follows(figure, cta),
+          heading: box(heading),
+          examples: box(examples),
+          figure: box(figure),
+          cta: box(cta),
+        };
+      });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const sp = await layout();
+    expect(sp.domOrder, 'HTML の順が 本文→図→相談ボタン').toBe(true);
+    expect(sp.figure.top, '図は本文（相談例）の下').toBeGreaterThanOrEqual(sp.examples.bottom);
+    expect(sp.cta.top, '相談ボタンは図の下').toBeGreaterThanOrEqual(sp.figure.bottom);
+    // 記録用の画像に下部バーが重ならないよう、撮影の前だけ隠す（CSSOM で指定するため CSP に触れない）
+    await page.locator('[data-bottom-nav]').evaluate((el) => (el as HTMLElement).style.setProperty('visibility', 'hidden'));
+    await page.locator('#service-system').screenshot({ path: testInfo.outputPath('service-system-390.png') });
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const pc = await layout();
+    expect(pc.domOrder).toBe(true);
+    expect(pc.figure.left, '図は本文の右').toBeGreaterThanOrEqual(pc.heading.right);
+    expect(pc.figure.left).toBeGreaterThanOrEqual(pc.examples.right);
+    expect(pc.cta.top, '相談ボタンは本文の下').toBeGreaterThanOrEqual(pc.examples.bottom);
+    expect(Math.abs(pc.cta.left - pc.heading.left), '相談ボタンは本文と同じ左列').toBeLessThanOrEqual(1);
+    expect(pc.cta.right).toBeLessThanOrEqual(pc.figure.left);
+    await page.locator('#service-system').screenshot({ path: testInfo.outputPath('service-system-1440.png') });
+  });
+
   test('学びの計画は2項目とも「構想中」と文字で示し、日程・料金・申込みを置かない', async ({ page }) => {
     await page.goto('/');
     const items = page.locator('#learning li');
@@ -477,19 +522,101 @@ test.describe('下部バーとの重なり・文字拡大・短い画面', () =>
     });
   }
 
+  /** 主な見出しと本文の文字サイズ（px） */
+  const sizeTargets = ['#hero-title', '#services-title', '#service-ai h3', '#contact-title', '#top p'];
+  async function fontSizes(page: Page): Promise<number[]> {
+    return page.evaluate((selectors) => selectors.map((s) => parseFloat(getComputedStyle(document.querySelector(s)!).fontSize)), sizeTargets);
+  }
+
+  /** 見出しが自分の列の中に収まり（はみ出し・切れがない）、指定した要素と重ならない */
+  async function headingsFit(page: Page): Promise<string[]> {
+    return page.evaluate(() => {
+      const problems: string[] = [];
+      const name = (el: Element) => `${el.tagName.toLowerCase()}「${(el.textContent ?? '').trim().slice(0, 12)}」`;
+      const viewport = document.documentElement.clientWidth;
+      for (const heading of document.querySelectorAll('main h1, main h2, main h3')) {
+        const rect = heading.getBoundingClientRect();
+        if (rect.width === 0) continue; // 表示していない画面デモのパネルの中など
+        const parent = heading.parentElement!.getBoundingClientRect();
+        if (heading.scrollWidth > heading.clientWidth + 1) problems.push(`${name(heading)} の中身が横にはみ出す`);
+        if (rect.left < parent.left - 1 || rect.right > parent.right + 1) problems.push(`${name(heading)} が列からはみ出す`);
+        if (rect.right > viewport + 1) problems.push(`${name(heading)} が画面の右端を越える`);
+      }
+      const intersects = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      for (const [a, b] of [
+        ['#hero-title', '[data-demo-tabs]'],
+        ['#hero-title', '#top p'],
+        ['#contact-title', '#contact fieldset'],
+        ['#services-title', '#service-ai'],
+      ] as const) {
+        if (intersects(document.querySelector(a)!.getBoundingClientRect(), document.querySelector(b)!.getBoundingClientRect())) {
+          problems.push(`${a} と ${b} が重なる`);
+        }
+      }
+      return problems;
+    });
+  }
+
+  /** 冒頭（見出しと画面デモ）・相談欄（説明と入力欄）が左右に並んでいるか、縦に積まれているか */
+  async function splitLayout(page: Page): Promise<{ hero: string; contact: string; h1PhraseLines: number[] }> {
+    return page.evaluate(() => {
+      const arrangement = (a: string, b: string) => {
+        const first = document.querySelector(a)!.getBoundingClientRect();
+        const second = document.querySelector(b)!.getBoundingClientRect();
+        if (second.left >= first.right) return '左右';
+        if (second.top >= first.bottom) return '縦';
+        return '重なり';
+      };
+      const h1 = document.querySelector('#hero-title')!;
+      const h1PhraseLines = [...h1.childNodes]
+        .filter((node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== '')
+        .map((node) => {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          return new Set([...range.getClientRects()].filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top))).size;
+        });
+      return { hero: arrangement('#hero-title', '[data-demo-tabs]'), contact: arrangement('#contact-title', '#contact fieldset'), h1PhraseLines };
+    });
+  }
+
   test('文字の大きさ 200%: 横にはみ出さず、下部バーは伸びて、本文とフッターの最後まで隠れない', async ({ page }, testInfo) => {
     for (const viewport of [
+      { width: 320, height: 568 },
       { width: 390, height: 844 },
+      { width: 1024, height: 768 },
       { width: 1280, height: 800 },
+      { width: 1440, height: 900 },
     ]) {
       await page.setViewportSize(viewport);
       await page.goto('/');
       const barBefore = await bar(page).boundingBox();
+      const sizesBefore = await fontSizes(page);
+      const layoutBefore = await splitLayout(page);
       // 文字だけを拡大する（ブラウザーの文字サイズ設定 200% 相当。CSSOM で指定するため CSP に触れない）
       await page.evaluate(() => document.documentElement.style.setProperty('font-size', '200%'));
       await page.waitForTimeout(200);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, `${viewport.width}px: 横スクロールなし`).toBeLessThanOrEqual(0);
+      // 見出しも本文と同じ比率で大きくなる（H1・H2・H3・本文の実寸で確かめる）
+      const sizesAfter = await fontSizes(page);
+      await testInfo.attach(`text-200-sizes-${viewport.width}.json`, {
+        body: JSON.stringify(Object.fromEntries(sizeTargets.map((s, i) => [s, { before: sizesBefore[i], after: sizesAfter[i] }]))),
+        contentType: 'application/json',
+      });
+      sizeTargets.forEach((target, i) => {
+        expect(sizesAfter[i]! / sizesBefore[i]!, `${viewport.width}px: ${target} の文字サイズ ${sizesBefore[i]}→${sizesAfter[i]}px`).toBeGreaterThanOrEqual(1.95);
+      });
+      // 大きくなった見出しは折り返しで収まり、列からはみ出したり、ほかの要素に重なったりしない
+      expect(await headingsFit(page), `${viewport.width}px`).toEqual([]);
+      // PC 幅: 通常の文字サイズでは左右に並び、200% では冒頭・相談欄を1列にして、H1 は文節ごとの行のまま
+      const layoutAfter = await splitLayout(page);
+      if (viewport.width >= 1024) {
+        expect(layoutBefore, `${viewport.width}px: 通常の文字サイズ`).toEqual({ hero: '左右', contact: '左右', h1PhraseLines: [1, 1] });
+        expect(layoutAfter, `${viewport.width}px: 文字 200%`).toEqual({ hero: '縦', contact: '縦', h1PhraseLines: [1, 1] });
+      }
+      await page.screenshot({ path: testInfo.outputPath(`text-200-top-${viewport.width}.png`) });
+      await page.locator('#contact-title').scrollIntoViewIfNeeded();
+      await page.screenshot({ path: testInfo.outputPath(`text-200-contact-${viewport.width}.png`) });
       const barAfter = await bar(page).boundingBox();
       expect(barAfter!.height).toBeGreaterThan(barBefore!.height);
       // 下部バーの高さが余白の計算に反映されている

@@ -2,9 +2,12 @@
 /**
  * トップの冒頭（#top）。H1・説明・主リンクを初回表示から読めるようにし、演出を待たせない。
  * - PC（1024px以上）は文字5：画面デモ7。それより狭い幅は 見出し→説明→主リンク→デモ の縦順
+ *   文字サイズの設定を大きくして、左右に分ける幅（--container-split）が足りないときも縦順にする
  * - 見出しは文節ごとに区切り（titleの配列）、語の途中で改行しない。
  *   区切りは <wbr> で示し、keep-all で文節の中では折り返さない（読み上げの文字列に空白を入れないため、
  *   文節を inline-block の要素で包む方式は使わない）
+ * - 見出しの最大幅（--container-hero-title）で、どの画面幅・書体でも文節ごとの2行にする。
+ *   端末の書体のほうが字幅が狭いと読み込み前だけ1行に収まり、読み込み後に2行へ変わって下の要素が動くため
  */
 import Button from './Button.astro';
 import HeroDemo from './HeroDemo.astro';
@@ -21,10 +24,10 @@ type Props = {
 const { title, lead, primary, demo, href } = Astro.props;
 ---
 
-<section id="top" class="pt-6 pb-(--spacing-section) lg:pt-12" aria-labelledby="hero-title">
-  <div class="container-content grid gap-10 lg:grid-cols-12 lg:items-center lg:gap-12">
-    <div class="@container grid content-start gap-6 lg:col-span-5">
-      <h1 id="hero-title" class="text-display tracking-normal break-keep">
+<section id="top" class="@container pt-6 pb-(--spacing-section) lg:pt-12" aria-labelledby="hero-title">
+  <div class="container-content grid gap-10 lg:@split:grid-cols-12 lg:@split:items-center lg:@split:gap-12">
+    <div class="grid content-start gap-6 lg:@split:col-span-5">
+      <h1 id="hero-title" class="max-w-(--container-hero-title) text-display tracking-normal break-keep">
         {title.map((phrase, index) => (index > 0 ? [<wbr />, phrase] : phrase))}
       </h1>
       <p class="max-w-(--container-prose) text-lg text-ink-soft">
@@ -37,7 +40,7 @@ const { title, lead, primary, demo, href } = Astro.props;
         </Button>
       </div>
     </div>
-    <div class="lg:col-span-7">
+    <div class="lg:@split:col-span-7">
       <HeroDemo label={demo.label} badge={demo.badge} views={demo.views} href={href} />
     </div>
   </div>

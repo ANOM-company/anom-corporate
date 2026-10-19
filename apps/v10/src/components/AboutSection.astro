@@ -2,6 +2,8 @@
 /**
  * ANOMの考え方（#about）。動きを抑え、文字と余白で読む場面。
  * - 「売上の向上を目指す」は目指す方向であり、効果の保証としない
+ * - PC（1024px以上）は本文7：流れ5。文字サイズの設定を大きくして、左右に分ける幅（--container-split）が
+ *   足りないときは1列にする（列の間の余白も文字サイズに比例して広がり、横にはみ出すため）
  */
 import SectionHeading from './SectionHeading.astro';
 
@@ -16,15 +18,15 @@ type Props = {
 const { eyebrow, title, body, flowLabel, flow } = Astro.props;
 ---
 
-<section id="about" class="border-y border-line py-(--spacing-section)" aria-labelledby="about-title">
-  <div class="container-content grid gap-10 lg:grid-cols-12 lg:gap-12">
-    <div class="grid content-start gap-6 lg:col-span-7">
+<section id="about" class="@container border-y border-line py-(--spacing-section)" aria-labelledby="about-title">
+  <div class="container-content grid gap-10 lg:@split:grid-cols-12 lg:@split:gap-12">
+    <div class="grid content-start gap-6 lg:@split:col-span-7">
       <SectionHeading id="about-title" eyebrow={eyebrow} title={title} />
       <p class="max-w-(--container-prose) text-lg">
         {body.map((sentence) => <span class="block">{sentence}</span>)}
       </p>
     </div>
-    <div class="grid content-start gap-3 lg:col-span-5 lg:pt-10">
+    <div class="grid content-start gap-3 lg:@split:col-span-5 lg:@split:pt-10">
       <p class="text-sm font-bold text-ink-soft">{flowLabel}</p>
       <ol class="grid gap-0">
         {

@@ -105,12 +105,13 @@ test.describe('動き低減の設定', () => {
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/kitchen-sink/');
+    expect(await styleOf(page, faqIcon, 'transition-property')).toBe('none');
     expect(await styleOf(page, faqIcon, 'transition-duration')).toBe('0s');
     await page.goto('/');
-    // 図形は最初から完成した状態（遅延なし・実質0秒）
-    expect(parseFloat(await styleOf(page, shape, 'animation-duration'))).toBeLessThan(0.001);
-    expect(await styleOf(page, shape, 'animation-delay')).toBe('0s');
-    expect(await styleOf(page, menu, 'transition-duration')).not.toMatch(/[1-9]/);
+    // 図形は動きを持たず、最初から完成した状態（時間を極小にするのではなく、動きそのものがない）
+    expect(await styleOf(page, shape, 'animation-name')).toBe('none');
+    expect(await styleOf(page, menu, 'transition-property')).toBe('none');
+    expect(await page.evaluate(() => document.getAnimations().length), 'ページ上で動いているものがない').toBe(0);
     // 本文と画面デモは、動きを待たずに完成した形で読める
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     expect(await styleOf(page, `${shape}:last-of-type`, 'opacity')).toBe('1');
@@ -122,9 +123,33 @@ test.describe('動き低減の設定', () => {
     await page.getByRole('tab', { name: 'Web' }).click();
     await expect(page.getByRole('tabpanel')).toHaveAttribute('id', 'demo-panel-web');
     expect(await styleOf(page, '#demo-panel-web', 'opacity')).toBe('1');
+
+    // 選んだ直後（クリックの処理と同じ流れの中。次の描画を待たない）でも、パネルは完成した表示で、動きが付かない。
+    // 動きの時間を極小にしただけだと、この時点では動きの1コマ目（透明・ずれた位置）が読み取れる
+    const rightAfterSelect = await page.evaluate(() => {
+      document.querySelector<HTMLElement>('#demo-tab-system')?.click();
+      const panel = document.querySelector('#demo-panel-system') as HTMLElement;
+      const style = getComputedStyle(panel);
+      return { hidden: panel.hidden, opacity: style.opacity, transform: style.transform, animations: panel.getAnimations().length };
+    });
+    expect(rightAfterSelect).toEqual({ hidden: false, opacity: '1', transform: 'none', animations: 0 });
+
     await page.getByRole('navigation', { name: '下部メニュー' }).getByRole('button', { name: /メニュー/ }).click();
     const dialog = page.getByRole('dialog', { name: 'サイトメニュー' });
     await expect(dialog).toBeVisible();
     expect(await styleOf(page, '#site-menu', 'opacity')).toBe('1');
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+
+    // メニューも、開いた直後から最終の位置・不透明度で、閉じた直後には表示が残らない
+    const rightAfterOpen = await page.evaluate(() => {
+      document.querySelector<HTMLElement>('[data-menu-button]')?.click();
+      const menu = document.querySelector('#site-menu') as HTMLDialogElement;
+      const style = getComputedStyle(menu);
+      const opened = { open: menu.open, opacity: style.opacity, translate: style.translate, animations: menu.getAnimations().length };
+      menu.close();
+      return { opened, displayAfterClose: getComputedStyle(menu).display };
+    });
+    expect(rightAfterOpen).toEqual({ opened: { open: true, opacity: '1', translate: '0px', animations: 0 }, displayAfterClose: 'none' });
   });
 });

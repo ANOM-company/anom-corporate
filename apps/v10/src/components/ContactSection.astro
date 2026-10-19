@@ -7,6 +7,8 @@
  * - 送信ボタンは disabled。理由は直前の注記で示す
  * - 相談分野は、サービス欄の相談ボタンから引き継ぐ（src/scripts/contact.ts）。ほかの入力は消さない
  * - 実際の送信先・form 要素は、送信処理の承認と接続のときに導入する
+ * - PC（1024px以上）は説明4：入力欄8。文字サイズの設定を大きくして、左右に分ける幅（--container-split）が
+ *   足りないときは1列にし、大きな見出しを広い幅で折り返す
  */
 import Input from './Input.astro';
 import Select from './Select.astro';
@@ -55,15 +57,15 @@ const {
 } = Astro.props;
 ---
 
-<section id="contact" class="py-(--spacing-section)" aria-labelledby="contact-title">
-  <div class="container-content grid gap-10 lg:grid-cols-12 lg:gap-12">
-    <div class="@container grid content-start gap-6 lg:col-span-4">
+<section id="contact" class="@container py-(--spacing-section)" aria-labelledby="contact-title">
+  <div class="container-content grid gap-10 lg:@split:grid-cols-12 lg:@split:gap-12">
+    <div class="grid content-start gap-6 lg:@split:col-span-4">
       <SectionHeading id="contact-title" eyebrow={eyebrow} title={title} />
       <p role="status" class="font-bold text-brand" data-contact-status data-template={handoffMessage}></p>
       <p class="text-lg text-ink-soft">{body}</p>
     </div>
 
-    <div class="grid content-start gap-6 lg:col-span-8">
+    <div class="grid content-start gap-6 lg:@split:col-span-8">
       <p id="contact-preview-notice" class="rounded-control border-2 border-brand bg-surface p-4 font-bold">
         {previewNotice}
       </p>

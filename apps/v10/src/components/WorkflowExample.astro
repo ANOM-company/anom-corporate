@@ -3,6 +3,7 @@
  * 支援のイメージ（#examples）。説明用デモ1件を「Webで伝える→相談を受け取る→対応を整理する」の流れで示す。
  * - 実績一覧ではない。画面の中は「サンプル案件A」などの明らかな見本名と説明用の状態ラベルだけ
  * - 画面枠は装飾（読み上げ対象外・フォーカスしない）。同じ情報は各段階の本文で読める
+ * - 画面枠の中の行は折り返せるようにし、狭い画面で文字を大きくしても枠が画面の外へはみ出さないようにする
  */
 import SectionHeading from './SectionHeading.astro';
 
@@ -34,7 +35,7 @@ const { eyebrow, title, demoTitle, badge, stages, sampleName, sampleButton, samp
         {
           stages.map((stage, index) => (
             <li class="grid content-start gap-4">
-              <div aria-hidden="true" class="grid min-h-40 content-start gap-2 rounded-card bg-muted p-4 text-sm">
+              <div aria-hidden="true" class="grid min-h-40 content-start gap-2 rounded-card bg-muted p-3 text-sm sm:p-4">
                 {index === 0 && (
                   <>
                     <div class="h-2 w-12 rounded-full bg-brand" />
@@ -46,7 +47,7 @@ const { eyebrow, title, demoTitle, badge, stages, sampleName, sampleButton, samp
                 )}
                 {index === 1 && (
                   <>
-                    <div class="flex items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
                       <span class="font-bold">{sampleName}</span>
                       <span class="rounded-full border border-line-strong px-2">{statuses[0]}</span>
                     </div>
@@ -57,7 +58,7 @@ const { eyebrow, title, demoTitle, badge, stages, sampleName, sampleButton, samp
                 {index === 2 && (
                   <>
                     {statuses.map((status, row) => (
-                      <div class="flex items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
+                      <div class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
                         <span class={row === 0 ? 'font-bold' : 'text-ink-soft'}>{row === 0 ? sampleName : sampleOther}</span>
                         <span class="rounded-full border border-line-strong px-2">{status}</span>
                       </div>

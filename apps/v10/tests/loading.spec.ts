@@ -5,6 +5,7 @@
 // - デモの切替・メニューの開閉では、本文の位置がまったく動かないこと（ずれの値が 0）
 // - 操作への応答（Event Timing の処理時間）が 200ms 以内（INP の「良好」の基準）
 // - 測った数値は、条件とともにテスト結果へ添付する（報告に使う）
+// - 字幅の狭い端末の書体で先に表示し、あとから自己配信の書体に切り替わっても、H1 の改行位置と高さが変わらない
 import { writeFileSync } from 'node:fs';
 import type { CDPSession, Page, TestInfo } from '@playwright/test';
 import { test, expect } from './fixtures';
@@ -181,3 +182,151 @@ for (const condition of ['通常', '低速4G+CPU4倍'] as const) {
     });
   }
 }
+
+/**
+ * 字幅の狭い端末の書体（仮名・句読点を詰めた画面表示用の書体）。
+ * Windows は Yu Gothic UI／Meiryo UI、Linux（CI のブラウザー導入で入る書体）は IPA Pゴシック。
+ * 自己配信の書体（LINE Seed JP）は仮名・句読点が全角幅のため、これらの書体のほうが同じ文字列が短くなる。
+ */
+const narrowFonts = ['Yu Gothic UI', 'Meiryo UI', 'IPAPGothic'];
+
+type TitleLayout = {
+  loadedFaces: number;
+  fontSizePx: number;
+  heightPx: number;
+  phraseLines: number[];
+  phraseTops: number[];
+  /** 改行をしないときの文字列の長さ（文字サイズ = 1em） */
+  titleEm: number;
+  lastPhraseEm: number;
+  maxWidthEm: number;
+};
+
+/** H1 の改行と高さ、改行しないときの文字列の長さ（em）を測る */
+async function titleLayout(page: Page): Promise<TitleLayout> {
+  return page.locator('#hero-title').evaluate((el) => {
+    const style = getComputedStyle(el);
+    const fontSize = parseFloat(style.fontSize);
+    const phrases = [...el.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== '');
+    const tops = phrases.map((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      return [...range.getClientRects()].filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top));
+    });
+    // 同じ書体・文字サイズで、改行させない複製を作って長さを測る（CSSOM で指定するため CSP に触れない）
+    const measure = (text: string): number => {
+      const probe = document.createElement('span');
+      probe.textContent = text;
+      for (const [property, value] of [
+        ['position', 'absolute'],
+        ['visibility', 'hidden'],
+        ['white-space', 'nowrap'],
+        ['font', style.font],
+        ['letter-spacing', style.letterSpacing],
+      ]) {
+        probe.style.setProperty(property!, value!);
+      }
+      el.append(probe);
+      const width = probe.getBoundingClientRect().width;
+      probe.remove();
+      return width / fontSize;
+    };
+    return {
+      loadedFaces: [...document.fonts].filter((face) => face.status === 'loaded').length,
+      fontSizePx: fontSize,
+      heightPx: el.getBoundingClientRect().height,
+      phraseLines: tops.map((list) => new Set(list).size),
+      phraseTops: tops.map((list) => Math.min(...list)),
+      titleEm: measure(el.textContent ?? ''),
+      lastPhraseEm: measure(phrases.at(-1)?.textContent ?? ''),
+      maxWidthEm: parseFloat(style.maxWidth) / fontSize,
+    };
+  });
+}
+
+/** H1 の描画に使われた書体の名前（CDP の CSS.getPlatformFontsForNode） */
+async function titleFonts(page: Page): Promise<{ familyName: string; isCustomFont: boolean }[]> {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('DOM.enable');
+  await cdp.send('CSS.enable');
+  const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+  const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: '#hero-title' });
+  const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+  await cdp.detach();
+  return fonts;
+}
+
+test.describe('字幅の狭い端末の書体で先に表示したとき', () => {
+  for (const width of [320, 360, 390, 768, 1024, 1280, 1440]) {
+    test(`@ ${width}px: 書体の切替の前後で H1 の改行位置と高さが変わらず、ずれは 0.1 未満`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await installObservers(page);
+      // 端末の書体の部分だけを字幅の狭い書体にする（自己配信の書体の指定と順番はそのまま。CSSOM で指定）
+      await page.addInitScript((fallback) => {
+        const apply = (): void => {
+          const root = document.documentElement;
+          root.style.setProperty('--font-heading', `'Outfit', 'LINE Seed JP', ${fallback}, sans-serif`);
+          root.style.setProperty('--font-sans', `'LINE Seed JP', ${fallback}, sans-serif`);
+        };
+        if (document.documentElement) apply();
+        else {
+          new MutationObserver((_, observer) => {
+            if (!document.documentElement) return;
+            apply();
+            observer.disconnect();
+          }).observe(document, { childList: true });
+        }
+      }, narrowFonts.map((name) => `'${name}'`).join(', '));
+      // 自己配信の書体の到着を遅らせ、端末の書体で表示された状態を確実に作る
+      await page.route(/\/fonts\/[^/]+\.woff2$/, async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await route.continue();
+      });
+
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      const before = await titleLayout(page);
+      const beforeFonts = await titleFonts(page);
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+      const after = await titleLayout(page);
+      const afterFonts = await titleFonts(page);
+      const metrics = await readMetrics(page);
+      const shift = sum(metrics.shifts.filter((entry) => !entry.hadRecentInput));
+
+      await attach(testInfo, `narrow-fallback-${width}.json`, {
+        fallbackFonts: narrowFonts,
+        viewport: { width, height: 844 },
+        before: { fonts: beforeFonts.map((font) => font.familyName), ...before },
+        after: { fonts: afterFonts.map((font) => font.familyName), ...after },
+        layoutShiftOnLoad: Number(shift.toFixed(4)),
+        shiftSources: metrics.shifts.map((entry) => ({ value: Number(entry.value.toFixed(4)), sources: entry.sources })),
+      });
+
+      // 前提: 切替の前は字幅の狭い端末の書体、後は自己配信の書体で描画されている
+      expect(before.loadedFaces, '切替の前に自己配信の書体が読み込まれていない').toBe(0);
+      expect(beforeFonts.length).toBeGreaterThan(0);
+      for (const font of beforeFonts) {
+        expect(narrowFonts, `切替の前の書体: ${JSON.stringify(beforeFonts)}`).toContain(font.familyName);
+      }
+      expect(afterFonts.every((font) => font.isCustomFont), `切替の後の書体: ${JSON.stringify(afterFonts)}`).toBe(true);
+      // 前提: 端末の書体のほうが同じ見出しが短い（以前の指定では、この差で1行に収まり、切替で2行に変わった）
+      expect(before.titleEm).toBeLessThan(after.titleEm);
+
+      // 切替の前後とも、文節ごとの2行で、H1 の高さが変わらない。ずれの合計は既存の基準（0.1 未満）
+      for (const [label, layout] of [
+        ['切替の前', before],
+        ['切替の後', after],
+      ] as const) {
+        expect(layout.phraseLines, `${label}: 文節ごとに1行`).toEqual([1, 1]);
+        expect(layout.phraseTops[1]!, `${label}: 後半の文節は2行目`).toBeGreaterThan(layout.phraseTops[0]!);
+      }
+      expect(after.heightPx, 'H1 の高さが変わらない').toBeCloseTo(before.heightPx, 1);
+      expect(shift, `初回表示のずれ: ${JSON.stringify(metrics.shifts)}`).toBeLessThan(0.1);
+      // 仕組みの確認: どちらの書体でも、後半の文節は見出しの最大幅に入り、2つの文節を合わせた長さは入らない
+      for (const layout of [before, after]) {
+        expect(layout.lastPhraseEm).toBeLessThanOrEqual(layout.maxWidthEm);
+        expect(layout.titleEm).toBeGreaterThan(layout.maxWidthEm);
+      }
+    });
+  }
+});

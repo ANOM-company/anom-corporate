@@ -6,7 +6,19 @@ import { test, expect, pages } from './fixtures';
 
 const tags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
 
+/**
+ * 開閉・切替・組み上がりの動き（CSS の transition と animation）がすべて終わるまで待つ。
+ * 動きの途中（例: 閉じかけて半透明のメニュー）の色や重なりを、静止した画面の指摘として扱わないため。
+ * 判定の基準や対象は変えない。
+ */
+async function waitForMotionEnd(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => animation.playState !== 'running' && !animation.pending),
+  );
+}
+
 async function audit(page: Page, testInfo: TestInfo, label: string): Promise<void> {
+  await waitForMotionEnd(page);
   const results = await new AxeBuilder({ page }).withTags(tags).analyze();
   const summary = results.violations.map((v) => ({
     id: v.id,
@@ -14,12 +26,17 @@ async function audit(page: Page, testInfo: TestInfo, label: string): Promise<voi
     help: v.help,
     nodes: v.nodes.length,
   }));
-  // 全指摘（軽微なものを含む）を記録として残す
+  // 全指摘（軽微なものを含む）を、該当した要素（セレクター・HTML・理由）とともに記録として残す
+  const details = results.violations.map((v) => ({
+    id: v.id,
+    impact: v.impact,
+    nodes: v.nodes.map((node) => ({ target: node.target, html: node.html, failureSummary: node.failureSummary })),
+  }));
   await testInfo.attach(`axe-${label}.json`, {
-    body: JSON.stringify({ url: page.url(), violations: summary, incomplete: results.incomplete.map((v) => v.id) }, null, 2),
+    body: JSON.stringify({ url: page.url(), violations: summary, details, incomplete: results.incomplete.map((v) => v.id) }, null, 2),
     contentType: 'application/json',
   });
-  const blocking = summary.filter((v) => v.impact === 'critical' || v.impact === 'serious');
+  const blocking = details.filter((v) => v.impact === 'critical' || v.impact === 'serious');
   expect(blocking, `${label}: 重大・深刻な指摘`).toEqual([]);
 }
 
@@ -45,12 +62,16 @@ for (const width of [360, 1440]) {
     test('top: 展開メニュー表示中と、相談分野を引き継いだ状態', async ({ page }, testInfo) => {
       await page.goto('/');
       await page.getByRole('navigation', { name: '下部メニュー' }).getByRole('button', { name: /メニュー/ }).click();
-      await expect(page.getByRole('dialog', { name: 'サイトメニュー' })).toBeVisible();
-      await page.waitForTimeout(400); // 開く動き（320ms）の途中の色で判定しない
+      const dialog = page.getByRole('dialog', { name: 'サイトメニュー' });
+      await expect(dialog).toBeVisible();
       await audit(page, testInfo, `top-menu-open-${width}`);
+      // 閉じる動き（200ms）の途中でも、背面のボタンは押せる（閉じかけの面は操作を受けない）
       await page.keyboard.press('Escape');
       await page.locator('#service-web a[data-consult-field="web"]').click();
       await expect(page.locator('[data-contact-status]')).not.toBeEmpty();
+      // 閉じ終わって画面から消えたことを確かめてから判定する
+      await expect(dialog).toBeHidden();
+      await expect(page.locator('#site-menu')).toHaveCSS('display', 'none');
       await audit(page, testInfo, `top-contact-handoff-${width}`);
     });
   });
