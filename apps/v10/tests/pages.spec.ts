@@ -50,7 +50,7 @@ test.describe('404ページの表示', () => {
     const response = await page.goto('/missing/page/');
     expect(response?.status()).toBe(404);
     await expect(page.getByRole('heading', { level: 1, name: 'ページが見つかりません' })).toBeVisible();
-    await page.getByRole('main').getByRole('link', { name: 'はじめにへ戻る' }).click();
+    await page.getByRole('main').getByRole('link', { name: 'トップへ戻る' }).click();
     await expect(page).toHaveURL('/');
   });
 });
@@ -123,6 +123,29 @@ test.describe('リンクとアセット', () => {
         expect(response.status(), url).toBe(200);
       }
     });
+  }
+});
+
+test.describe('通信先', () => {
+  for (const { name, path } of pages) {
+    for (const width of [390, 1440]) {
+      test(`${name} @ ${width}px: 表示中のすべての通信が同一オリジン（フォントを含む）`, async ({ page, baseURL }) => {
+        const requests: string[] = [];
+        page.on('request', (request) => requests.push(request.url()));
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+        // ページ全体を表示させ、遅れて読み込まれるものも含める
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        await page.waitForLoadState('networkidle');
+        const origin = new URL(baseURL ?? '').origin;
+        expect(requests.length).toBeGreaterThan(0);
+        expect(
+          requests.filter((url) => new URL(url).origin !== origin),
+          '外部への通信がないこと',
+        ).toEqual([]);
+      });
+    }
   }
 });
 

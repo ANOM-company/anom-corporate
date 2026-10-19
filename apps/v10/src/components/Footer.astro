@@ -1,32 +1,61 @@
 ---
 /**
- * フッター。会社情報など未確定の内容はここに書かない（確定後にページ側から渡す）。
+ * フッター。ANOM 表記・サイト内の案内（#site-navigation）・個人情報の取り扱いへのリンク。
+ * - サイト内の案内は <details open> の通常のリンク。JavaScript 無効時の「メニュー」の移動先を兼ねる
+ * - 住所・法人格・設立年などの未確認の会社情報は載せない
+ * - 末尾に下部バーの高さ分の余白を取り、最後の内容までバーに隠れないようにする
  */
-import type { NavItem } from './Navigation.astro';
+import type { MenuGroup } from '../site';
 
 type Props = {
-  items: NavItem[];
+  siteName: string;
+  title: string;
+  groups: MenuGroup[];
+  privacy: { label: string; href: string };
   note: string;
+  href: (anchor: string) => string;
 };
 
-const { items, note } = Astro.props;
+const { siteName, title, groups, privacy, note, href } = Astro.props;
 ---
 
-<footer class="border-t border-line bg-surface py-10">
-  <div class="container-content grid gap-4">
-    <nav aria-label="フッター">
-      <ul class="flex flex-wrap gap-x-6 gap-y-2">
-        {
-          items.map((item) => (
-            <li>
-              <a href={item.href} class="inline-flex min-h-11 items-center">
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+<footer class="border-t border-line bg-surface pt-12 pb-[calc(var(--bar-clearance)+1.5rem)]">
+  <div class="container-content grid gap-10 lg:grid-cols-12 lg:gap-12">
+    <div class="grid content-start gap-3 lg:col-span-4">
+      <p class="font-latin text-2xl font-bold tracking-wide">{siteName}</p>
+      <p class="text-sm text-ink-soft">{note}</p>
+    </div>
+    <nav id="site-navigation" aria-labelledby="site-navigation-title" class="lg:col-span-8">
+      <details open class="group">
+        <summary
+          class="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 font-bold [&::-webkit-details-marker]:hidden"
+        >
+          <span id="site-navigation-title">{title}</span>
+          <span aria-hidden="true" class="text-ink-soft transition-transform duration-(--duration-base) group-open:rotate-45">+</span>
+        </summary>
+        <div class="grid gap-6 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          {
+            groups.map((group) => (
+              <div class="grid content-start gap-1">
+                <p class="text-sm font-bold text-ink-soft">{group.title}</p>
+                <ul class="grid">
+                  {group.links.map((link) => (
+                    <li>
+                      <a href={href(link.anchor)} class="inline-flex min-h-11 items-center gap-2">
+                        {link.label}
+                        {link.status && <span class="text-sm text-ink-soft">［{link.status}］</span>}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </div>
+        <p class="mt-6 border-t border-line pt-4">
+          <a href={privacy.href} class="inline-flex min-h-11 items-center">{privacy.label}</a>
+        </p>
+      </details>
     </nav>
-    <p class="text-sm text-ink-soft">{note}</p>
   </div>
 </footer>

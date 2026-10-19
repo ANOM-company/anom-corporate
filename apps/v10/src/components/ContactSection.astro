@@ -1,0 +1,158 @@
+---
+/**
+ * 相談（#contact）と個人情報の取り扱い（#contact-privacy）。
+ * 確認版のため、入力はできるが送信しない構造にしている。
+ * - 入力欄は <form> に入れず、fieldset／legend でまとめる（form 属性も付けない）。
+ *   送信元となる form がないため、Enter キーや JavaScript 無効時でも送信・ページ移動・GET の発生がない
+ * - 送信ボタンは disabled。理由は直前の注記で示す
+ * - 相談分野は、サービス欄の相談ボタンから引き継ぐ（src/scripts/contact.ts）。ほかの入力は消さない
+ * - 実際の送信先・form 要素は、送信処理の承認と接続のときに導入する
+ */
+import Input from './Input.astro';
+import Select from './Select.astro';
+import Checkbox from './Checkbox.astro';
+import SectionHeading from './SectionHeading.astro';
+
+type TextField = { label: string; maxlength: number };
+
+type Props = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  previewNotice: string;
+  requiredNote: string;
+  legend: string;
+  fields: {
+    name: TextField;
+    company: TextField;
+    email: TextField;
+    field: { label: string; placeholder: string };
+    message: TextField & { hint: string };
+    privacy: { label: string; hint: string; link: string };
+  };
+  fieldOptions: readonly { value: string; label: string }[];
+  handoffMessage: string;
+  sendNote: string;
+  sendLabel: string;
+  helperLinks: { label: string; href: string }[];
+  privacy: { title: string; body: string };
+};
+
+const {
+  eyebrow,
+  title,
+  body,
+  previewNotice,
+  requiredNote,
+  legend,
+  fields,
+  fieldOptions,
+  handoffMessage,
+  sendNote,
+  sendLabel,
+  helperLinks,
+  privacy,
+} = Astro.props;
+---
+
+<section id="contact" class="py-(--spacing-section)" aria-labelledby="contact-title">
+  <div class="container-content grid gap-10 lg:grid-cols-12 lg:gap-12">
+    <div class="@container grid content-start gap-6 lg:col-span-4">
+      <SectionHeading id="contact-title" eyebrow={eyebrow} title={title} />
+      <p role="status" class="font-bold text-brand" data-contact-status data-template={handoffMessage}></p>
+      <p class="text-lg text-ink-soft">{body}</p>
+    </div>
+
+    <div class="grid content-start gap-6 lg:col-span-8">
+      <p id="contact-preview-notice" class="rounded-control border-2 border-brand bg-surface p-4 font-bold">
+        {previewNotice}
+      </p>
+      <p id="contact-required-note" class="text-sm text-ink-soft">{requiredNote}</p>
+
+      <fieldset
+        class="grid gap-6 rounded-demo border border-line bg-surface p-6 sm:p-8"
+        aria-describedby="contact-preview-notice"
+        data-contact-form
+      >
+        <legend class="float-left mb-2 w-full text-xl font-bold">{legend}</legend>
+        <div class="grid gap-6 lg:grid-cols-2">
+          <Input id="contact-name" label={fields.name.label} required autocomplete="name" maxlength={fields.name.maxlength} />
+          <Input
+            id="contact-company"
+            label={fields.company.label}
+            optional
+            autocomplete="organization"
+            maxlength={fields.company.maxlength}
+          />
+        </div>
+        <Input
+          id="contact-email"
+          label={fields.email.label}
+          type="email"
+          required
+          autocomplete="email"
+          maxlength={fields.email.maxlength}
+        />
+        <Select
+          id="contact-field"
+          label={fields.field.label}
+          placeholder={fields.field.placeholder}
+          options={fieldOptions}
+          required
+          data-consult-select=""
+        />
+        <Input
+          id="contact-message"
+          label={fields.message.label}
+          hint={fields.message.hint}
+          required
+          multiline
+          rows={6}
+          maxlength={fields.message.maxlength}
+        />
+        <Checkbox id="contact-privacy-agree" label={fields.privacy.label} required>
+          <Fragment slot="hint">
+            <p>
+              {fields.privacy.hint}
+              <a href="#contact-privacy" class="font-bold">{fields.privacy.link}</a>
+            </p>
+          </Fragment>
+        </Checkbox>
+        <div class="grid gap-3 border-t border-line pt-6">
+          <p id="contact-send-note" class="text-sm font-bold">{sendNote}</p>
+          <div>
+            <button
+              type="button"
+              disabled
+              aria-describedby="contact-send-note"
+              class="inline-flex min-h-13 items-center justify-center rounded-control bg-brand px-8 text-lg font-bold text-on-brand disabled:cursor-not-allowed disabled:bg-line-strong"
+            >
+              {sendLabel}
+            </button>
+          </div>
+        </div>
+      </fieldset>
+
+      <ul class="flex flex-wrap gap-x-6 gap-y-2">
+        {
+          helperLinks.map((link) => (
+            <li>
+              <a href={link.href} class="inline-flex min-h-11 items-center font-bold">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div id="contact-privacy" class="grid gap-3 rounded-card bg-muted p-6" aria-labelledby="contact-privacy-title" role="region">
+        <h3 id="contact-privacy-title" class="text-lg">{privacy.title}</h3>
+        <p class="text-ink-soft">{privacy.body}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../scripts/contact';
+</script>

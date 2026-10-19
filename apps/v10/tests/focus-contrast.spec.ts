@@ -95,10 +95,33 @@ for (const { name, path, allow404 } of [
         if (luminance(parseRgb(info.behind)) < 0.05) darkChecked = true;
       }
       expect(seen.size).toBeGreaterThan(3);
-      if (name !== '404') expect(darkChecked, '暗い地（CTA）の上の要素も検査していること').toBe(true);
+      // 暗い地（CTA・画面デモ・下部バー）の上の要素も検査していること（下部バーは全ページにある）
+      expect(darkChecked, '暗い地の上の要素も検査していること').toBe(true);
     });
   });
 }
+
+test.describe('フォーカス表示の計算値: 展開メニュー（深い青の地）', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('メニュー内のTabで移動できる全要素で、輪郭が隣り合う色と 3:1 以上', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('navigation', { name: '下部メニュー' }).getByRole('button', { name: /メニュー/ }).click();
+    await expect(page.getByRole('dialog', { name: 'サイトメニュー' })).toBeVisible();
+    const seen = new Set<number>();
+    for (let i = 0; i < 30; i += 1) {
+      await page.keyboard.press('Tab');
+      const info = await readIndicator(page);
+      if (!info) continue;
+      if (seen.has(info.key)) break;
+      seen.add(info.key);
+      expectIndicator(info);
+      expect(luminance(parseRgb(info.behind)), `深い青の地: ${info.label}`).toBeLessThan(0.05);
+    }
+    // 9つのリンクと「閉じる」
+    expect(seen.size).toBe(10);
+  });
+});
 
 test.describe('フォーカス表示の描画値', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -132,7 +155,7 @@ test.describe('フォーカス表示の描画値', () => {
 
   for (const target of [
     { name: '明るい地の主要ボタン', text: '主要ボタン', selector: '#ks-button ~ div button:first-child', dark: false },
-    { name: '暗い地（CTA）のボタン', text: 'はじめにへ戻る', selector: '[aria-labelledby="cta-title"] a', dark: true },
+    { name: '暗い地（CTA）のボタン', text: 'トップへ戻る', selector: '[aria-labelledby="cta-title"] a', dark: true },
   ]) {
     test(`${target.name}: 撮影した輪郭と隣り合う色が 3:1 以上`, async ({ page }, testInfo) => {
       await page.goto('/kitchen-sink/');

@@ -41,6 +41,18 @@ for (const width of [360, 1440]) {
       await page.getByRole('button', { name: 'モーダルを開く' }).click();
       await audit(page, testInfo, `modal-open-${width}`);
     });
+
+    test('top: 展開メニュー表示中と、相談分野を引き継いだ状態', async ({ page }, testInfo) => {
+      await page.goto('/');
+      await page.getByRole('navigation', { name: '下部メニュー' }).getByRole('button', { name: /メニュー/ }).click();
+      await expect(page.getByRole('dialog', { name: 'サイトメニュー' })).toBeVisible();
+      await page.waitForTimeout(400); // 開く動き（320ms）の途中の色で判定しない
+      await audit(page, testInfo, `top-menu-open-${width}`);
+      await page.keyboard.press('Escape');
+      await page.locator('#service-web a[data-consult-field="web"]').click();
+      await expect(page.locator('[data-contact-status]')).not.toBeEmpty();
+      await audit(page, testInfo, `top-contact-handoff-${width}`);
+    });
   });
 }
 

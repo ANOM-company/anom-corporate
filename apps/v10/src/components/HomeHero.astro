@@ -1,0 +1,44 @@
+---
+/**
+ * トップの冒頭（#top）。H1・説明・主リンクを初回表示から読めるようにし、演出を待たせない。
+ * - PC（1024px以上）は文字5：画面デモ7。それより狭い幅は 見出し→説明→主リンク→デモ の縦順
+ * - 見出しは文節ごとに区切り（titleの配列）、語の途中で改行しない。
+ *   区切りは <wbr> で示し、keep-all で文節の中では折り返さない（読み上げの文字列に空白を入れないため、
+ *   文節を inline-block の要素で包む方式は使わない）
+ */
+import Button from './Button.astro';
+import HeroDemo from './HeroDemo.astro';
+import type { DemoView } from '../data/home';
+
+type Props = {
+  title: string[];
+  lead: string[];
+  primary: { label: string; href: string };
+  demo: { label: string; badge: string; views: DemoView[] };
+  href: (anchor: string) => string;
+};
+
+const { title, lead, primary, demo, href } = Astro.props;
+---
+
+<section id="top" class="pt-6 pb-(--spacing-section) lg:pt-12" aria-labelledby="hero-title">
+  <div class="container-content grid gap-10 lg:grid-cols-12 lg:items-center lg:gap-12">
+    <div class="@container grid content-start gap-6 lg:col-span-5">
+      <h1 id="hero-title" class="text-display tracking-normal break-keep">
+        {title.map((phrase, index) => (index > 0 ? [<wbr />, phrase] : phrase))}
+      </h1>
+      <p class="max-w-(--container-prose) text-lg text-ink-soft">
+        {lead.map((line) => <span class="block">{line}</span>)}
+      </p>
+      <div>
+        <Button href={primary.href} size="lg">
+          {primary.label}
+          <span aria-hidden="true">↓</span>
+        </Button>
+      </div>
+    </div>
+    <div class="lg:col-span-7">
+      <HeroDemo label={demo.label} badge={demo.badge} views={demo.views} href={href} />
+    </div>
+  </div>
+</section>

@@ -3,6 +3,7 @@
  * ラベル付きの入力欄。ラベル・補足・エラー文を入力欄と結び付ける。
  * - error を渡すとエラー状態（aria-invalid と赤い枠・エラー文）で表示する
  * - multiline で複数行（textarea）になる
+ * - required で「必須」、optional で「任意」の印をラベルに付ける（色だけでなく文字で示す）
  */
 import type { HTMLAttributes } from 'astro/types';
 
@@ -15,10 +16,26 @@ type Props = {
   error?: string;
   required?: boolean;
   multiline?: boolean;
+  optional?: boolean;
+  maxlength?: number;
+  rows?: number;
   autocomplete?: HTMLAttributes<'input'>['autocomplete'];
 };
 
-const { id, label, name = id, type = 'text', hint, error, required = false, multiline = false, autocomplete } = Astro.props;
+const {
+  id,
+  label,
+  name = id,
+  type = 'text',
+  hint,
+  error,
+  required = false,
+  multiline = false,
+  optional = false,
+  maxlength,
+  rows = 4,
+  autocomplete,
+} = Astro.props;
 
 const hintId = `${id}-hint`;
 const errorId = `${id}-error`;
@@ -31,7 +48,8 @@ const field =
 <div class="grid gap-1.5" data-field>
   <label for={id} class="font-bold">
     {label}
-    {required && <span class="ms-1 text-sm font-normal text-ink-soft">（必須）</span>}
+    {required && <span class="ms-2 rounded-sm bg-brand px-1.5 py-0.5 text-sm font-bold text-on-brand">必須</span>}
+    {optional && <span class="ms-2 rounded-sm border border-line-strong px-1.5 text-sm font-bold text-ink-soft">任意</span>}
   </label>
   {
     hint && (
@@ -45,7 +63,8 @@ const field =
       <textarea
         id={id}
         name={name}
-        rows="4"
+        rows={rows}
+        maxlength={maxlength}
         class={field}
         required={required}
         aria-describedby={describedBy}
@@ -58,6 +77,7 @@ const field =
         type={type}
         class={field}
         required={required}
+        maxlength={maxlength}
         autocomplete={autocomplete}
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : undefined}

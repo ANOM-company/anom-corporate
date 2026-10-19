@@ -1,0 +1,60 @@
+---
+/**
+ * 画面下中央に常に表示する下部バー（サービス／相談する／メニュー）。
+ * - サービス・相談するは通常のページ内リンク（相談するは相談分野や入力内容を変えない）
+ * - メニュー: JavaScript 無効時はフッターの案内（#site-navigation）へのリンク。
+ *   有効時だけ、展開メニュー（<dialog>）を開くボタンに置き換える（src/scripts/bottom-nav.ts）。
+ *   リンクとボタンは同じ見た目・大きさのため、置き換えで表示は動かない
+ * - スマホ幅でフォームに入力している間は一時的に隠す（data-input-active。src/scripts/contact.ts）
+ */
+type Props = {
+  label: string;
+  services: { label: string; href: string };
+  contact: { label: string; href: string };
+  menu: { label: string; dialogId: string };
+};
+
+const { label, services, contact, menu } = Astro.props;
+const item =
+  'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold no-underline transition-colors duration-(--duration-base) ease-standard';
+const onBrand = `${item} text-on-brand hover:bg-shape hover:text-on-brand`;
+---
+
+<nav
+  aria-label={label}
+  class="fixed inset-x-4 bottom-(--bar-offset) z-40 mx-auto max-w-(--container-bar) rounded-full bg-brand text-on-brand shadow-lg shadow-ink/20 max-md:data-input-active:invisible"
+  data-bottom-nav
+>
+  <ul class="grid min-h-16 grid-cols-3 items-stretch gap-1 p-1.5">
+    <li>
+      <a href={services.href} class={onBrand}>{services.label}</a>
+    </li>
+    <li>
+      <a href={contact.href} class={`${item} bg-surface text-brand hover:bg-shape-soft hover:text-brand`}>
+        {contact.label}
+      </a>
+    </li>
+    <li>
+      <a href="#site-navigation" class={onBrand} data-menu-fallback>
+        {menu.label}
+        <span aria-hidden="true" class="font-latin text-lg leading-none">+</span>
+      </a>
+      <button
+        type="button"
+        class={`${onBrand} w-full cursor-pointer`}
+        hidden
+        aria-expanded="false"
+        aria-controls={menu.dialogId}
+        data-modal-open={menu.dialogId}
+        data-menu-button
+      >
+        {menu.label}
+        <span aria-hidden="true" class="font-latin text-lg leading-none">+</span>
+      </button>
+    </li>
+  </ul>
+</nav>
+
+<script>
+  import '../scripts/bottom-nav';
+</script>

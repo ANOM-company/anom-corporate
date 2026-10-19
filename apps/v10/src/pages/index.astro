@@ -1,60 +1,88 @@
 ---
 /**
- * トップ（/）: ひな形の案内ページ。営業用の文言は置かない。
+ * トップ（/）: ANOM V10 の確認版。原稿は src/data/home.ts から渡す。
+ * 読み順: 冒頭 → 主力2サービス → システム開発 → 支援のイメージ → 考え方 → 進め方 → 学びの計画 → 相談
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Hero from '../components/Hero.astro';
-import Services from '../components/Services.astro';
-import FAQ from '../components/FAQ.astro';
-import CTA from '../components/CTA.astro';
-import Button from '../components/Button.astro';
+import HomeHero from '../components/HomeHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ServiceFeature from '../components/ServiceFeature.astro';
+import SystemFeature from '../components/SystemFeature.astro';
+import WorkflowExample from '../components/WorkflowExample.astro';
+import AboutSection from '../components/AboutSection.astro';
+import ProcessSection from '../components/ProcessSection.astro';
+import LearningSection from '../components/LearningSection.astro';
+import ContactSection from '../components/ContactSection.astro';
+import { hero, services, system, examples, about, process, learning, contact, consultFields } from '../data/home';
 
-const parts = [
-  { title: '共通の設計トークン', body: '色・書体・余白・文字サイズ・動きを src/styles/global.css に集約しています。' },
-  { title: '最小構成の部品', body: 'Button・Input・Card・Navigation・Modal・Hero・Services・FAQ・CTA・Footer を用意しています。' },
-  { title: '静的HTMLの出力', body: 'ビルド結果は dist/ の静的ファイルだけです。サーバー側のコードはありません。' },
-  { title: 'ローカル配信の設定', body: 'Wrangler でビルド済みの dist/ をローカル配信し、ヘッダーと404の挙動を確認できます。' },
-  { title: 'ブラウザーテスト', body: 'Playwright で表示幅・操作・アクセシビリティ・セキュリティヘッダーを確認します。' },
-  { title: '検証用CI', body: 'GitHub Actions で型確認・Lint・ビルド・テスト・脆弱性検査を実行します（配信はしません）。' },
-];
-
-const faq = [
-  {
-    question: 'このページは何ですか？',
-    answer: 'サイト制作の土台（ひな形）が正しく動くかを確かめるための案内ページです。実際のサイトの内容ではありません。',
-  },
-  {
-    question: '部品の見た目や状態はどこで確認できますか？',
-    answer: '「部品の確認画面」で、各部品の種類と状態（無効・エラーなど）を一覧で試せます。',
-  },
-  {
-    question: 'JavaScript が無効でも使えますか？',
-    answer: '本文・リンク・メニュー・よくある質問は HTML だけで動きます。モーダルとフォームの入力確認は JavaScript を使います。',
-  },
-];
+const href = (anchor: string): string => `#${anchor}`;
 ---
 
-<BaseLayout title="はじめに" description="ANOM Web Starter v1 の案内ページです。">
-  <Hero
-    eyebrow="ANOM Web Starter v1"
-    title="静的サイト制作のための最小のひな形"
-    lead="共通部品・設計トークン・検証の仕組みをまとめた土台です。このページはひな形の案内で、実際のサイトの内容ではありません。"
-  >
-    <Fragment slot="actions">
-      <Button href="/kitchen-sink/" size="lg">部品の確認画面を開く</Button>
-      <Button href="#starter-parts" variant="secondary" size="lg">含まれるものを見る</Button>
-    </Fragment>
-  </Hero>
-  <Services
-    id="starter-parts"
-    title="このひな形に含まれるもの"
-    intro="実案件では、この土台に内容とデザインを重ねて使います。"
-    items={parts}
+<BaseLayout title="技術を、仕事の力に。" description="AI・DX支援、Web制作・運用保守、システム開発のご相談（確認用プレビュー）。">
+  <HomeHero
+    title={hero.title}
+    lead={hero.lead}
+    primary={{ label: hero.primary.label, href: href(hero.primary.anchor) }}
+    demo={hero.demo}
+    href={href}
   />
-  <FAQ title="よくある質問" items={faq} />
-  <CTA title="部品の動きを確かめる" body="各部品の種類と状態、キーボード操作をまとめて試せます。">
-    <Fragment slot="actions">
-      <Button href="/kitchen-sink/" variant="secondary" size="lg">部品の確認画面へ</Button>
-    </Fragment>
-  </CTA>
+
+  <section id="services" class="pb-(--spacing-section)" aria-labelledby="services-title">
+    <div class="container-content grid gap-10">
+      <SectionHeading id="services-title" eyebrow={services.eyebrow} title={services.title} intro={services.intro} />
+      <div class="grid gap-6 md:grid-cols-2">
+        {
+          services.items.map((item) => (
+            <ServiceFeature
+              item={item}
+              audienceLabel={services.audienceLabel}
+              examplesLabel={services.examplesLabel}
+              examplesNote={services.examplesNote}
+              contactHref={href('contact')}
+            />
+          ))
+        }
+      </div>
+      <p>
+        <a href={href(services.systemLink.anchor)} class="inline-flex min-h-11 items-center gap-2 text-lg font-bold">
+          {services.systemLink.label}
+          <span aria-hidden="true">→</span>
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <SystemFeature
+    eyebrow={system.eyebrow}
+    title={system.title}
+    body={system.body}
+    stepsLabel={system.stepsLabel}
+    steps={system.steps}
+    examplesLabel={system.examplesLabel}
+    examplesNote={system.examplesNote}
+    examples={system.examples}
+    cta={system.cta}
+    contactHref={href('contact')}
+  />
+
+  <WorkflowExample {...examples} />
+  <AboutSection {...about} />
+  <ProcessSection {...process} />
+  <LearningSection {...learning} />
+
+  <ContactSection
+    eyebrow={contact.eyebrow}
+    title={contact.title}
+    body={contact.body}
+    previewNotice={contact.previewNotice}
+    requiredNote={contact.requiredNote}
+    legend={contact.legend}
+    fields={contact.fields}
+    fieldOptions={consultFields}
+    handoffMessage={contact.handoffMessage}
+    sendNote={contact.sendNote}
+    sendLabel={contact.sendLabel}
+    helperLinks={contact.helperLinks.map((link) => ({ label: link.label, href: href(link.anchor) }))}
+    privacy={contact.privacy}
+  />
 </BaseLayout>

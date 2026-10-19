@@ -1,0 +1,37 @@
+---
+/**
+ * 相談からの進め方（#process）。PCは4列、768〜1023pxは2列、スマホは1列。
+ * - 番号は順序を表すだけで、納期や固定プランではない
+ */
+import SectionHeading from './SectionHeading.astro';
+
+type Props = {
+  eyebrow: string;
+  title: string;
+  steps: { number: string; title: string; body: string }[];
+  note: string;
+};
+
+const { eyebrow, title, steps, note } = Astro.props;
+---
+
+<section id="process" class="py-(--spacing-section)" aria-labelledby="process-title">
+  <div class="container-content grid gap-10">
+    <SectionHeading id="process-title" eyebrow={eyebrow} title={title} />
+    <ol class="grid gap-x-6 gap-y-8 md:grid-cols-2 lg:grid-cols-4">
+      {
+        steps.map((step) => (
+          <li class="grid content-start gap-3 border-t-2 border-brand pt-4">
+            <p class="font-latin text-2xl font-semibold text-brand" aria-hidden="true">{step.number}</p>
+            <h3 class="text-xl">
+              <span class="sr-only">{step.number} </span>
+              {step.title}
+            </h3>
+            <p class="text-ink-soft">{step.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="text-sm text-ink-soft">{note}</p>
+  </div>
+</section>

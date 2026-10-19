@@ -2,35 +2,53 @@
  * 共通スタイルと設計トークン（色・書体・余白・文字サイズ・動き）
  * ---------------------------------------------------------------
  * - 見た目の値はここに集約し、部品側では Tailwind のクラス名（bg-surface など）で参照する
- * - 現在の値は「読みやすさ優先の仮テーマ」。ANOM V10 の採用デザインではない
- * - 外部フォントは読み込まない（端末にある書体だけを使う）
+ * - 現在の値は V10 確認版の開始値（設計書の提案値）。正式なブランド色の採取値ではない
+ * - 書体は自己配信の Outfit と LINE Seed JP だけを使う（定義は fonts.css。外部へは接続しない）
  */
 @import 'tailwindcss';
+@import './fonts.css';
+
+/* JavaScript が無効のときだけ当てる指定（例: noscript:hidden） */
+@custom-variant noscript (@media (scripting: none));
 
 @theme {
   /* 色: 役割名で定義し、部品は役割名だけを使う */
-  --color-canvas: #fafaf7; /* ページ全体の地 */
-  --color-surface: #ffffff; /* カード・入力欄などの面 */
-  --color-muted: #f0efea; /* 一段沈めた面 */
-  --color-ink: #1c1b18; /* 本文・見出しの文字 */
-  --color-ink-soft: #55524a; /* 補足の文字（地の上でコントラスト比 7:1 以上） */
-  --color-line: #d6d3ca; /* 罫線 */
-  --color-line-strong: #8a867b; /* 入力欄の枠など強い罫線 */
-  --color-brand: #2f3a8f; /* 主要ボタン・リンク（仮の色） */
-  --color-brand-strong: #222a6b; /* 主要ボタンのホバー */
+  --color-canvas: #f5f5f2; /* ページ全体の地 */
+  --color-surface: #ffffff; /* 入力欄などの面 */
+  --color-muted: #e9edee; /* 一段沈めた面 */
+  --color-ink: #17212a; /* 本文・見出しの文字 */
+  --color-ink-soft: #4b5963; /* 補足の文字（地の上でコントラスト比 6:1 以上） */
+  --color-line: #ced6da; /* 装飾の罫線（入力欄の境界には使わない） */
+  --color-line-strong: #697781; /* 入力欄・操作部の境界（白い面とのコントラスト比 4.5:1 以上） */
+  --color-brand: #14344b; /* 深い青: 主要ボタン・画面デモ・下部バー・展開メニュー */
+  --color-brand-strong: #0d2638; /* 主要ボタンのホバー */
   --color-on-brand: #ffffff; /* brand の上の文字 */
+  --color-on-brand-soft: #c9d8e3; /* brand の上の補足の文字（コントラスト比 8:1 以上） */
   --color-danger: #a4161a; /* エラー表示 */
   --color-danger-soft: #fbeaea; /* エラーの背景 */
   --color-focus: #1a5fd0; /* フォーカス表示の輪郭（白とのコントラスト比 5.8:1） */
-  --color-focus-halo: #ffffff; /* 輪郭の内外を縁取る白（暗い地とのコントラスト比 17:1） */
+  --color-focus-halo: #ffffff; /* 輪郭の内外を縁取る白（暗い地とのコントラスト比 12:1 以上） */
 
-  /* 書体: 端末の標準書体（日本語を優先） */
+  /* 図形（画面デモ・説明図の装飾）。意味は本文で伝え、色だけで状態を示さない */
+  --color-shape: #2a5675; /* 深い青の上の面 */
+  --color-shape-line: #4f7b9a; /* 深い青の上の線 */
+  --color-shape-accent: #8fc1e3; /* 強調の面 */
+  --color-shape-soft: #dbe7ee; /* 明るい地の上の面 */
+  --color-shape-paper: #f7fafb; /* 画面デモの中の白い画面 */
+
+  /* 書体: 自己配信の2書体（fonts.css）→ 端末の標準書体の順 */
   --font-sans:
-    system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic UI',
-    Meiryo, sans-serif;
+    'LINE Seed JP', system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP',
+    'Yu Gothic UI', Meiryo, sans-serif;
+  /* 見出し: 英数字は Outfit、和文は LINE Seed JP（Outfit は和文を収録していないため和文はこの順で選ばれる） */
+  --font-heading:
+    'Outfit', 'LINE Seed JP', system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', 'Yu Gothic UI', Meiryo, sans-serif;
+  /* 英字だけの補助ラベル・番号 */
+  --font-latin: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
-  /* 文字サイズ（行間は日本語向けに広め） */
+  /* 文字サイズ（行間は日本語向けに広め。見出しは画面幅に応じて伸縮） */
   --text-sm: 0.875rem;
   --text-sm--line-height: 1.7;
   --text-base: 1rem;
@@ -43,34 +61,103 @@
   --text-2xl--line-height: 1.4;
   --text-3xl: clamp(2rem, 1.4rem + 2.6vw, 3rem);
   --text-3xl--line-height: 1.3;
+  /* H1: スマホ 36〜48px、PC 64〜88px 相当 */
+  /* 見出しの列（@container）が狭い画面幅では、文節の途中で改行しないよう列幅の15%を上限にする */
+  --text-display: min(clamp(2.25rem, 1.2rem + 4.2vw, 5.5rem), 15cqi);
+  --text-display--line-height: 1.2;
+  /* H2: スマホ 28〜32px、PC 36〜48px 相当 */
+  /* 狭い列（@container。例: 相談欄の説明側）に置くときは、列幅の10%を上限にして語の途中で改行しない */
+  --text-heading: min(clamp(1.75rem, 1.2rem + 1.9vw, 3rem), 10cqi);
+  --text-heading--line-height: 1.35;
+  /* H3 */
+  --text-subheading: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
+  --text-subheading--line-height: 1.5;
 
   /* 余白の基準（Tailwind の p-4 などはこの値の倍数になる） */
   --spacing: 0.25rem;
-  /* セクション間の余白・本文幅など、レイアウト用の名前付き値 */
-  --spacing-section: clamp(3.5rem, 2.5rem + 4vw, 6rem);
-  --container-content: 72rem;
-  --container-prose: 40rem;
+  /* セクション間: スマホ 64〜88px、PC 112〜144px */
+  --spacing-section: clamp(4rem, 2.6rem + 5.6vw, 8rem);
+  /* 全体幅（左右の余白を含めて最大 1280px） */
+  --container-content: 80rem;
+  /* 本文の行長（1行 約32〜40文字） */
+  --container-prose: 36rem;
+  --container-menu: 35rem; /* 展開メニューの最大幅 560px */
+  --container-bar: 27.5rem; /* 下部バーの最大幅 440px */
 
   /* 角丸 */
-  --radius-control: 0.5rem;
+  --radius-control: 0.5rem; /* 通常の操作部 8px */
   --radius-card: 0.875rem;
+  --radius-demo: 1.25rem; /* 画面デモ 20px */
 
-  /* 動き: 時間と緩急はここだけで決める */
+  /* 動き: 時間と緩急はここだけで決める（動き低減の設定では下の @media で 0 にする） */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --duration-fast: 120ms;
-  --duration-base: 200ms;
+  --duration-base: 180ms; /* ボタン・リンクの変化 */
+  --duration-build: 640ms; /* 冒頭の図形が組み上がる時間（遅延と合わせて 900ms 以内） */
+  --duration-stagger: 40ms; /* 図形ごとの開始のずれ（最大6段 = 240ms） */
+  --duration-switch: 320ms; /* デモ切替（360ms 以内） */
+  --duration-menu-open: 320ms;
+  --duration-menu-close: 200ms;
+
+  --animate-assemble: assemble var(--duration-build) var(--ease-standard) both;
+  --animate-panel-in: panel-in var(--duration-switch) var(--ease-standard) both;
+
+  /* 図形が散らばった位置（--from-x / --from-y / --from-r）から本来の位置へ整う */
+  @keyframes assemble {
+    from {
+      opacity: 0;
+      transform: translate(var(--from-x, 0), var(--from-y, 0)) rotate(var(--from-r, 0deg));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  /* デモ切替: 短い移動とフェード */
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
-/* 動き低減の設定がある場合は、すべての動きを実質ゼロにする */
+/*
+ * 下部バーの寸法。本文・フォーム・フッターは「バーの高さ＋下端の余白＋24px」以上を下に空ける。
+ * --bar-height はスクリプトが実際の高さで更新する（文字拡大で伸びた場合も追従）。
+ */
+:root {
+  --bar-height: 4rem;
+  --bar-offset: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  --bar-clearance: calc(var(--bar-height) + var(--bar-offset) + 1.5rem);
+}
+@media (min-width: 48rem) {
+  :root {
+    --bar-offset: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* 動き低減の設定がある場合は、すべての動きを実質ゼロにし、完成した状態をすぐに表示する */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-fast: 0ms;
     --duration-base: 0ms;
+    --duration-build: 0ms;
+    --duration-stagger: 0ms;
+    --duration-switch: 0ms;
+    --duration-menu-open: 0ms;
+    --duration-menu-close: 0ms;
   }
   *,
   *::before,
-  *::after {
+  *::after,
+  ::backdrop {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0ms !important;
     scroll-behavior: auto !important;
@@ -82,11 +169,34 @@
     background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* 擬似的な太字・斜体を作らない（LINE Seed JP は 400 と 700 を配信） */
+    font-synthesis: none;
+    line-break: strict;
     -webkit-text-size-adjust: 100%;
+    /* フォーカスした要素が下部バーの裏に隠れないよう、スクロール位置を調整する */
+    scroll-padding-bottom: var(--bar-clearance);
+    scrollbar-gutter: stable;
+  }
+  /* 展開メニューの表示中は背面をスクロールさせない（src/scripts/modal.ts が付け外しする） */
+  html[data-scroll-locked] {
+    overflow: hidden;
   }
   body {
     min-height: 100vh;
     overflow-wrap: anywhere;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    /* 日本語の文節で改行し、行の長さをそろえる（未対応のブラウザーでは通常の改行） */
+    word-break: auto-phrase;
+    text-wrap: balance;
+  }
+  /* アンカーで移動したとき、見出しが画面上端に貼り付かないようにする */
+  [id] {
+    scroll-margin-top: 1.5rem;
   }
   /*
    * キーボード操作時のフォーカス表示（二重輪郭）
@@ -107,19 +217,161 @@
   a:hover {
     color: var(--color-brand-strong);
   }
+
+  /*
+   * 画面デモの切替（src/scripts/hero-tabs.ts）
+   * 3つのパネルを同じ位置に重ね、最も高いパネルの高さを確保する。
+   * 選んでいないパネルは hidden 属性で非表示（読み上げ・Tab移動の対象外）にしつつ、高さだけを残すため
+   * display ではなく visibility で隠す。こうすると切替で下の本文が動かない。
+   */
+  [data-demo-panels] {
+    display: grid;
+  }
+  [data-demo-panels] > [data-demo-panel] {
+    grid-area: 1 / 1;
+  }
+  /* Tailwind の初期化CSS（[hidden] を display: none !important にする）より優先させるため、同じ base 層で !important を使う */
+  [data-demo-panels] > [data-demo-panel][hidden] {
+    display: block !important;
+    visibility: hidden;
+  }
+  /* 利用者が切り替えたときだけ、選んだパネルを短く表示する（初回の組み上がりとは別） */
+  [data-demo-switched] [data-demo-panel]:not([hidden]) {
+    animation: var(--animate-panel-in);
+  }
+  /* JavaScript 無効時は切替ボタンを出さず、3つのパネルを縦に並べる */
+  @media (scripting: none) {
+    [data-demo-panels] > [data-demo-panel] {
+      grid-area: auto;
+    }
+    [data-demo-panels] > [data-demo-panel][hidden] {
+      visibility: visible;
+    }
+  }
 }
 
 @layer components {
-  /* 本文幅のコンテナ（左右16pxの余白を確保） */
+  /* 本文幅のコンテナ（左右の余白: 767px以下 20px、768〜1023px 32px、1024px以上 48px） */
   .container-content {
     margin-inline: auto;
     width: 100%;
     max-width: var(--container-content);
-    padding-inline: 1rem;
+    padding-inline: 1.25rem;
   }
   @media (min-width: 48rem) {
     .container-content {
       padding-inline: 2rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .container-content {
+      padding-inline: 3rem;
+    }
+  }
+
+  /*
+   * 冒頭の図形: 読み込み時に1回だけ、散らばった位置から本来の位置へ組み上がる。
+   * - data-scatter（1〜6）: 散らばり方の種類（開始位置のずれと傾き。SVG の座標単位）
+   * - data-step（0〜6）: 開始の順番（--duration-stagger ずつ遅らせる。最大 240ms）
+   * 動き低減の設定では時間が 0 になり、最初から完成した図を表示する。
+   */
+  .assemble {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: var(--animate-assemble);
+    animation-delay: calc(var(--step, 0) * var(--duration-stagger));
+  }
+  .assemble[data-scatter='1'] {
+    --from-x: -28px;
+    --from-y: 22px;
+    --from-r: -14deg;
+  }
+  .assemble[data-scatter='2'] {
+    --from-x: 18px;
+    --from-y: -26px;
+    --from-r: 10deg;
+  }
+  .assemble[data-scatter='3'] {
+    --from-x: -14px;
+    --from-y: 30px;
+    --from-r: 8deg;
+  }
+  .assemble[data-scatter='4'] {
+    --from-x: 32px;
+    --from-y: 14px;
+    --from-r: -6deg;
+  }
+  .assemble[data-scatter='5'] {
+    --from-x: -20px;
+    --from-y: -18px;
+    --from-r: 12deg;
+  }
+  .assemble[data-scatter='6'] {
+    --from-x: 24px;
+    --from-y: 26px;
+    --from-r: -10deg;
+  }
+  .assemble[data-step='1'] {
+    --step: 1;
+  }
+  .assemble[data-step='2'] {
+    --step: 2;
+  }
+  .assemble[data-step='3'] {
+    --step: 3;
+  }
+  .assemble[data-step='4'] {
+    --step: 4;
+  }
+  .assemble[data-step='5'] {
+    --step: 5;
+  }
+  .assemble[data-step='6'] {
+    --step: 6;
+  }
+
+  /*
+   * 展開メニュー（<dialog>）の開閉の動き。下部バーの位置から上へ広がる面として現れる。
+   * 閉じる処理そのものは <dialog> の close() のまま（監査済みのフォーカス復帰を変えない）で、
+   * 見た目の退場だけを transition で付ける。
+   */
+  .menu-panel {
+    opacity: 0;
+    translate: 0 1rem;
+    transition:
+      opacity var(--duration-menu-close) var(--ease-standard),
+      translate var(--duration-menu-close) var(--ease-standard),
+      overlay var(--duration-menu-close) allow-discrete,
+      display var(--duration-menu-close) allow-discrete;
+  }
+  /* 閉じる動きの途中のパネル・暗幕は、下のバーの操作を妨げない */
+  .menu-panel:not([open]),
+  .menu-panel:not([open])::backdrop {
+    pointer-events: none;
+  }
+  .menu-panel[open] {
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: var(--duration-menu-open);
+  }
+  .menu-panel::backdrop {
+    background-color: transparent;
+    transition:
+      background-color var(--duration-menu-close) var(--ease-standard),
+      overlay var(--duration-menu-close) allow-discrete,
+      display var(--duration-menu-close) allow-discrete;
+  }
+  .menu-panel[open]::backdrop {
+    background-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+    transition-duration: var(--duration-menu-open);
+  }
+  @starting-style {
+    .menu-panel[open] {
+      opacity: 0;
+      translate: 0 1rem;
+    }
+    .menu-panel[open]::backdrop {
+      background-color: transparent;
     }
   }
 }
