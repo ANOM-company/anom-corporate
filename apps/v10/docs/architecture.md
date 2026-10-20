@@ -59,8 +59,9 @@ apps/v10/
 - 「メニュー」は `<dialog>` を下から上へ開くボタン（`aria-expanded`・`aria-controls`）。JavaScript が無効のときは、フッターのサイト案内へのリンクになる
 - 展開メニュー（`MenuDialog`）は下記「モーダルとフォーカス」の仕組みを使う。開くと見出しへフォーカスし、背面のスクロールを止める（`html[data-scroll-locked]`）。項目が収まらない短い画面では項目の部分だけを縦にスクロールし、見出しと「閉じる」は常に見える
 - サイトの案内のため `role="menu"` は使わず、通常のナビゲーションのリンクにする
-- 文字サイズの設定を大きくしてバーの幅が `--container-bar-stack`（16.25rem。4文字のラベルが3等分の1列に入る最小の幅）を下回るときは、3項目を HTML の順に縦に並べ、各ラベルを1行に収める。横のままだとラベルが1文字ずつ折り返し、背の高くなったバーの丸い角の外へ文字が出て明るい地に重なるため。縦のときはバーの角の丸みを項目の丸みに合わせ、押せる高さは 44px 以上を保つ。判定はバーの幅で行うため、`<nav>` を `@container` とし、色・丸み・影は中の `<ul>` に付ける（通常の文字サイズの見た目は従来どおり）
+- 文字サイズの設定を大きくしてバーの幅が `--container-bar-stack`（16.25rem。4文字のラベルが3等分の1列に入る最小の幅）を下回るときは、3項目を HTML の順に縦に並べ、各ラベルを1行に収める。横のままだとラベルが1文字ずつ折り返し、背の高くなったバーの丸い角の外へ文字が出て明るい地に重なるため。縦のときはバーの角の丸みを項目の丸みに合わせ（`--radius-bar-stack`）、押せる高さは 44px 以上を保つ（`--spacing-tap`）。判定はバーの幅で行うため、`<nav>` を `@container` とし、色・丸み・影は中の `<ul>` に付ける（通常の文字サイズの見た目は従来どおり）
 - 下部バーの高さは `--bar-height`（`src/scripts/bottom-nav.ts` が文字の拡大に合わせて更新）。`html` の `scroll-padding-bottom` とフッター下の余白に使い、ページ内リンク・Tab 移動の行き先がバーの裏に隠れないようにする
+- スクリプトが動く前と JavaScript が無効のときは、横1段の高さ `--bar-height-row`（4rem）を使う。JavaScript が無効のまま文字を大きくして下部バーが縦に並ぶ幅では、フッターの中で縦3段の高さ `--bar-height-stack` との差（`--bar-stack-extra`）を下の余白に足し、フッターの最後の内容とバーの間を有効時と同じだけ空ける。フッターは画面の幅いっぱいの `@container` のため、境目は `--container-page-bar-stack`（`--container-bar-stack`＋バーの左右の余白 2rem）。`html` の `scroll-padding-bottom` は画面全体の設定でバーの並び方を CSS で知る方法がないため、JavaScript 無効時は横1段の高さのまま
 
 ## 相談フォーム（確認版）
 
@@ -86,12 +87,12 @@ apps/v10/
 | 図形の色 | `--color-shape`, `--color-shape-line`, `--color-shape-accent` など | 画面デモ・サービスの図の SVG（`fill-shape` など） |
 | 書体 | `--font-sans`（LINE Seed JP）, `--font-heading`（Outfit → LINE Seed JP）, `--font-latin`（Outfit） | `font-sans`, `font-latin` |
 | 文字サイズ | `--text-base` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
-| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1` |
-| 余白 | `--spacing`（基準 0.25rem）, `--spacing-section` | `p-4`, `py-(--spacing-section)` |
+| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)` |
+| 余白 | `--spacing`（基準 0.25rem）, `--spacing-section`, `--spacing-tap`（押せる範囲の最小の高さ 44px） | `p-4`, `py-(--spacing-section)`, `min-h-tap` |
 | 幅 | `--container-content`, `--container-prose`, `--container-menu`, `--container-bar` | `.container-content`, `max-w-(--container-prose)` |
-| 角丸 | `--radius-control`, `--radius-card`, `--radius-demo` | `rounded-control` など |
+| 角丸 | `--radius-control`, `--radius-card`, `--radius-demo`, `--radius-bar-stack`（縦に並べた下部バー） | `rounded-control`, `rounded-bar-stack` など |
 | 動き | `--duration-fast`, `--duration-base`, `--duration-build`, `--duration-switch`, `--duration-menu-open` / `-close`, `--ease-standard` | `duration-(--duration-base) ease-standard` |
-| 下部バー | `--bar-height`, `--bar-offset`, `--bar-clearance`（`:root` の変数） | 固定位置・余白の計算 |
+| 下部バー | `--bar-height`（スクリプトが設定）, `--bar-height-row`・`--bar-height-stack`（初期値）, `--bar-offset`, `--bar-clearance`, `--bar-stack-extra`（`:root` の変数） | 固定位置・余白の計算 |
 | フォーカス表示 | `--color-focus`（輪郭）, `--color-focus-halo`（白の縁取り） | `:focus-visible` で自動適用（部品側の指定は不要） |
 
 フォーカス表示は「要素 | 白 2px | 青の輪郭 3px | 白 2px | 地」の二重輪郭です。明るい地では青の輪郭が、暗い地では外側の白が、隣り合う色と 3:1 以上になります。
@@ -134,7 +135,7 @@ apps/v10/
 | 表示のずれ（初回表示・デモ切替・メニュー）と操作の応答。通常と通信制限＋CPU 4倍遅延の両方で計測し、数値を添付。字幅の狭い端末の書体（Windows: Yu Gothic UI／Meiryo UI、Linux: IPA Pゴシック）で先に表示し、自己配信の書体に切り替わっても H1 の改行と高さが変わらないこと | `tests/loading.spec.ts` |
 | 部品見本: ナビ、モーダル（Tab・Shift+Tab で背景へ移らない・Esc とフォーカス復帰・内部のページ内リンク）、FAQ、フォームのラベルとエラー、Tab移動・本文へ移動 | `tests/interactions.spec.ts` |
 | フォーカス表示と隣り合う色のコントラスト（全Tab停止位置の計算値。展開メニューの中を含む。明暗の地の撮影ピクセル） | `tests/focus-contrast.spec.ts` |
-| JavaScript無効時の本文・リンク・メニュー・画面デモ・相談フォーム、動き低減（動きがなく、切替・メニューを開いた直後から完成した表示） | `tests/no-js-and-motion.spec.ts` |
+| JavaScript無効時の本文・リンク・メニュー・画面デモ・相談フォーム・ページ最下端の余白（文字 200% で下部バーが縦に並んでも、フッターの最後の内容とバーの間が 24px 以上。文字サイズと画面の幅を変えても、下部バーの高さの初期値が実際の高さと合う）、動き低減（動きがなく、切替・メニューを開いた直後から完成した表示） | `tests/no-js-and-motion.spec.ts` |
 | axe による自動検査（各ページ、部品見本のエラー・モーダル表示中、トップの展開メニュー表示中・相談分野の引継ぎ後。開閉などの動きが終わってから判定。重大・深刻は0件で合格、全指摘を該当要素とともに添付） | `tests/accessibility.spec.ts` |
 | 監査・目視確認用の画面記録（PC・スマホのトップ全体、メニュー、フォームの表示見本） | `tests/screens.spec.ts` |
 

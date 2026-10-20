@@ -80,6 +80,8 @@
   --spacing: 0.25rem;
   /* セクション間: スマホ 64〜88px、PC 112〜144px */
   --spacing-section: clamp(4rem, 2.6rem + 5.6vw, 8rem);
+  /* 押せる範囲の最小の高さ 44px（文字サイズに比例させない。下部バーを縦に並べたときの項目） */
+  --spacing-tap: 44px;
   /* 全体幅（左右の余白を含めて最大 1280px） */
   --container-content: 80rem;
   /* 本文の行長（1行 約32〜40文字） */
@@ -92,6 +94,11 @@
    * rem のため文字サイズに比例し、文字を大きくしてこの幅を下回るときは縦に並べる（使い方: @max-bar-stack:grid-cols-1）
    */
   --container-bar-stack: 16.25rem;
+  /*
+   * 上の境目を、画面の幅いっぱいの区画（フッター）の幅で表したもの。下部バーは左右に 1rem ずつ空けて置くため、
+   * --container-bar-stack＋2rem。フッターの中で、下部バーが縦に並んでいるかを知るために使う（使い方: @max-page-bar-stack:pb-...）
+   */
+  --container-page-bar-stack: 18.25rem;
   /*
    * トップの H1「技術を、／仕事の力に。」の最大幅（見出し自身の文字サイズが基準）。
    * 後半の文節（6文字 ≒ 6em）は入り、2つの文節を合わせた長さ（全角の書体で約10em、仮名・句読点を詰めた書体でも約8.7em）は入らない幅にして、
@@ -110,6 +117,11 @@
   --radius-control: 0.5rem; /* 通常の操作部 8px */
   --radius-card: 0.875rem;
   --radius-demo: 1.25rem; /* 画面デモ 20px */
+  /*
+   * 下部バーを縦に並べたときのバーの角。項目の丸み（項目の高さの半分 =（行の高さ 1.375rem＋上下の余白 0.5rem）÷2）に
+   * 外側の余白 0.375rem を足し、角の近くの文字も濃い色の背景の内側に保つ
+   */
+  --radius-bar-stack: 1.3125rem;
 
   /* 動き: 時間と緩急はここだけで決める（動き低減の設定では下の @media で 0 にする） */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -150,12 +162,25 @@
 
 /*
  * 下部バーの寸法。本文・フォーム・フッターは「バーの高さ＋下端の余白＋24px」以上を下に空ける。
- * --bar-height はスクリプトが実際の高さで更新する（文字拡大で伸びた場合も追従）。
+ * --bar-height はスクリプトが実際の高さで設定する（文字拡大で伸びた場合も追従）。
+ * スクリプトが動く前と JavaScript 無効のときは、下の初期値（横1段・縦3段の高さ）を使う。
  */
 :root {
-  --bar-height: 4rem;
+  /* 横1段の高さ（項目 3.25rem＋外側の余白 0.375rem×2） */
+  --bar-height-row: 4rem;
+  /*
+   * 縦3段の高さ = 項目の高さ×3＋項目の間 0.25rem×2＋外側の余白 0.375rem×2。
+   * 項目の高さは、行の高さ 1.375rem＋上下の余白 0.25rem×2 と、押せる高さの下限（--spacing-tap）の大きい方。
+   * BottomNav.astro の縦に並べたときの指定と合わせる（一致は tests/no-js-and-motion.spec.ts で確かめる）
+   */
+  --bar-height-stack: calc(3 * max(var(--spacing-tap), 1.875rem) + 1.25rem);
   --bar-offset: calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  --bar-clearance: calc(var(--bar-height) + var(--bar-offset) + 1.5rem);
+  --bar-clearance: calc(var(--bar-height, var(--bar-height-row)) + var(--bar-offset) + 1.5rem);
+  /*
+   * JavaScript 無効のまま下部バーが縦に並んだとき、横1段の初期値では足りない高さ（フッターの下の余白に足す）。
+   * スクリプトが実際の高さを --bar-height に設定した後は 0 になる
+   */
+  --bar-stack-extra: calc(var(--bar-height, var(--bar-height-stack)) - var(--bar-height, var(--bar-height-row)));
 }
 @media (min-width: 48rem) {
   :root {

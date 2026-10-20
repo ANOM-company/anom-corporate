@@ -3,7 +3,9 @@
  * フッター。ANOM 表記・サイト内の案内（#site-navigation）・個人情報の取り扱いへのリンク。
  * - サイト内の案内は <details open> の通常のリンク。JavaScript 無効時の「メニュー」の移動先を兼ねる
  * - 住所・法人格・設立年などの未確認の会社情報は載せない
- * - 末尾に下部バーの高さ分の余白を取り、最後の内容までバーに隠れないようにする
+ * - 末尾に下部バーの高さ分の余白を取り、最後の内容までバーに隠れないようにする。
+ *   JavaScript 無効で文字を大きくして下部バーが縦に並ぶ幅（フッターの幅が --container-page-bar-stack 未満）では、
+ *   横1段の初期値では足りない高さ（--bar-stack-extra）を足す
  * - PC（1024px以上）は ANOM 表記4：案内8。文字サイズの設定を大きくして、左右に分ける幅（--container-split）が
  *   足りないときは1列にする
  */
@@ -22,7 +24,7 @@ const { siteName, title, groups, privacy, note, href } = Astro.props;
 ---
 
 <footer class="@container border-t border-line bg-surface pt-12 pb-[calc(var(--bar-clearance)+1.5rem)]">
-  <div class="container-content grid gap-10 lg:@split:grid-cols-12 lg:@split:gap-12">
+  <div class="container-content grid gap-10 @max-page-bar-stack:pb-(--bar-stack-extra) lg:@split:grid-cols-12 lg:@split:gap-12">
     <div class="grid content-start gap-3 lg:@split:col-span-4">
       <p class="font-latin text-2xl font-bold tracking-wide">{siteName}</p>
       <p class="text-sm text-ink-soft">{note}</p>

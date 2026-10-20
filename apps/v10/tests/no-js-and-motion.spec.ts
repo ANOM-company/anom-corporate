@@ -1,4 +1,5 @@
 // JavaScript無効時と、動き低減の設定時の確認。
+import type { Page } from '@playwright/test';
 import { test, expect, trackSends } from './fixtures';
 
 test.describe('JavaScript無効', () => {
@@ -80,7 +81,92 @@ test.describe('JavaScript無効', () => {
     expect(page.url()).toMatch(/\/kitchen-sink\/$/);
     expect(sent).toEqual([]);
   });
+
+  test('文字の大きさ 200%（320×568・390×844）: 下部バーが縦に並んでも、ページの最下端でフッターの最後の内容とバーの間が 24px 以上あく', async ({
+    page,
+  }, testInfo) => {
+    for (const viewport of [
+      { width: 320, height: 568 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+      await setTextScale(page, '200%');
+      const result = await pageEnd(page);
+      await testInfo.attach(`nojs-text-200-end-${viewport.width}.json`, { body: JSON.stringify(result), contentType: 'application/json' });
+      expect(result.rows, `${viewport.width}px: 下部バーは縦3段`).toBe(3);
+      expect(result.atEnd, `${viewport.width}px: ページの最下端まで移動できる`).toBe(true);
+      expect(result.gap, `${viewport.width}px: フッターの最後の内容と下部バーの間`).toBeGreaterThanOrEqual(24);
+      await page.screenshot({ path: testInfo.outputPath(`nojs-text-200-end-${viewport.width}.png`) });
+    }
+  });
+
+  test('文字サイズと画面の幅を変えても、下部バーの高さの初期値が実際の高さと合い、フッターの下の余白がスクリプト有効時と同じになる', async ({
+    page,
+  }, testInfo) => {
+    const cases = [
+      ...[320, 360, 390, 414, 640, 768].flatMap((width) =>
+        ['100%', '110%', '125%', '150%', '175%', '200%'].map((scale) => ({ width, scale })),
+      ),
+      // 文字 200% で縦3段と横1段が切り替わる境目の前後（境目の画面の幅はスクロールバーの溝の幅で前後する）
+      ...Array.from({ length: 41 }, (_, i) => ({ width: 580 + i, scale: '200%' })),
+    ];
+    await page.goto('/');
+    const results = [];
+    for (const { width, scale } of cases) {
+      await page.setViewportSize({ width, height: 800 });
+      await setTextScale(page, scale);
+      results.push({ width, scale, ...(await pageEnd(page)) });
+    }
+    await testInfo.attach('nojs-bar-fallback.json', { body: JSON.stringify(results), contentType: 'application/json' });
+    // スクリプト有効時のフッターの下の余白は「実際のバーの高さ＋下端の余白＋1.5rem＋1.5rem」。無効時もこれと 1px 以内で一致する
+    const mismatched = results.filter((r) => Math.abs(r.footerPadding - r.expectedPadding) > 1);
+    expect(mismatched, '下部バーの高さの初期値が実際の高さと合わない幅・文字サイズ').toEqual([]);
+    expect(
+      results.filter((r) => r.gap < 24),
+      'フッターの最後の内容と下部バーの間が 24px 未満の幅・文字サイズ',
+    ).toEqual([]);
+    // 境目の前後で、縦3段と横1段の両方を確かめている
+    expect(new Set(results.filter((r) => r.scale === '200%' && r.width >= 580).map((r) => r.rows))).toEqual(new Set([1, 3]));
+  });
 });
+
+/** 文字だけを拡大する（ブラウザーの文字サイズ設定の代わり。page.evaluate はページのスクリプトが無効でも動く） */
+async function setTextScale(page: Page, scale: string) {
+  await page.evaluate(async (size) => {
+    document.documentElement.style.setProperty('font-size', size);
+    await document.fonts.ready;
+  }, scale);
+}
+
+/**
+ * ページの最下端まで移動したときの、下部バーとフッターの位置関係。
+ * - gap: フッターの最後のリンクの下端から、下部バーの上端までの距離
+ * - footerPadding: フッターの最後の内容より下の余白（フッターと中の区画の下の余白の合計）
+ * - expectedPadding: スクリプト有効時と同じ計算（実際のバーの高さ＋下端の余白＋1.5rem＋1.5rem）
+ */
+async function pageEnd(page: Page) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  return page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>('[data-bottom-nav]')!;
+    const bar = nav.getBoundingClientRect();
+    const items = [...nav.querySelectorAll<HTMLElement>('li')];
+    const footer = document.querySelector('footer')!;
+    const inner = footer.firstElementChild!;
+    const last = [...footer.querySelectorAll('a')].at(-1)!.getBoundingClientRect();
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const offset = innerHeight - bar.bottom;
+    return {
+      rows: new Set(items.map((item) => Math.round(item.getBoundingClientRect().top))).size,
+      barHeight: bar.height,
+      offset,
+      atEnd: Math.abs(scrollY + innerHeight - document.documentElement.scrollHeight) <= 1,
+      gap: bar.top - last.bottom,
+      footerPadding: parseFloat(getComputedStyle(footer).paddingBottom) + parseFloat(getComputedStyle(inner).paddingBottom),
+      expectedPadding: bar.height + offset + 3 * rem,
+    };
+  });
+}
 
 test.describe('動き低減の設定', () => {
   /** 要素の計算済みスタイルの値 */
