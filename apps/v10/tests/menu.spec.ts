@@ -7,6 +7,75 @@ const bar = (page: Page) => page.getByRole('navigation', { name: '下部メニ�
 const menuButton = (page: Page) => bar(page).getByRole('button', { name: /メニュー/ });
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'サイトメニュー' });
 
+/**
+ * 下部バーの文字の収まり。
+ * - outside: 文字（1文字ずつ）の四隅のどれかが、その文字の背景（濃い色のバー、または白い「相談する」）の
+ *   丸い角を含む形から外れているもの。外れた文字は明るいページの地に重なって読みにくくなる
+ * - labels: 各ラベル（「+」の飾りを除く）が何行に折り返されているか
+ * - rows / height: 3項目が何段に並んでいるか、各項目の高さ
+ */
+async function barText(page: Page) {
+  return page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>('[data-bottom-nav]')!;
+    const transparent = (el: Element) => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)';
+    // 角の丸みは、辺の長さを超えると辺の長さに合わせて縮む（rounded-full は短い辺の半分）
+    const shapeOf = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      const raw = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+      const radius = raw === 0 ? 0 : raw * Math.min(1, r.width / (2 * raw), r.height / (2 * raw));
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, radius };
+    };
+    const inside = (shape: ReturnType<typeof shapeOf>, x: number, y: number) => {
+      const tolerance = 0.5;
+      if (x < shape.left - tolerance || x > shape.right + tolerance) return false;
+      if (y < shape.top - tolerance || y > shape.bottom + tolerance) return false;
+      const cx = Math.min(Math.max(x, shape.left + shape.radius), shape.right - shape.radius);
+      const cy = Math.min(Math.max(y, shape.top + shape.radius), shape.bottom - shape.radius);
+      return Math.hypot(x - cx, y - cy) <= shape.radius + tolerance;
+    };
+    const items = [...nav.querySelectorAll<HTMLElement>('a, button')].filter((el) => !el.hidden);
+    const outside: string[] = [];
+    const labels = items.map((item) => {
+      const tops = new Set<number>();
+      const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        // 文字の背景: 文字に最も近い、背景色のある要素
+        let background: Element | null = node.parentElement;
+        while (background && background !== nav && transparent(background)) background = background.parentElement;
+        const shape = shapeOf(background!);
+        const decorative = node.parentElement?.closest('[aria-hidden="true"]') !== null;
+        const text = node.textContent ?? '';
+        for (let i = 0; i < text.length; i++) {
+          if (!text[i]!.trim()) continue;
+          const range = document.createRange();
+          range.setStart(node, i);
+          range.setEnd(node, i + 1);
+          const rect = range.getBoundingClientRect();
+          const corners: Array<[number, number]> = [
+            [rect.left, rect.top],
+            [rect.right, rect.top],
+            [rect.left, rect.bottom],
+            [rect.right, rect.bottom],
+          ];
+          if (!corners.every(([x, y]) => inside(shape, x, y))) outside.push(`${text[i]}（${item.textContent?.trim()}）`);
+          if (!decorative) tops.add(Math.round(rect.top));
+        }
+      }
+      return { name: item.firstChild?.textContent?.trim(), lines: tops.size };
+    });
+    const boxes = items.map((item) => item.getBoundingClientRect());
+    return {
+      outside,
+      labels,
+      rows: new Set(boxes.map((box) => Math.round(box.top))).size,
+      // 上から下へ HTML の順（サービス→相談する→メニュー）に並んでいるか
+      topToBottomInOrder: boxes.every((box, i) => i === 0 || box.top >= boxes[i - 1]!.bottom),
+      minItemSize: Math.min(...boxes.flatMap((box) => [box.width, box.height])),
+      labelFontSize: parseFloat(getComputedStyle(items[0]!).fontSize),
+    };
+  });
+}
+
 /** 開いているダイアログの数・ボタンの状態・背面のスクロール停止が一致しているか */
 async function menuState(page: Page) {
   return page.evaluate(() => {
@@ -66,6 +135,80 @@ test.describe('下部バー', () => {
     await expect(page).toHaveURL(/#contact$/);
     await expect(page.getByLabel('ご相談の分野')).toHaveValue('system');
     await expect(page.getByLabel('お名前')).toHaveValue('見本 太郎');
+  });
+
+  test('文字の大きさ 200%（320×568・390×844）: ラベルは単語の途中で折り返さずに縦に並び、すべての文字が背景の丸い形の内側にあって操作できる', async ({
+    page,
+  }, testInfo) => {
+    for (const viewport of [
+      { width: 320, height: 568 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      const normal = await barText(page);
+      // 通常の文字サイズでは、従来どおり3項目を1段に並べる
+      expect(normal.outside, `${viewport.width}px: 通常の文字サイズ`).toEqual([]);
+      expect(normal.rows, `${viewport.width}px: 通常の文字サイズの段数`).toBe(1);
+
+      // 文字だけを拡大する（ブラウザーの文字サイズ設定 200% 相当。CSSOM で指定するため CSP に触れない）
+      await page.evaluate(() => document.documentElement.style.setProperty('font-size', '200%'));
+      await page.waitForTimeout(200);
+      const large = await barText(page);
+      await testInfo.attach(`bar-text-200-${viewport.width}.json`, {
+        body: JSON.stringify({ normal, large }, null, 2),
+        contentType: 'application/json',
+      });
+      await page.screenshot({ path: testInfo.outputPath(`bar-text-200-${viewport.width}.png`) });
+      // 文字は小さくしない
+      expect(large.labelFontSize, `${viewport.width}px: ラベルの文字サイズ`).toBe(normal.labelFontSize * 2);
+      // 濃い色・白の背景から外れる文字がない
+      expect(large.outside, `${viewport.width}px: 文字 200%`).toEqual([]);
+      // 各ラベルは1行（単語の途中で折り返さない）で、3項目は HTML の順に上から縦に並ぶ
+      expect(large.labels, `${viewport.width}px: 文字 200% の各ラベルの行数`).toEqual([
+        { name: 'サービス', lines: 1 },
+        { name: '相談する', lines: 1 },
+        { name: 'メニュー', lines: 1 },
+      ]);
+      expect(large.rows).toBe(3);
+      expect(large.topToBottomInOrder).toBe(true);
+      // 押せる大きさ（44px 四方以上）を保つ
+      expect(large.minItemSize).toBeGreaterThanOrEqual(44);
+      // バーは画面内に収まる
+      await expect(bar(page)).toBeInViewport({ ratio: 1 });
+
+      // 拡大したままでも操作できる: メニューを開いて Esc で閉じるとボタンへ戻り、リンクは移動先を変えない
+      await menuButton(page).click();
+      await expect(dialog(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(dialog(page)).toBeHidden();
+      await expect(menuButton(page)).toBeFocused();
+      await expect(bar(page).getByRole('link', { name: 'サービス' })).toHaveAttribute('href', '#services');
+      await bar(page).getByRole('link', { name: '相談する' }).click();
+      await expect(page).toHaveURL(/#contact$/);
+    }
+  });
+
+  test('通常の文字サイズと、横に3項目が並ぶ幅の文字 200% でも、すべての文字が背景の丸い形の内側にある', async ({ page }) => {
+    const cases = [
+      ...[320, 360, 390, 768, 1024, 1440].map((width) => ({ width, scale: '100%' })),
+      ...[640, 768, 1024, 1440].map((width) => ({ width, scale: '200%' })),
+    ];
+    for (const { width, scale } of cases) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      await page.evaluate((size) => document.documentElement.style.setProperty('font-size', size), scale);
+      await page.waitForTimeout(200);
+      const result = await barText(page);
+      expect(result.outside, `${width}px・文字 ${scale}`).toEqual([]);
+      expect(result.rows, `${width}px・文字 ${scale}: 3項目を1段に並べる`).toBe(1);
+    }
   });
 });
 

@@ -6,6 +6,11 @@
  *   有効時だけ、展開メニュー（<dialog>）を開くボタンに置き換える（src/scripts/bottom-nav.ts）。
  *   リンクとボタンは同じ見た目・大きさのため、置き換えで表示は動かない
  * - スマホ幅でフォームに入力している間は一時的に隠す（data-input-active。src/scripts/contact.ts）
+ * - 文字を大きくしてバーの幅（rem 換算）が --container-bar-stack を下回るときは、3項目を縦に並べる。
+ *   横のままだとラベルが1文字ずつ折り返し、背の高くなったバーの丸い角の外へ文字が出て明るい地に重なるため。
+ *   縦に並べたときは各ラベルを1行に収め、バーの角の丸みを項目の丸みに合わせて文字を背景の内側に保つ
+ *   （1.3125rem = 項目の高さの半分（(1.375rem＋0.5rem)÷2）＋外側の余白 0.375rem）。
+ *   バーの幅で判定するため、<nav> を container とし、色・丸み・影は中の <ul> に付ける
  */
 type Props = {
   label: string;
@@ -15,17 +20,20 @@ type Props = {
 };
 
 const { label, services, contact, menu } = Astro.props;
+// 縦に並べたとき（@max-bar-stack）は、行の高さと上下の余白を詰める。押せる大きさは 44px 以上を保つ
 const item =
-  'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold no-underline transition-colors duration-(--duration-base) ease-standard';
+  'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold no-underline transition-colors duration-(--duration-base) ease-standard @max-bar-stack:min-h-[44px] @max-bar-stack:py-1 @max-bar-stack:leading-snug';
 const onBrand = `${item} text-on-brand hover:bg-shape hover:text-on-brand`;
 ---
 
 <nav
   aria-label={label}
-  class="fixed inset-x-4 bottom-(--bar-offset) z-40 mx-auto max-w-(--container-bar) rounded-full bg-brand text-on-brand shadow-lg shadow-ink/20 max-md:data-input-active:invisible"
+  class="@container fixed inset-x-4 bottom-(--bar-offset) z-40 mx-auto max-w-(--container-bar) text-on-brand max-md:data-input-active:invisible"
   data-bottom-nav
 >
-  <ul class="grid min-h-16 grid-cols-3 items-stretch gap-1 p-1.5">
+  <ul
+    class="grid min-h-16 grid-cols-3 items-stretch gap-1 rounded-full bg-brand p-1.5 shadow-lg shadow-ink/20 @max-bar-stack:grid-cols-1 @max-bar-stack:rounded-[1.3125rem]"
+  >
     <li>
       <a href={services.href} class={onBrand}>{services.label}</a>
     </li>

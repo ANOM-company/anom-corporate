@@ -59,6 +59,7 @@ apps/v10/
 - 「メニュー」は `<dialog>` を下から上へ開くボタン（`aria-expanded`・`aria-controls`）。JavaScript が無効のときは、フッターのサイト案内へのリンクになる
 - 展開メニュー（`MenuDialog`）は下記「モーダルとフォーカス」の仕組みを使う。開くと見出しへフォーカスし、背面のスクロールを止める（`html[data-scroll-locked]`）。項目が収まらない短い画面では項目の部分だけを縦にスクロールし、見出しと「閉じる」は常に見える
 - サイトの案内のため `role="menu"` は使わず、通常のナビゲーションのリンクにする
+- 文字サイズの設定を大きくしてバーの幅が `--container-bar-stack`（16.25rem。4文字のラベルが3等分の1列に入る最小の幅）を下回るときは、3項目を HTML の順に縦に並べ、各ラベルを1行に収める。横のままだとラベルが1文字ずつ折り返し、背の高くなったバーの丸い角の外へ文字が出て明るい地に重なるため。縦のときはバーの角の丸みを項目の丸みに合わせ、押せる高さは 44px 以上を保つ。判定はバーの幅で行うため、`<nav>` を `@container` とし、色・丸み・影は中の `<ul>` に付ける（通常の文字サイズの見た目は従来どおり）
 - 下部バーの高さは `--bar-height`（`src/scripts/bottom-nav.ts` が文字の拡大に合わせて更新）。`html` の `scroll-padding-bottom` とフッター下の余白に使い、ページ内リンク・Tab 移動の行き先がバーの裏に隠れないようにする
 
 ## 相談フォーム（確認版）
@@ -85,7 +86,7 @@ apps/v10/
 | 図形の色 | `--color-shape`, `--color-shape-line`, `--color-shape-accent` など | 画面デモ・サービスの図の SVG（`fill-shape` など） |
 | 書体 | `--font-sans`（LINE Seed JP）, `--font-heading`（Outfit → LINE Seed JP）, `--font-latin`（Outfit） | `font-sans`, `font-latin` |
 | 文字サイズ | `--text-base` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
-| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12` |
+| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1` |
 | 余白 | `--spacing`（基準 0.25rem）, `--spacing-section` | `p-4`, `py-(--spacing-section)` |
 | 幅 | `--container-content`, `--container-prose`, `--container-menu`, `--container-bar` | `.container-content`, `max-w-(--container-prose)` |
 | 角丸 | `--radius-control`, `--radius-card`, `--radius-demo` | `rounded-control` など |
@@ -128,7 +129,7 @@ apps/v10/
 | 320 / 360 / 390 / 768 / 1440px の横はみ出し（スクリーンショット保存） | `tests/pages.spec.ts` |
 | リンク・CSS・JS・画像の読み込み、表示中の通信がすべて同一オリジン | `tests/pages.spec.ts` |
 | トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、システム開発の並び順（スマホ: 本文→図→相談ボタン、PC: 左右）、下部バーとの重なり（Tab 全巡回・文字 200%: 見出しの実寸が2倍・はみ出し・重なり・区画の1列化・短い画面） | `tests/home.spec.ts` |
-| 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更） | `tests/menu.spec.ts` |
+| 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更、文字 200% の下部バー: ラベルが1行・文字が背景の丸い形の内側・縦並び・操作） | `tests/menu.spec.ts` |
 | 書体（実際に描画された書体・外部通信なし・読み込み量・読み込めないときの表示・ライセンス・分割ファイルの収録文字・見出しの改行） | `tests/fonts.spec.ts` |
 | 表示のずれ（初回表示・デモ切替・メニュー）と操作の応答。通常と通信制限＋CPU 4倍遅延の両方で計測し、数値を添付。字幅の狭い端末の書体（Windows: Yu Gothic UI／Meiryo UI、Linux: IPA Pゴシック）で先に表示し、自己配信の書体に切り替わっても H1 の改行と高さが変わらないこと | `tests/loading.spec.ts` |
 | 部品見本: ナビ、モーダル（Tab・Shift+Tab で背景へ移らない・Esc とフォーカス復帰・内部のページ内リンク）、FAQ、フォームのラベルとエラー、Tab移動・本文へ移動 | `tests/interactions.spec.ts` |

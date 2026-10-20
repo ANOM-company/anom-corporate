@@ -43,7 +43,7 @@ npm ci && npm run check && npm run lint && npm run build && npm run test:e2e && 
 - `test-results/`：画面幅ごとのスクリーンショット、失敗時のトレース、`results.json`（集計）
 - `test-results/screens-*/`：PC・スマホのトップ全体、メニューを開いた状態、相談フォームの表示見本の画像
 - アクセシビリティ検査（axe）の全指摘は、各テストの添付（`axe-*.json`）としてレポートに残る
-- 書体の読み込み量（`font-transfer.json`）、表示のずれと操作の応答の計測値（`metrics-*.json`）、字幅の狭い端末の書体から切り替わるときの見出しの計測値（`narrow-fallback-*.json`）、文字 200% での文字サイズ（`text-200-sizes-*.json`）も各テストの添付に残る
+- 書体の読み込み量（`font-transfer.json`）、表示のずれと操作の応答の計測値（`metrics-*.json`）、字幅の狭い端末の書体から切り替わるときの見出しの計測値（`narrow-fallback-*.json`）、文字 200% での文字サイズ（`text-200-sizes-*.json`）と下部バーの文字の収まり（`bar-text-200-*.json`）も各テストの添付に残る
 
 どちらも Git の対象外です。CI では成果物（artifact）としてアップロードされます。
 
