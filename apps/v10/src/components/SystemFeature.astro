@@ -1,0 +1,98 @@
+---
+/**
+ * システム開発（#service-system）。主力2枠とは別の、独立した横長の説明。
+ * - PC（1024px以上）は本文と図を左右に、狭い幅は 本文→図→相談ボタン の縦順
+ *   本文・図・相談ボタンを同じグリッドに並べ、HTML の順（読み上げ・Tab の順）も 本文→図→相談ボタン にする。
+ *   PC では相談ボタンを本文の下（左列の2段目）に置き、図は右列で2段にまたがせる
+ * - 図の「入力する→整理する→確認する」は本文の順序付きリストで、外部連携や自動処理を装わない
+ */
+import Button from './Button.astro';
+import SectionHeading from './SectionHeading.astro';
+
+type Props = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  stepsLabel: string;
+  steps: string[];
+  examplesLabel: string;
+  examplesNote: string;
+  examples: string[];
+  cta: { label: string; field: string };
+  contactHref: string;
+};
+
+const { eyebrow, title, body, stepsLabel, steps, examplesLabel, examplesNote, examples, cta, contactHref } = Astro.props;
+---
+
+<section id="service-system" class="pb-(--spacing-section)" aria-labelledby="service-system-title">
+  <div class="container-content">
+    <div class="grid gap-10 rounded-demo bg-surface p-6 sm:p-10 lg:grid-cols-2 lg:gap-x-12 lg:gap-y-6">
+      <div class="grid content-start gap-6 lg:col-start-1 lg:row-start-1 lg:self-end">
+        <SectionHeading id="service-system-title" eyebrow={eyebrow} title={title} intro={body} />
+        <div class="grid gap-2">
+          <p class="text-sm font-bold text-ink-soft">
+            {examplesLabel}<span class="font-normal">（{examplesNote}）</span>
+          </p>
+          <ul class="grid gap-2">
+            {
+              examples.map((example) => (
+                <li class="flex gap-3 border-t border-line pt-2">
+                  <span aria-hidden="true" class="mt-3 size-1.5 shrink-0 rounded-full bg-brand" />
+                  <span>{example}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+      <div class="grid gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
+        <p class="text-sm font-bold text-ink-soft">{stepsLabel}</p>
+        <ol class="grid gap-3 sm:grid-cols-3 sm:gap-4">
+          {
+            steps.map((step, index) => (
+              <li class="grid content-start gap-3 rounded-card bg-muted p-4">
+                <svg viewBox="0 0 120 72" class="block h-auto w-full" aria-hidden="true" focusable="false">
+                  <rect width="120" height="72" rx="8" class="fill-surface" />
+                  {index === 0 && (
+                    <g>
+                      <rect x="12" y="14" width="96" height="14" rx="4" class="fill-surface stroke-line-strong" stroke-width="1" />
+                      <rect x="12" y="36" width="96" height="14" rx="4" class="fill-surface stroke-line-strong" stroke-width="1" />
+                      <rect x="72" y="56" width="36" height="9" rx="4.5" class="fill-brand" />
+                    </g>
+                  )}
+                  {index === 1 && (
+                    <g>
+                      <rect x="12" y="12" width="96" height="12" rx="4" class="fill-shape-soft" />
+                      <rect x="12" y="30" width="96" height="12" rx="4" class="fill-shape-soft" />
+                      <rect x="12" y="48" width="96" height="12" rx="4" class="fill-shape-soft" />
+                      <rect x="80" y="15" width="22" height="6" rx="3" class="fill-shape-accent" />
+                      <rect x="80" y="33" width="22" height="6" rx="3" class="fill-brand" />
+                      <rect x="80" y="51" width="22" height="6" rx="3" class="fill-shape-accent" />
+                    </g>
+                  )}
+                  {index === 2 && (
+                    <g>
+                      <rect x="12" y="12" width="28" height="22" rx="4" class="fill-shape-soft" />
+                      <rect x="46" y="12" width="28" height="22" rx="4" class="fill-shape-soft" />
+                      <rect x="80" y="12" width="28" height="22" rx="4" class="fill-brand" />
+                      <rect x="12" y="42" width="96" height="6" rx="3" class="fill-shape-line" />
+                      <rect x="12" y="54" width="64" height="6" rx="3" class="fill-shape-line" />
+                    </g>
+                  )}
+                </svg>
+                <p class="flex items-baseline gap-2 font-bold">
+                  <span class="font-latin text-sm font-semibold text-ink-soft">{String(index + 1).padStart(2, '0')}</span>
+                  {step}
+                </p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+      <div class="lg:col-start-1 lg:row-start-2 lg:self-start">
+        <Button href={contactHref} size="lg" data-consult-field={cta.field}>{cta.label}</Button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,69 @@
+---
+/**
+ * 画面下中央に常に表示する下部バー（サービス／相談する／メニュー）。
+ * - サービス・相談するは通常のページ内リンク（相談するは相談分野や入力内容を変えない）
+ * - メニュー: JavaScript 無効時はフッターの案内（#site-navigation）へのリンク。
+ *   有効時だけ、展開メニュー（<dialog>）を開くボタンに置き換える（src/scripts/bottom-nav.ts）。
+ *   リンクとボタンは同じ見た目・大きさのため、置き換えで表示は動かない
+ * - スマホ幅でフォームに入力している間は一時的に隠す（data-input-active。src/scripts/contact.ts）
+ * - 文字を大きくしてバーの幅（rem 換算）が --container-bar-stack を下回るときは、3項目を縦に並べる。
+ *   横のままだとラベルが1文字ずつ折り返し、背の高くなったバーの丸い角の外へ文字が出て明るい地に重なるため。
+ *   縦に並べたときは各ラベルを1行に収め、バーの角の丸みを項目の丸みに合わせて文字を背景の内側に保つ（--radius-bar-stack）。
+ *   バーの幅で判定するため、<nav> を container とし、色・丸み・影は中の <ul> に付ける
+ * - 縦に並べたときの寸法（行の高さ・上下の余白・項目の間・外側の余白）を変えたら、global.css の
+ *   --bar-height-stack（JavaScript 無効時に使う縦3段の高さ）と --radius-bar-stack も合わせる
+ */
+type Props = {
+  label: string;
+  services: { label: string; href: string };
+  contact: { label: string; href: string };
+  menu: { label: string; dialogId: string };
+};
+
+const { label, services, contact, menu } = Astro.props;
+// 縦に並べたとき（@max-bar-stack）は、行の高さと上下の余白を詰める。押せる大きさは 44px 以上を保つ
+const item =
+  'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold no-underline transition-colors duration-(--duration-base) ease-standard @max-bar-stack:min-h-tap @max-bar-stack:py-1 @max-bar-stack:leading-snug';
+const onBrand = `${item} text-on-brand hover:bg-shape hover:text-on-brand`;
+---
+
+<nav
+  aria-label={label}
+  class="@container fixed inset-x-4 bottom-(--bar-offset) z-40 mx-auto max-w-(--container-bar) text-on-brand max-md:data-input-active:invisible"
+  data-bottom-nav
+>
+  <ul
+    class="grid min-h-16 grid-cols-3 items-stretch gap-1 rounded-full bg-brand p-1.5 shadow-lg shadow-ink/20 @max-bar-stack:grid-cols-1 @max-bar-stack:rounded-bar-stack"
+  >
+    <li>
+      <a href={services.href} class={onBrand}>{services.label}</a>
+    </li>
+    <li>
+      <a href={contact.href} class={`${item} bg-surface text-brand hover:bg-shape-soft hover:text-brand`}>
+        {contact.label}
+      </a>
+    </li>
+    <li>
+      <a href="#site-navigation" class={onBrand} data-menu-fallback>
+        {menu.label}
+        <span aria-hidden="true" class="font-latin text-lg leading-none">+</span>
+      </a>
+      <button
+        type="button"
+        class={`${onBrand} w-full cursor-pointer`}
+        hidden
+        aria-expanded="false"
+        aria-controls={menu.dialogId}
+        data-modal-open={menu.dialogId}
+        data-menu-button
+      >
+        {menu.label}
+        <span aria-hidden="true" class="font-latin text-lg leading-none">+</span>
+      </button>
+    </li>
+  </ul>
+</nav>
+
+<script>
+  import '../scripts/bottom-nav';
+</script>

@@ -1,0 +1,37 @@
+---
+/**
+ * サービス一覧のひな形。項目はページ側から渡す（ここに文言を持たない）。
+ */
+import Card from './Card.astro';
+
+export type ServiceItem = { title: string; body: string };
+
+type Props = {
+  id?: string;
+  title: string;
+  intro?: string;
+  items: ServiceItem[];
+};
+
+const { id = 'services', title, intro, items } = Astro.props;
+---
+
+<section id={id} class="py-(--spacing-section)" aria-labelledby={`${id}-title`}>
+  <div class="container-content grid gap-8">
+    <div class="grid max-w-(--container-prose) gap-3">
+      <h2 id={`${id}-title`} class="text-2xl font-bold">{title}</h2>
+      {intro && <p class="text-ink-soft">{intro}</p>}
+    </div>
+    <ul class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {
+        items.map((item) => (
+          <li class="grid">
+            <Card title={item.title}>
+              <p>{item.body}</p>
+            </Card>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

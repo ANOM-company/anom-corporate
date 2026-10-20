@@ -1,0 +1,11 @@
+# Cloudflare Workers の静的アセット用レスポンスヘッダー（ビルドで dist/_headers にコピーされる）
+# - CSS/JS はすべて同一オリジンの外部ファイル（astro.config.mjs で inline 出力を無効化）
+# - インライン実行・外部CDN・外部フォントは許可しない
+# - 検証用のため全URLを noindex にする
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Robots-Tag: noindex, nofollow
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()

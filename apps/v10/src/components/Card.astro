@@ -1,0 +1,28 @@
+---
+/**
+ * カード。見出し・本文・任意の操作（actions スロット）をまとめる面。
+ * - headingLevel で見出しの階層を文書構造に合わせる
+ */
+type Props = {
+  title: string;
+  headingLevel?: 2 | 3 | 4;
+  class?: string;
+};
+
+const { title, headingLevel = 3, class: className } = Astro.props;
+const Heading = `h${headingLevel}` as const;
+---
+
+<article class:list={['flex flex-col gap-3 rounded-card border border-line bg-surface p-6', className]}>
+  <Heading class="text-xl font-bold">{title}</Heading>
+  <div class="text-ink-soft">
+    <slot />
+  </div>
+  {
+    Astro.slots.has('actions') && (
+      <div class="mt-auto flex flex-wrap gap-3 pt-2">
+        <slot name="actions" />
+      </div>
+    )
+  }
+</article>

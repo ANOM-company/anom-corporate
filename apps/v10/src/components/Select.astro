@@ -1,0 +1,49 @@
+---
+/**
+ * ラベル付きの選択欄。先頭の選択肢（placeholder）は値が空で、選び直しの基準になる。
+ * - 補足・エラー文は aria-describedby で結び付ける（Input と同じ構成）
+ */
+type Props = {
+  id: string;
+  label: string;
+  placeholder: string;
+  options: readonly { value: string; label: string }[];
+  required?: boolean;
+  hint?: string;
+  error?: string;
+  /** スクリプトから値を設定する対象の目印など、追加の data-* 属性 */
+  [key: `data-${string}`]: string | undefined;
+};
+
+const { id, label, placeholder, options, required = false, hint, error, ...rest } = Astro.props;
+const hintId = `${id}-hint`;
+const errorId = `${id}-error`;
+const describedBy = [hint ? hintId : null, errorId].filter(Boolean).join(' ');
+---
+
+<div class="grid gap-1.5" data-field>
+  <label for={id} class="font-bold">
+    {label}
+    {required && <span class="ms-2 rounded-sm bg-brand px-1.5 py-0.5 text-sm font-bold text-on-brand">必須</span>}
+  </label>
+  {
+    hint && (
+      <p id={hintId} class="text-sm text-ink-soft">
+        {hint}
+      </p>
+    )
+  }
+  <select
+    id={id}
+    name={id}
+    class="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 py-2 text-base text-ink aria-invalid:border-2 aria-invalid:border-danger"
+    required={required}
+    aria-describedby={describedBy}
+    aria-invalid={error ? 'true' : undefined}
+    {...rest}
+  >
+    <option value="">{placeholder}</option>
+    {options.map((option) => <option value={option.value}>{option.label}</option>)}
+  </select>
+  <p id={errorId} class="text-sm font-bold text-danger empty:hidden" data-error>{error}</p>
+</div>

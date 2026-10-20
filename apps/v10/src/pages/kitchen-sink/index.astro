@@ -1,0 +1,220 @@
+---
+/**
+ * 部品の確認画面（/kitchen-sink/）。各部品の種類と状態を1ページで試す。
+ * ここに置く文言は見本であり、実際のサイトの内容ではない。
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
+import Button from '../../components/Button.astro';
+import Input from '../../components/Input.astro';
+import Card from '../../components/Card.astro';
+import Modal from '../../components/Modal.astro';
+import Services from '../../components/Services.astro';
+import FAQ from '../../components/FAQ.astro';
+import CTA from '../../components/CTA.astro';
+import Navigation from '../../components/Navigation.astro';
+import type { NavItem } from '../../components/Navigation.astro';
+
+const sampleItems = [
+  { title: '項目の見本 1', body: '説明文の見本です。項目はページ側から配列で渡します。' },
+  { title: '項目の見本 2', body: '幅に応じて 1列・2列・3列に並びが変わります。' },
+  { title: '項目の見本 3', body: '長い文章でも折り返して、横にはみ出さないことを確認します。' },
+];
+
+const sampleFaq = [
+  { question: '質問の見本（開閉できます）', answer: '回答の見本です。Enter キーまたは Space キーでも開閉できます。' },
+  { question: '2つ目の質問の見本', answer: '複数の項目を同時に開くこともできます。' },
+];
+
+const sampleNav: NavItem[] = [
+  { label: 'トップ', href: '/' },
+  { label: '部品の確認画面', href: '/kitchen-sink/' },
+];
+
+const section = 'border-b border-line py-(--spacing-section)';
+const sampleBadge = 'w-fit rounded-full border border-line-strong px-2.5 text-sm font-bold';
+---
+
+<BaseLayout title="部品の確認画面" description="ANOM V10 の部品と状態を確認する画面です。">
+  <Hero
+    eyebrow="Kitchen sink"
+    title="部品の確認画面"
+    lead="各部品の種類と状態を並べています。キーボードの Tab キーで順に移動し、フォーカス表示も確認できます。"
+  />
+
+  <section class={section} aria-labelledby="ks-button">
+    <div class="container-content grid gap-6">
+      <h2 id="ks-button" class="text-2xl font-bold">Button（ボタン）</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <Button>主要ボタン</Button>
+        <Button variant="secondary">補助ボタン</Button>
+        <Button variant="ghost">控えめなボタン</Button>
+        <Button size="lg">大きいボタン</Button>
+        <Button disabled>無効なボタン</Button>
+        <Button href="/">リンクのボタン</Button>
+      </div>
+    </div>
+  </section>
+
+  <section class={section} aria-labelledby="ks-input">
+    <div class="container-content grid gap-6">
+      <h2 id="ks-input" class="text-2xl font-bold">Input（入力欄）</h2>
+      <div class="grid max-w-(--container-prose) gap-6">
+        <Input id="ks-plain" label="通常の入力欄" />
+        <Input id="ks-hint" label="補足付きの入力欄" hint="補足の文章は入力欄に結び付けて読み上げられます。" />
+        <Input
+          id="ks-error"
+          label="エラー状態の入力欄"
+          type="email"
+          error="形式が正しくありません（例: name@example.com）。"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class={section} aria-labelledby="ks-form">
+    <div class="container-content grid gap-6">
+      <h2 id="ks-form" class="text-2xl font-bold">フォームの見本</h2>
+      <p class="max-w-(--container-prose) rounded-control border border-line-strong bg-surface p-4 font-bold" id="ks-form-note">
+        このフォームは入力とエラー表示の見本です。送信ボタンを押しても、入力内容はどこにも送信されません。
+      </p>
+      <form
+        method="dialog"
+        class="grid max-w-(--container-prose) gap-6"
+        aria-labelledby="ks-form"
+        aria-describedby="ks-form-note"
+        data-demo-form
+      >
+        <Input id="demo-name" label="お名前" required autocomplete="name" />
+        <Input
+          id="demo-email"
+          label="メールアドレス"
+          type="email"
+          required
+          autocomplete="email"
+          hint="見本のため、入力しても送信されません。"
+        />
+        <Input id="demo-message" label="内容" multiline />
+        <div class="flex flex-wrap items-center gap-3">
+          <Button type="submit">入力内容を確認する（送信しません）</Button>
+        </div>
+        <p role="status" class="font-bold" data-form-status></p>
+      </form>
+    </div>
+  </section>
+
+  <section class={section} aria-labelledby="ks-form-states">
+    <div class="container-content grid gap-6">
+      <h2 id="ks-form-states" class="text-2xl font-bold">相談フォームの表示見本</h2>
+      <p class="max-w-(--container-prose) rounded-control border-2 border-brand bg-surface p-4 font-bold" id="ks-form-states-note">
+        ここに並べるのは、送信処理を接続したときの画面の表示見本です。実際の送信結果ではなく、入力内容はどこにも送信されません。
+      </p>
+      <div class="grid gap-6 lg:grid-cols-2">
+        <article class="grid content-start gap-4 rounded-card border border-line bg-surface p-6" aria-labelledby="ks-state-error">
+          <p class={sampleBadge}>表示見本</p>
+          <h3 id="ks-state-error" class="text-xl font-bold">入力不備（エラー要約）</h3>
+          <p class="text-sm text-ink-soft">送信操作のときに上部の要約へフォーカスを移し、該当欄へのリンクを示します。入力値は保持します。</p>
+          <div id="ks-error-summary" tabindex="-1" class="grid gap-2 rounded-control border-2 border-danger bg-danger-soft p-4" aria-labelledby="ks-error-summary-title" role="group">
+            <p id="ks-error-summary-title" class="font-bold text-danger">入力内容を確認してください（2件）</p>
+            <ul class="grid gap-1">
+              <li><a href="#ks-sample-name" class="font-bold text-danger">お名前を入力してください。</a></li>
+              <li><a href="#ks-sample-email" class="font-bold text-danger">メールアドレスの形式が正しくありません。</a></li>
+            </ul>
+          </div>
+          <Input id="ks-sample-name" label="見本の氏名" required error="お名前を入力してください。" />
+          <Input
+            id="ks-sample-email"
+            label="見本のメール"
+            type="email"
+            required
+            error="メールアドレスの形式が正しくありません（例: name@example.com）。"
+          />
+        </article>
+        <div class="grid content-start gap-6">
+          <article class="grid content-start gap-4 rounded-card border border-line bg-surface p-6" aria-labelledby="ks-state-sending">
+            <p class={sampleBadge}>表示見本</p>
+            <h3 id="ks-state-sending" class="text-xl font-bold">送信中</h3>
+            <p class="text-sm text-ink-soft">連打を防ぐためボタンを押せない状態にし、入力欄の表示は消しません。</p>
+            <div>
+              <Button disabled size="lg">送信しています…</Button>
+            </div>
+          </article>
+          <article class="grid content-start gap-4 rounded-card border border-line bg-surface p-6" aria-labelledby="ks-state-done">
+            <p class={sampleBadge}>表示見本</p>
+            <h3 id="ks-state-done" class="text-xl font-bold">受付完了</h3>
+            <p class="text-sm text-ink-soft">サーバーから受付成功を確認できた場合だけ表示し、この見出しへフォーカスを移します。</p>
+            <p class="rounded-control border-2 border-brand p-4 text-lg font-bold">お問い合わせを受け付けました。</p>
+          </article>
+          <article class="grid content-start gap-4 rounded-card border border-line bg-surface p-6" aria-labelledby="ks-state-failed">
+            <p class={sampleBadge}>表示見本</p>
+            <h3 id="ks-state-failed" class="text-xl font-bold">送信失敗・通信切断</h3>
+            <p class="text-sm text-ink-soft">入力内容を保持したまま、再試行を案内します。内部のエラー詳細は表示しません。</p>
+            <p class="rounded-control border-2 border-danger bg-danger-soft p-4 font-bold text-danger">
+              送信を完了できませんでした。時間をおいてもう一度お試しください。
+            </p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class={section} aria-labelledby="ks-card">
+    <div class="container-content grid gap-6">
+      <h2 id="ks-card" class="text-2xl font-bold">Card（カード）</h2>
+      <div class="grid gap-4 md:grid-cols-2">
+        <Card title="本文だけのカード">
+          <p>見出しと本文だけの最小構成です。</p>
+        </Card>
+        <Card title="操作付きのカード">
+          <p>actions スロットにボタンを入れると、下端に並びます。</p>
+          <Fragment slot="actions">
+            <Button variant="secondary" href="#ks-modal">モーダルの見本へ</Button>
+          </Fragment>
+        </Card>
+      </div>
+    </div>
+  </section>
+
+  <section class={section} aria-labelledby="ks-modal">
+    <div class="container-content grid gap-6">
+      <h2 id="ks-modal" class="text-2xl font-bold">Modal（モーダル）</h2>
+      <p class="max-w-(--container-prose) text-ink-soft">
+        開くと背面は操作できなくなり、Tab キーで背景のページ要素へフォーカスが移ることはありません（最後の要素の次はブラウザーの操作部へ移ることがあります）。Esc キーか「閉じる」で閉じると、開いたボタンへフォーカスが戻ります。中のリンクを選ぶと、モーダルを閉じてリンク先へ移動します。
+      </p>
+      <div>
+        <Button data-modal-open="ks-dialog">モーダルを開く</Button>
+      </div>
+      <Modal id="ks-dialog" title="モーダルの見本">
+        <p>これはモーダルの見本です。下のリンクを選ぶと、モーダルを閉じて「よくある質問」の見本へ移動します。</p>
+        <Fragment slot="actions">
+          <Button variant="ghost" href="#ks-faq-title">よくある質問の見本へ</Button>
+        </Fragment>
+      </Modal>
+    </div>
+  </section>
+
+  <section class="border-b border-line" aria-labelledby="ks-navigation">
+    <div class="container-content grid gap-3 pt-(--spacing-section)">
+      <h2 id="ks-navigation" class="text-2xl font-bold">Navigation・Footer</h2>
+      <p class="max-w-(--container-prose) text-ink-soft">
+        下はヘッダー型のナビゲーションの見本です（V10 のページでは下部バーと展開メニューを使います）。画面幅を狭めると「メニュー」ボタンに切り替わります。フッターはページ下部にあります。
+      </p>
+    </div>
+    <div class="pt-6">
+      <Navigation items={sampleNav} siteName="見本サイト" label="ナビゲーションの見本" />
+    </div>
+    <Services id="ks-services" title="Services（サービス一覧）" intro="一覧部品の見本です。" items={sampleItems} />
+  </section>
+
+  <FAQ id="ks-faq" title="FAQ（よくある質問）" items={sampleFaq} />
+
+  <CTA title="CTA（行動を促す帯）" body="導線の見本です。ボタンはページ側から渡します。">
+    <Fragment slot="actions">
+      <Button href="/" variant="secondary">トップへ戻る</Button>
+    </Fragment>
+  </CTA>
+</BaseLayout>
+
+<script>
+  import '../../scripts/form-demo';
+</script>
