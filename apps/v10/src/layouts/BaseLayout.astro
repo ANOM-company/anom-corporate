@@ -1,0 +1,70 @@
+---
+/**
+ * 全ページ共通の骨組み（head・スキップリンク・確認版の案内・ANOM表記・フッター・下部バー・展開メニュー）。
+ * - 確認用のため常に noindex（_headers の X-Robots-Tag と二重に指定）
+ * - 外部のフォント・スクリプトは読み込まない（書体は public/fonts/ の自己配信）
+ * - トップ以外のページでは、下部バー・メニュー・フッターのリンクはトップの該当位置（/#...）へ移動する
+ */
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import Footer from '../components/Footer.astro';
+import BottomNav from '../components/BottomNav.astro';
+import MenuDialog from '../components/MenuDialog.astro';
+import { siteName, previewNotice, footerNote, siteMenu, bottomNav, privacyLink, anchorHref } from '../site';
+
+type Props = {
+  title: string;
+  description: string;
+};
+
+const { title, description } = Astro.props;
+const fullTitle = `${title} | ${siteName}`;
+const isHome = Astro.url.pathname === '/';
+const href = (anchor: string): string => anchorHref(anchor, isHome);
+const menuId = 'site-menu';
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{fullTitle}</title>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main"
+      class="sr-only z-50 rounded-control bg-surface px-4 py-2 font-bold focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+    >
+      本文へ移動
+    </a>
+    <aside aria-label="このサイトについて" class="bg-ink px-4 py-1.5 text-center text-sm text-canvas">
+      <p>{previewNotice}</p>
+    </aside>
+    <SiteHeader siteName={siteName} homeHref="/" />
+    <main id="main" tabindex="-1" class="flex-1 focus:shadow-none focus:outline-none">
+      <slot />
+    </main>
+    <Footer
+      siteName={siteName}
+      title="サイト案内"
+      groups={siteMenu}
+      privacy={{ label: privacyLink.label, href: href(privacyLink.anchor) }}
+      note={footerNote}
+      href={href}
+    />
+    <BottomNav
+      label="下部メニュー"
+      services={{ label: bottomNav.services.label, href: href(bottomNav.services.anchor) }}
+      contact={{ label: bottomNav.contact.label, href: href(bottomNav.contact.anchor) }}
+      menu={{ label: bottomNav.menu.label, dialogId: menuId }}
+    />
+    <MenuDialog id={menuId} title={bottomNav.menu.title} close={bottomNav.menu.close} groups={siteMenu} href={href} />
+    <script>
+      import '../scripts/modal';
+    </script>
+  </body>
+</html>

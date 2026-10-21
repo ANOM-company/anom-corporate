@@ -1,0 +1,47 @@
+---
+/**
+ * ボタン。href を渡すとリンク（<a>）、渡さないと <button> になる。
+ * - variant: primary（主要） / secondary（補助） / ghost（控えめ）
+ * - size: md / lg
+ * - リンクの見た目でもキーボード操作・フォーカス表示は共通
+ * - data-* などの追加の属性は、リンク・ボタンのどちらにも付く
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+type Variant = 'primary' | 'secondary' | 'ghost';
+type Size = 'md' | 'lg';
+
+type Props = {
+  variant?: Variant;
+  size?: Size;
+  href?: string;
+  class?: string;
+} & Omit<HTMLAttributes<'button'>, 'class'>;
+
+const { variant = 'primary', size = 'md', href, class: className, type = 'button', ...rest } = Astro.props;
+
+const base =
+  'inline-flex items-center justify-center gap-2 rounded-control font-bold no-underline transition-colors duration-(--duration-base) ease-standard disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50';
+const variants: Record<Variant, string> = {
+  primary: 'bg-brand text-on-brand hover:bg-brand-strong hover:text-on-brand',
+  secondary: 'border border-line-strong bg-surface text-ink hover:bg-muted hover:text-ink',
+  ghost: 'text-brand underline hover:bg-muted',
+};
+const sizes: Record<Size, string> = {
+  md: 'min-h-11 px-4 text-base',
+  lg: 'min-h-13 px-6 text-lg',
+};
+const classes = [base, variants[variant], sizes[size], className].filter(Boolean).join(' ');
+---
+
+{
+  href ? (
+    <a href={href} class={classes} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes} {...rest}>
+      <slot />
+    </button>
+  )
+}

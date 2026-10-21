@@ -1,0 +1,33 @@
+---
+/**
+ * ページ冒頭の見出し領域。
+ * - 画像を使わず、CSSの図形（装飾・読み上げ対象外）だけで構成する
+ * - actions スロットにボタン類を入れる
+ */
+type Props = {
+  eyebrow?: string;
+  title: string;
+  lead: string;
+};
+
+const { eyebrow, title, lead } = Astro.props;
+---
+
+<section class="relative overflow-hidden border-b border-line bg-muted" aria-labelledby="hero-title">
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+    <div class="absolute -top-16 -right-16 size-64 rounded-full border-[24px] border-brand/10"></div>
+    <div class="absolute right-1/4 -bottom-10 size-24 rotate-12 rounded-card bg-brand/10"></div>
+  </div>
+  <div class="container-content relative grid gap-6 py-(--spacing-section)">
+    {eyebrow && <p class="text-sm font-bold tracking-wider text-ink-soft">{eyebrow}</p>}
+    <h1 id="hero-title" class="max-w-(--container-prose) text-3xl font-bold">{title}</h1>
+    <p class="max-w-(--container-prose) text-lg text-ink-soft">{lead}</p>
+    {
+      Astro.slots.has('actions') && (
+        <div class="flex flex-wrap gap-3">
+          <slot name="actions" />
+        </div>
+      )
+    }
+  </div>
+</section>

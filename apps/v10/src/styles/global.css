@@ -1,0 +1,458 @@
+/*
+ * 共通スタイルと設計トークン（色・書体・余白・文字サイズ・動き）
+ * ---------------------------------------------------------------
+ * - 見た目の値はここに集約し、部品側では Tailwind のクラス名（bg-surface など）で参照する
+ * - 現在の値は V10 確認版の開始値（設計書の提案値）。正式なブランド色の採取値ではない
+ * - 書体は自己配信の Outfit と LINE Seed JP だけを使う（定義は fonts.css。外部へは接続しない）
+ */
+@import 'tailwindcss';
+@import './fonts.css';
+
+/* JavaScript が無効のときだけ当てる指定（例: noscript:hidden） */
+@custom-variant noscript (@media (scripting: none));
+
+@theme {
+  /* 色: 役割名で定義し、部品は役割名だけを使う */
+  --color-canvas: #f5f5f2; /* ページ全体の地 */
+  --color-surface: #ffffff; /* 入力欄などの面 */
+  --color-muted: #e9edee; /* 一段沈めた面 */
+  --color-ink: #17212a; /* 本文・見出しの文字 */
+  --color-ink-soft: #4b5963; /* 補足の文字（地の上でコントラスト比 6:1 以上） */
+  --color-line: #ced6da; /* 装飾の罫線（入力欄の境界には使わない） */
+  --color-line-strong: #697781; /* 入力欄・操作部の境界（白い面とのコントラスト比 4.5:1 以上） */
+  --color-brand: #14344b; /* 深い青: 主要ボタン・画面デモ・下部バー・展開メニュー */
+  --color-brand-strong: #0d2638; /* 主要ボタンのホバー */
+  --color-on-brand: #ffffff; /* brand の上の文字 */
+  --color-on-brand-soft: #c9d8e3; /* brand の上の補足の文字（コントラスト比 8:1 以上） */
+  --color-danger: #a4161a; /* エラー表示 */
+  --color-danger-soft: #fbeaea; /* エラーの背景 */
+  --color-focus: #1a5fd0; /* フォーカス表示の輪郭（白とのコントラスト比 5.8:1） */
+  --color-focus-halo: #ffffff; /* 輪郭の内外を縁取る白（暗い地とのコントラスト比 12:1 以上） */
+
+  /* 図形（画面デモ・説明図の装飾）。意味は本文で伝え、色だけで状態を示さない */
+  --color-shape: #2a5675; /* 深い青の上の面 */
+  --color-shape-line: #4f7b9a; /* 深い青の上の線 */
+  --color-shape-accent: #8fc1e3; /* 強調の面 */
+  --color-shape-soft: #dbe7ee; /* 明るい地の上の面 */
+  --color-shape-paper: #f7fafb; /* 画面デモの中の白い画面 */
+
+  /* 書体: 自己配信の2書体（fonts.css）→ 端末の標準書体の順 */
+  --font-sans:
+    'LINE Seed JP', system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP',
+    'Yu Gothic UI', Meiryo, sans-serif;
+  /* 見出し: 英数字は Outfit、和文は LINE Seed JP（Outfit は和文を収録していないため和文はこの順で選ばれる） */
+  --font-heading:
+    'Outfit', 'LINE Seed JP', system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', 'Yu Gothic UI', Meiryo, sans-serif;
+  /* 英字だけの補助ラベル・番号 */
+  --font-latin: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /*
+   * 文字サイズ（行間は日本語向けに広め）
+   * すべて rem で指定し、見出しは画面幅の区切りごとに段階で大きくする（区切りの値は下の :root）。
+   * 画面幅（vw）や列幅（cqi）を混ぜないのは、ブラウザーの文字サイズ設定を上げたときに
+   * 見出しも本文と同じ比率で大きくなるようにするため。拡大で入りきらない分は折り返しで吸収する。
+   */
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.7;
+  --text-base: 1rem;
+  --text-base--line-height: 1.8;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.8;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.5;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.4;
+  --text-3xl: 2rem; /* 32px → 768px以上 40px → 1280px以上 48px */
+  --text-3xl--line-height: 1.3;
+  /* H1: 36px → 640px以上 44px → 768px以上 52px → 1024px以上 56px → 1280px以上 72px */
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.2;
+  /* H2: 28px → 768px以上 32px → 1024px以上 40px → 1280px以上 44px */
+  --text-heading: 1.75rem;
+  --text-heading--line-height: 1.35;
+  /* H3: 20px → 768px以上 24px → 1280px以上 28px */
+  --text-subheading: 1.25rem;
+  --text-subheading--line-height: 1.5;
+
+  /* 余白の基準（Tailwind の p-4 などはこの値の倍数になる） */
+  --spacing: 0.25rem;
+  /* セクション間: スマホ 64〜88px、PC 112〜144px */
+  --spacing-section: clamp(4rem, 2.6rem + 5.6vw, 8rem);
+  /* 押せる範囲の最小の高さ 44px（文字サイズに比例させない。下部バーを縦に並べたときの項目） */
+  --spacing-tap: 44px;
+  /* 全体幅（左右の余白を含めて最大 1280px） */
+  --container-content: 80rem;
+  /* 本文の行長（1行 約32〜40文字） */
+  --container-prose: 36rem;
+  --container-menu: 35rem; /* 展開メニューの最大幅 560px */
+  --container-bar: 27.5rem; /* 下部バーの最大幅 440px */
+  /*
+   * 下部バーの3項目を横1段に並べるのに必要なバーの幅。4文字のラベル（4em）が3等分の1列に入る最小の幅
+   * （外側の余白 0.75rem＋列の間 0.5rem＋各列の左右の余白 1rem×3＋4em×3）。
+   * rem のため文字サイズに比例し、文字を大きくしてこの幅を下回るときは縦に並べる（使い方: @max-bar-stack:grid-cols-1）
+   */
+  --container-bar-stack: 16.25rem;
+  /*
+   * 上の境目を、画面の幅いっぱいの区画（フッター）の幅で表したもの。下部バーは左右に 1rem ずつ空けて置くため、
+   * --container-bar-stack＋2rem。フッターの中で、下部バーが縦に並んでいるかを知るために使う（使い方: @max-page-bar-stack:pb-...）
+   */
+  --container-page-bar-stack: 18.25rem;
+  /*
+   * トップの H1「技術を、／仕事の力に。」の最大幅（見出し自身の文字サイズが基準）。
+   * 後半の文節（6文字 ≒ 6em）は入り、2つの文節を合わせた長さ（全角の書体で約10em、仮名・句読点を詰めた書体でも約8.7em）は入らない幅にして、
+   * 書体の読み込み前後や端末の書体の違いで改行位置と高さが変わらないようにする（読み込み後の位置ずれを防ぐ）
+   */
+  --container-hero-title: 6.5em;
+  /*
+   * 12列のグリッドで左右に分ける区画（冒頭・考え方・相談欄・フッター）に必要な幅。
+   * 区画（@container を付けたセクション）の幅で判定し、rem のため文字サイズに比例する。
+   * 通常の文字サイズでは 1024px 以上で左右に分け、ブラウザーの文字サイズ設定を上げて列が狭くなりすぎる場合は
+   * 1列に戻して、大きな見出しを広い幅で折り返す（使い方: lg:@split:grid-cols-12）
+   */
+  --container-split: 56rem;
+
+  /* 角丸 */
+  --radius-control: 0.5rem; /* 通常の操作部 8px */
+  --radius-card: 0.875rem;
+  --radius-demo: 1.25rem; /* 画面デモ 20px */
+  /*
+   * 下部バーを縦に並べたときのバーの角。項目の丸み（項目の高さの半分 =（行の高さ 1.375rem＋上下の余白 0.5rem）÷2）に
+   * 外側の余白 0.375rem を足し、角の近くの文字も濃い色の背景の内側に保つ
+   */
+  --radius-bar-stack: 1.3125rem;
+
+  /* 動き: 時間と緩急はここだけで決める（動き低減の設定では下の @media で 0 にする） */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms; /* ボタン・リンクの変化 */
+  --duration-build: 640ms; /* 冒頭の図形が組み上がる時間（遅延と合わせて 900ms 以内） */
+  --duration-stagger: 40ms; /* 図形ごとの開始のずれ（最大6段 = 240ms） */
+  --duration-switch: 320ms; /* デモ切替（360ms 以内） */
+  --duration-menu-open: 320ms;
+  --duration-menu-close: 200ms;
+
+  --animate-assemble: assemble var(--duration-build) var(--ease-standard) both;
+  --animate-panel-in: panel-in var(--duration-switch) var(--ease-standard) both;
+
+  /* 図形が散らばった位置（--from-x / --from-y / --from-r）から本来の位置へ整う */
+  @keyframes assemble {
+    from {
+      opacity: 0;
+      transform: translate(var(--from-x, 0), var(--from-y, 0)) rotate(var(--from-r, 0deg));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  /* デモ切替: 短い移動とフェード */
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/*
+ * 下部バーの寸法。本文・フォーム・フッターは「バーの高さ＋下端の余白＋24px」以上を下に空ける。
+ * --bar-height はスクリプトが実際の高さで設定する（文字拡大で伸びた場合も追従）。
+ * スクリプトが動く前と JavaScript 無効のときは、下の初期値（横1段・縦3段の高さ）を使う。
+ */
+:root {
+  /* 横1段の高さ（項目 3.25rem＋外側の余白 0.375rem×2） */
+  --bar-height-row: 4rem;
+  /*
+   * 縦3段の高さ = 項目の高さ×3＋項目の間 0.25rem×2＋外側の余白 0.375rem×2。
+   * 項目の高さは、行の高さ 1.375rem＋上下の余白 0.25rem×2 と、押せる高さの下限（--spacing-tap）の大きい方。
+   * BottomNav.astro の縦に並べたときの指定と合わせる（一致は tests/no-js-and-motion.spec.ts で確かめる）
+   */
+  --bar-height-stack: calc(3 * max(var(--spacing-tap), 1.875rem) + 1.25rem);
+  --bar-offset: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  --bar-clearance: calc(var(--bar-height, var(--bar-height-row)) + var(--bar-offset) + 1.5rem);
+  /*
+   * JavaScript 無効のまま下部バーが縦に並んだとき、横1段の初期値では足りない高さ（フッターの下の余白に足す）。
+   * スクリプトが実際の高さを --bar-height に設定した後は 0 になる
+   */
+  --bar-stack-extra: calc(var(--bar-height, var(--bar-height-stack)) - var(--bar-height, var(--bar-height-row)));
+}
+@media (min-width: 48rem) {
+  :root {
+    --bar-offset: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/*
+ * 見出しの文字サイズの段階（設計書: H1 はスマホ 36〜48px・PC 64〜88px、H2 はスマホ 28〜32px・PC 36〜48px）。
+ * 1024〜1279px の H1 は、文字5：画面デモ7 の列（約350px）に後半の文節が1行で入る 56px にとどめる。
+ */
+@media (min-width: 40rem) {
+  :root {
+    --text-display: 2.75rem;
+  }
+}
+@media (min-width: 48rem) {
+  :root {
+    --text-3xl: 2.5rem;
+    --text-display: 3.25rem;
+    --text-heading: 2rem;
+    --text-subheading: 1.5rem;
+  }
+}
+@media (min-width: 64rem) {
+  :root {
+    --text-display: 3.5rem;
+    --text-heading: 2.5rem;
+  }
+}
+@media (min-width: 80rem) {
+  :root {
+    --text-3xl: 3rem;
+    --text-display: 4.5rem;
+    --text-heading: 2.75rem;
+    --text-subheading: 1.75rem;
+  }
+}
+
+/*
+ * 動き低減の設定がある場合は、動きそのものを外し、完成した状態をすぐに表示する。
+ * 時間を極小にするだけでは、動きが始まる前の1コマ目（透明・ずれた位置）が残ることがあるため、
+ * animation と transition を none にする（各 @keyframes の終わりは要素の通常の状態と同じ）。
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-build: 0ms;
+    --duration-stagger: 0ms;
+    --duration-switch: 0ms;
+    --duration-menu-open: 0ms;
+    --duration-menu-close: 0ms;
+  }
+  *,
+  *::before,
+  *::after,
+  ::backdrop {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* 擬似的な太字・斜体を作らない（LINE Seed JP は 400 と 700 を配信） */
+    font-synthesis: none;
+    line-break: strict;
+    -webkit-text-size-adjust: 100%;
+    /* フォーカスした要素が下部バーの裏に隠れないよう、スクロール位置を調整する */
+    scroll-padding-bottom: var(--bar-clearance);
+    scrollbar-gutter: stable;
+  }
+  /* 展開メニューの表示中は背面をスクロールさせない（src/scripts/modal.ts が付け外しする） */
+  html[data-scroll-locked] {
+    overflow: hidden;
+  }
+  body {
+    min-height: 100vh;
+    overflow-wrap: anywhere;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    /* 日本語の文節で改行し、行の長さをそろえる（未対応のブラウザーでは通常の改行） */
+    word-break: auto-phrase;
+    text-wrap: balance;
+  }
+  /* アンカーで移動したとき、見出しが画面上端に貼り付かないようにする */
+  [id] {
+    scroll-margin-top: 1.5rem;
+  }
+  /*
+   * キーボード操作時のフォーカス表示（二重輪郭）
+   * 要素 | 白 2px | 青の輪郭 3px | 白 2px | 地 の順に描く。
+   * - 明るい地: 青の輪郭が地・白の両方と 3:1 以上
+   * - 暗い地: 外側の白が地と 3:1 以上、青の輪郭は内外の白と 3:1 以上
+   * どの地の上でも、輪郭が隣り合う色と見分けられる。
+   */
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 7px var(--color-focus-halo);
+  }
+  a {
+    color: var(--color-brand);
+    text-underline-offset: 0.2em;
+  }
+  a:hover {
+    color: var(--color-brand-strong);
+  }
+
+  /*
+   * 画面デモの切替（src/scripts/hero-tabs.ts）
+   * 3つのパネルを同じ位置に重ね、最も高いパネルの高さを確保する。
+   * 選んでいないパネルは hidden 属性で非表示（読み上げ・Tab移動の対象外）にしつつ、高さだけを残すため
+   * display ではなく visibility で隠す。こうすると切替で下の本文が動かない。
+   */
+  [data-demo-panels] {
+    display: grid;
+  }
+  [data-demo-panels] > [data-demo-panel] {
+    grid-area: 1 / 1;
+  }
+  /* Tailwind の初期化CSS（[hidden] を display: none !important にする）より優先させるため、同じ base 層で !important を使う */
+  [data-demo-panels] > [data-demo-panel][hidden] {
+    display: block !important;
+    visibility: hidden;
+  }
+  /* 利用者が切り替えたときだけ、選んだパネルを短く表示する（初回の組み上がりとは別） */
+  [data-demo-switched] [data-demo-panel]:not([hidden]) {
+    animation: var(--animate-panel-in);
+  }
+  /* JavaScript 無効時は切替ボタンを出さず、3つのパネルを縦に並べる */
+  @media (scripting: none) {
+    [data-demo-panels] > [data-demo-panel] {
+      grid-area: auto;
+    }
+    [data-demo-panels] > [data-demo-panel][hidden] {
+      visibility: visible;
+    }
+  }
+}
+
+@layer components {
+  /* 本文幅のコンテナ（左右の余白: 767px以下 20px、768〜1023px 32px、1024px以上 48px） */
+  .container-content {
+    margin-inline: auto;
+    width: 100%;
+    max-width: var(--container-content);
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 48rem) {
+    .container-content {
+      padding-inline: 2rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .container-content {
+      padding-inline: 3rem;
+    }
+  }
+
+  /*
+   * 冒頭の図形: 読み込み時に1回だけ、散らばった位置から本来の位置へ組み上がる。
+   * - data-scatter（1〜6）: 散らばり方の種類（開始位置のずれと傾き。SVG の座標単位）
+   * - data-step（0〜6）: 開始の順番（--duration-stagger ずつ遅らせる。最大 240ms）
+   * 動き低減の設定では時間が 0 になり、最初から完成した図を表示する。
+   */
+  .assemble {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: var(--animate-assemble);
+    animation-delay: calc(var(--step, 0) * var(--duration-stagger));
+  }
+  .assemble[data-scatter='1'] {
+    --from-x: -28px;
+    --from-y: 22px;
+    --from-r: -14deg;
+  }
+  .assemble[data-scatter='2'] {
+    --from-x: 18px;
+    --from-y: -26px;
+    --from-r: 10deg;
+  }
+  .assemble[data-scatter='3'] {
+    --from-x: -14px;
+    --from-y: 30px;
+    --from-r: 8deg;
+  }
+  .assemble[data-scatter='4'] {
+    --from-x: 32px;
+    --from-y: 14px;
+    --from-r: -6deg;
+  }
+  .assemble[data-scatter='5'] {
+    --from-x: -20px;
+    --from-y: -18px;
+    --from-r: 12deg;
+  }
+  .assemble[data-scatter='6'] {
+    --from-x: 24px;
+    --from-y: 26px;
+    --from-r: -10deg;
+  }
+  .assemble[data-step='1'] {
+    --step: 1;
+  }
+  .assemble[data-step='2'] {
+    --step: 2;
+  }
+  .assemble[data-step='3'] {
+    --step: 3;
+  }
+  .assemble[data-step='4'] {
+    --step: 4;
+  }
+  .assemble[data-step='5'] {
+    --step: 5;
+  }
+  .assemble[data-step='6'] {
+    --step: 6;
+  }
+
+  /*
+   * 展開メニュー（<dialog>）の開閉の動き。下部バーの位置から上へ広がる面として現れる。
+   * 閉じる処理そのものは <dialog> の close() のまま（監査済みのフォーカス復帰を変えない）で、
+   * 見た目の退場だけを transition で付ける。
+   */
+  .menu-panel {
+    opacity: 0;
+    translate: 0 1rem;
+    transition:
+      opacity var(--duration-menu-close) var(--ease-standard),
+      translate var(--duration-menu-close) var(--ease-standard),
+      overlay var(--duration-menu-close) allow-discrete,
+      display var(--duration-menu-close) allow-discrete;
+  }
+  /* 閉じる動きの途中のパネル・暗幕は、下のバーの操作を妨げない */
+  .menu-panel:not([open]),
+  .menu-panel:not([open])::backdrop {
+    pointer-events: none;
+  }
+  .menu-panel[open] {
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: var(--duration-menu-open);
+  }
+  .menu-panel::backdrop {
+    background-color: transparent;
+    transition:
+      background-color var(--duration-menu-close) var(--ease-standard),
+      overlay var(--duration-menu-close) allow-discrete,
+      display var(--duration-menu-close) allow-discrete;
+  }
+  .menu-panel[open]::backdrop {
+    background-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+    transition-duration: var(--duration-menu-open);
+  }
+  @starting-style {
+    .menu-panel[open] {
+      opacity: 0;
+      translate: 0 1rem;
+    }
+    .menu-panel[open]::backdrop {
+      background-color: transparent;
+    }
+  }
+}

@@ -1,0 +1,32 @@
+---
+/**
+ * セクションの見出しまとまり（英字の補助ラベル＋H2＋導入文）。
+ * - 英字の補助ラベルは Outfit。日本語の見出しが主役で、ラベルは小さく添える
+ */
+type Props = {
+  id: string;
+  eyebrow?: string;
+  title: string;
+  intro?: string;
+  tone?: 'light' | 'dark';
+};
+
+const { id, eyebrow, title, intro, tone = 'light' } = Astro.props;
+---
+
+<div class="grid max-w-(--container-prose) gap-4">
+  {
+    eyebrow && (
+      <p
+        class:list={[
+          'font-latin text-sm font-semibold tracking-wider uppercase',
+          tone === 'dark' ? 'text-on-brand-soft' : 'text-ink-soft',
+        ]}
+      >
+        {eyebrow}
+      </p>
+    )
+  }
+  <h2 id={id} class="text-heading">{title}</h2>
+  {intro && <p class:list={['text-lg', tone === 'dark' ? 'text-on-brand-soft' : 'text-ink-soft']}>{intro}</p>}
+</div>

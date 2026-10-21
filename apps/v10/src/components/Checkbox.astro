@@ -1,0 +1,44 @@
+---
+/**
+ * ラベル付きのチェックボックス。初期状態は未選択。
+ * - 補足（説明へのリンクなど）は label の外に置き、aria-describedby で結び付ける
+ */
+type Props = {
+  id: string;
+  label: string;
+  required?: boolean;
+  error?: string;
+};
+
+const { id, label, required = false, error } = Astro.props;
+const hintId = `${id}-hint`;
+const errorId = `${id}-error`;
+const hasHint = Astro.slots.has('hint');
+const describedBy = [hasHint ? hintId : null, errorId].filter(Boolean).join(' ');
+---
+
+<div class="grid gap-1.5" data-field>
+  <div class="flex items-start gap-3">
+    <input
+      id={id}
+      name={id}
+      type="checkbox"
+      class="mt-1 size-5 shrink-0 accent-brand"
+      required={required}
+      aria-describedby={describedBy}
+      aria-invalid={error ? 'true' : undefined}
+    />
+    <label for={id} class="font-bold">
+      {label}
+      {required && <span class="ms-2 rounded-sm bg-brand px-1.5 py-0.5 text-sm font-bold text-on-brand">必須</span>}
+    </label>
+  </div>
+  {
+    hasHint && (
+      <div id={hintId} class="ps-8 text-sm text-ink-soft">
+        <slot name="hint" />
+      </div>
+    )
+  }
+  <p id={errorId} class="ps-8 text-sm font-bold text-danger empty:hidden" data-error>{error}</p>
+</div>
