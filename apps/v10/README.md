@@ -59,4 +59,6 @@ npm ci && npm run check && npm run lint && npm run build && npm run test:e2e && 
 
 ## 配信について
 
-`wrangler.jsonc` はローカル検証専用です（`workers_dev` / `preview_urls` は false、資格情報なし）。このひな形からクラウドへの配信は行いません。
+`wrangler.jsonc` はローカル検証専用です（`workers_dev` / `preview_urls` は false、資格情報なし）。
+
+PR ごとの確認用プレビューは、リポジトリの `.github/workflows/preview.yml` が `dist/` を本番とは別の Worker に置き、URL を PR のコメントに書きます。閲覧は Cloudflare Access で制限します（準備と使い方は `.github/preview/README.md`）。本番への配信は含めていません。

@@ -7,7 +7,9 @@
 ## 1. 範囲
 
 - 作業は `apps/v10/` の中で完結させる。リポジトリのルート（既存サイトのHTML・assets・CNAME・既存の設定）は変更しない。
-- CI定義は `.github/workflows/v10-ci.yml` の1本だけ。検証専用で、配信（deploy）はしない。
+- CI定義は次の2本。本番へ配信するワークフローは置かない。
+  - `.github/workflows/v10-ci.yml`：検証専用。ジョブ `v10-quality` は main の必須チェック。
+  - `.github/workflows/preview.yml`：PRごとの確認用プレビュー。本番とは別の Worker に版を置くだけで、本番には配信しない（使い方は `.github/preview/README.md`）。
 
 ## 2. 技術構成
 
@@ -59,3 +61,5 @@ npm run audit     # 依存の脆弱性検査（高以上で失敗）
 
 - GitHub への push と本番公開は別の工程。本番公開・Cloudflare の設定変更・DNS 変更は、オーナーの承認なしに行わない。
 - `main` へ直接 push しない。作業ブランチから PR を出す。
+- PR の本文は `.github/pull_request_template.md` の見出しに沿って書く。
+- PR を出すと、確認用プレビューの URL が PR のコメントに書かれる（閲覧制限あり。本番ではない）。プレビューにも本番の顧客データ・認証情報を入れない。
