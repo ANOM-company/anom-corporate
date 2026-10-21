@@ -1,0 +1,199 @@
+# PRごとの確認用プレビュー（Cloudflare Workers のプレビューURL）を作るワークフロー。
+# - 本番へは配信しない。使うのは本番とは別の Worker「anom-site-preview」のプレビューURLだけ
+#   （wrangler versions upload は新しい版を置くだけで、その Worker の本番の版は切り替えない）
+# - 閲覧は Cloudflare Access で制限する前提。Access が効いていない（誰でも開ける）と分かったら失敗にしてURLを出さない
+# - リポジトリ変数 PREVIEW_ENABLED が 'true' のときだけ動く（Access の設定が済むまで何もしない）
+# - 資格情報は GitHub の Environment「preview」の Secrets に置き、Cloudflare に送る手順にだけ渡す
+# - 公式 Actions はコミットSHAで固定（コメントは対応するタグ）
+# 準備と使い方: .github/preview/README.md
+name: preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '初回だけ: プレビュー用 Worker を作る（中身は準備中ページ、常設URLなし）'
+        required: true
+        type: choice
+        options:
+          - init
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # 初回作成で使う Wrangler の版（apps/v10/package.json と同じ版に合わせる）
+  WRANGLER_VERSION: '4.151.1'
+
+jobs:
+  # 初回だけ手動で実行: Worker が無いとプレビューURLを作れないため、準備中ページで Worker を作る
+  init:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'init' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: preview
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.22.0'
+
+      - name: プレビュー用 Worker を準備中ページで作成（workers.dev の常設URLは作らない）
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          npx --yes "wrangler@${WRANGLER_VERSION}" deploy \
+            -c .github/preview/wrangler.jsonc \
+            --assets .github/preview/placeholder \
+            --message "init placeholder"
+
+  preview:
+    # 同じリポジトリのブランチからのPRだけ（フォークからのPRには資格情報を渡さない）
+    if: >-
+      ${{ github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && vars.PREVIEW_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: preview
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: apps/v10 があるか確認（無いPRでは何もしない）
+        id: target
+        run: |
+          if [ -f apps/v10/package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "このPRには apps/v10 が無いため、プレビューは作りません。" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Setup Node.js（apps/v10/.nvmrc の版）
+        if: ${{ steps.target.outputs.exists == 'true' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: apps/v10/.nvmrc
+          cache: npm
+          cache-dependency-path: apps/v10/package-lock.json
+
+      # 依存の導入とビルドには資格情報を渡さない
+      - name: 依存の導入（ロックファイルどおり）
+        if: ${{ steps.target.outputs.exists == 'true' }}
+        working-directory: apps/v10
+        run: npm ci
+
+      - name: ビルド
+        if: ${{ steps.target.outputs.exists == 'true' }}
+        working-directory: apps/v10
+        run: npm run build
+
+      - name: プレビュー用 Worker へ新しい版を置く（本番の版は切り替えない）
+        if: ${{ steps.target.outputs.exists == 'true' }}
+        id: upload
+        working-directory: apps/v10
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          npx wrangler versions upload \
+            -c ../../.github/preview/wrangler.jsonc \
+            --preview-alias "pr-${PR_NUMBER}" \
+            --tag "pr-${PR_NUMBER}" \
+            --message "PR #${PR_NUMBER} ${HEAD_SHA}" 2>&1 | tee "$RUNNER_TEMP/upload.log"
+          alias_url=$(sed -n 's/.*Version Preview Alias URL: \(https:[^ ]*\).*/\1/p' "$RUNNER_TEMP/upload.log" | tail -n 1)
+          version_url=$(sed -n 's/.*Version Preview URL: \(https:[^ ]*\).*/\1/p' "$RUNNER_TEMP/upload.log" | tail -n 1)
+          if [ -z "$alias_url" ] || [ -z "$version_url" ]; then
+            echo "プレビューURLを取得できませんでした（Worker のプレビューURLが有効か確認してください）" >&2
+            exit 1
+          fi
+          echo "alias_url=$alias_url" >> "$GITHUB_OUTPUT"
+          echo "version_url=$version_url" >> "$GITHUB_OUTPUT"
+
+      - name: 閲覧制限（Cloudflare Access）が効いているか確認
+        if: ${{ steps.target.outputs.exists == 'true' }}
+        env:
+          ALIAS_URL: ${{ steps.upload.outputs.alias_url }}
+          VERSION_URL: ${{ steps.upload.outputs.version_url }}
+        run: |
+          # 未ログインで開いたとき、Access のログイン画面へ転送される（または 401/403）ことを確かめる。
+          # 中身がそのまま見える（200）なら失敗にして、PRにURLを出さない。
+          for url in "$ALIAS_URL" "$VERSION_URL"; do
+            ok=false
+            for attempt in 1 2 3 4 5 6; do
+              code=$(curl -sS -o /dev/null --max-redirs 0 -w '%{http_code}' "$url" || true)
+              location=$(curl -sS -o /dev/null --max-redirs 0 -w '%{redirect_url}' "$url" || true)
+              case "$code" in
+                401|403) ok=true ;;
+                301|302|303|307|308)
+                  case "$location" in
+                    https://*.cloudflareaccess.com/*) ok=true ;;
+                  esac ;;
+                200)
+                  echo "閲覧制限なしで中身が見えています: $url" >&2
+                  echo "Cloudflare のダッシュボードで、この Worker のプレビューURLに Access を有効にしてください。" >&2
+                  exit 1 ;;
+              esac
+              if [ "$ok" = true ]; then break; fi
+              # 反映待ち（作成直後は 404 などが返ることがある）
+              sleep 10
+            done
+            if [ "$ok" != true ]; then
+              echo "閲覧制限を確認できませんでした（最後の応答: $code）: $url" >&2
+              exit 1
+            fi
+          done
+
+      - name: PRにプレビューURLを書く（同じコメントを更新）
+        if: ${{ steps.target.outputs.exists == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ALIAS_URL: ${{ steps.upload.outputs.alias_url }}
+          VERSION_URL: ${{ steps.upload.outputs.version_url }}
+        run: |
+          marker='<!-- anom-preview -->'
+          short_sha="${HEAD_SHA:0:7}"
+          body=$(printf '%s\n%s\n\n%s\n%s\n\n%s\n' \
+            "$marker" \
+            "### 確認用プレビュー（閲覧制限あり）" \
+            "- このPRの最新: ${ALIAS_URL}" \
+            "- この版（${short_sha}）に固定: ${VERSION_URL}" \
+            "開くとログイン画面が出ます。許可されたメールアドレスでログインしてください。本番には反映されていません。")
+          comment_id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"${marker}\"))) | .id" | head -n 1)
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${REPO}/issues/comments/${comment_id}" -f body="$body" > /dev/null
+          else
+            gh api --method POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$body" > /dev/null
+          fi
+          {
+            echo "### 確認用プレビュー"
+            echo "- 最新: ${ALIAS_URL}"
+            echo "- この版: ${VERSION_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"

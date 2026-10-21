@@ -1,0 +1,18 @@
+// PRごとの確認用プレビューを Cloudflare Workers へ載せるための設定（本番とは別の Worker）。
+// - 使うのは .github/workflows/preview.yml だけ。手元から deploy しない
+// - 本番の Worker 名・独自ドメイン・資格情報はここに書かない（資格情報は GitHub の Secrets に置く）
+// - assets の場所はこのファイルからの相対パス（apps/v10 の npm run build の出力先）
+{
+  "$schema": "../../apps/v10/node_modules/wrangler/config-schema.json",
+  "name": "anom-site-preview",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../../apps/v10/dist",
+    // 見つからないURLは dist/404.html を 404 ステータスで返す
+    "not_found_handling": "404-page"
+  },
+  // workers.dev の常設URLは作らない（本番扱いのURLを持たせない）
+  "workers_dev": false,
+  // バージョンごと・PRごとのプレビューURLだけを使う。閲覧は Cloudflare Access で制限する前提
+  "preview_urls": true
+}
