@@ -107,6 +107,10 @@ body.js-fine .cursor-dot,body.js-fine .cursor-ring{display:block;}
 }
 .nav-cta:hover{opacity:.82;}
 .nav-cta::after{display:none;}
+/* ナビのリンク共通指定（.nav-links a の上下だけの余白・下線）に負けないよう、詳細度を上げて指定し直す。
+   以前はここが上書きされて左右の余白が0になり、「無料診断」の文字が黒い枠いっぱいに詰まっていた */
+.nav-links .nav-cta{padding:9px 20px;}
+.nav-links .nav-cta::after{display:none;}
 .nav-burger{display:none;background:none;border:none;width:40px;height:40px;position:relative;z-index:102;color:inherit;}
 .nav-burger span{display:block;width:22px;height:1.5px;background:currentColor;margin:5px auto;transition:transform .35s,opacity .35s;}
 .nav.menu-open .nav-burger{color:var(--ink);}
@@ -120,7 +124,7 @@ body.js-fine .cursor-dot,body.js-fine .cursor-ring{display:block;}
 }
 .mobile-menu.open{opacity:1;visibility:visible;}
 .mobile-menu a{color:var(--ink);font-family:var(--mincho);font-size:clamp(30px,8vw,44px);font-weight:500;padding:8px 0;}
-.mobile-menu .nav-cta{font-family:var(--gothic);font-size:15px;margin-top:18px;}
+.mobile-menu .nav-cta{font-family:var(--gothic);font-size:15px;margin-top:18px;padding:13px 30px;} /* 左右の余白も明示（.mobile-menu a の余白指定に上書きされないように） */
 
 /* ============ 4. ヒーロー（タイポ主役・温白） ============ */
 .hero{
@@ -144,11 +148,18 @@ body.js-fine .cursor-dot,body.js-fine .cursor-ring{display:block;}
   font-family:var(--gothic);font-size:11px;letter-spacing:.3em;text-transform:uppercase;
   color:var(--soft);margin-bottom:clamp(22px,calc(var(--vhpx,1vh) * 4),40px);font-weight:500;
 }
+/* 見出しの文字サイズ: 基本は画面幅の8%（最小38px・最大116px）。
+   ただしスマホでは1行目「現場で感じるムダを、」（約10文字分）が画面幅に収まる大きさまで自動で縮める
+   （÷10.2 = 10文字分＋わずかな余裕）。これで見出しは常に2行で読める */
 .hero-copy{
   font-family:var(--mincho);font-weight:600;
-  font-size:clamp(38px,8vw,116px);line-height:1.08;letter-spacing:-.012em;color:var(--ink);
+  font-size:clamp(24px,min(max(38px,8vw),calc((100vw - 2 * var(--pad-x)) / 10.2)),116px);
+  line-height:1.08;letter-spacing:-.012em;color:var(--ink);
 }
 .hero-copy .ch{display:inline-block;will-change:transform,filter,opacity;}
+/* 文節のかたまり（index.html の .hc-ph）。この中では改行しない＝「、」「。」が行頭に落ちない。
+   さらに狭い画面でも、改行は文節の切れ目（感じる｜ムダを、｜目線で｜削る。）でだけ起こる */
+.hero-copy .hc-ph{display:inline-block;white-space:nowrap;}
 /* 「ムダ」の削り演出: 語を包む枠と、その上に重なる筆の一閃（テーパー付き塗りパス）。
    標準状態＝線が引き切られた完成形（JS無効・低減設定でも意味が通る）。
    スクロール連動の描画と語の減光は animations.js が担当 */
@@ -161,6 +172,9 @@ body.js-fine .cursor-dot,body.js-fine .cursor-ring{display:block;}
 }
 .hero-ctas{display:flex;gap:16px;margin-top:clamp(34px,calc(var(--vhpx,1vh) * 5),52px);flex-wrap:wrap;}
 .hero-note{margin-top:14px;font-size:12px;color:var(--soft);letter-spacing:.02em;}
+/* 説明文と補足は、HTML側の<wbr>の位置（文節の切れ目）でだけ改行する。
+   収まらない長さの時だけは途中で折り返す（はみ出し防止の保険） */
+.hero-sub,.hero-note{word-break:keep-all;overflow-wrap:anywhere;}
 .btn{
   display:inline-flex;align-items:center;gap:10px;
   padding:14px 28px;border-radius:100px;font-size:13.5px;font-weight:500;
