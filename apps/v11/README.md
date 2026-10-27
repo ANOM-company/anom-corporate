@@ -26,6 +26,8 @@
 | `src/styles/global.css` | 色・書体・角丸・影・動きの値（`@theme`） |
 | `public/_headers` | CSP などの応答ヘッダー |
 | `public/fonts/` | 自己配信フォントと、その取得元・ライセンスの記録 |
+| `public/images/` | ロゴ（フッター用の縦組み・ヘッダー用の横並び）。ファビコン類は `public/` 直下 |
+| `tools/` | 明朝体の部分集合（`fonts/`）とロゴ画像（`images/`）を作り直すスクリプト |
 | `tests/` | ブラウザーテスト（Playwright + axe-core） |
 
 ## 手元で確かめる

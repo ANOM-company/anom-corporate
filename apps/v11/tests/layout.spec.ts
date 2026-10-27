@@ -33,6 +33,24 @@ for (const width of widths) {
   });
 }
 
+for (const width of [320, 360, 390]) {
+  test(`${width}px: ヘッダーのロゴ・ボタン・メニューが1行に収まり、メニューボタンは押しやすい大きさのまま`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const box = async (selector: string) => (await page.locator(selector).boundingBox())!;
+    const logo = await box('.header__logo img');
+    const cta = await box('.header__cta');
+    const menu = await box('.header__menu');
+    expect(logo.x + logo.width).toBeLessThanOrEqual(cta.x);
+    expect(cta.x + cta.width).toBeLessThanOrEqual(menu.x);
+    expect(menu.x + menu.width).toBeLessThanOrEqual(width);
+    // 「無料相談をする」は1行（折り返すとボタンが縦に伸びる）
+    expect(cta.height).toBeLessThanOrEqual(44);
+    expect(menu.width).toBeGreaterThanOrEqual(44);
+    expect(menu.height).toBeGreaterThanOrEqual(44);
+  });
+}
+
 test.describe('PC のチップ配置', () => {
   test.use({ reducedMotion: 'reduce' });
 

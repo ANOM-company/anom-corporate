@@ -1,5 +1,6 @@
 ---
-// フッター。会社の基本情報（現行サイトに掲載している内容だけ）とページ内のリンク。
+// フッター。ロゴ、会社の基本情報（現行サイトに掲載している内容だけ）とページ内のリンク。
+// - ロゴは紺と黒の原本の色のまま使うため、フッターは明るい地にする（public/images/logo.png）
 interface Props {
   footer: {
     rows: { term: string; value: string }[];
@@ -18,7 +19,7 @@ const { footer, nav, privacyUrl } = Astro.props;
 <footer class="footer">
   <div class="wrap footer__inner">
     <div class="footer__brand">
-      <p class="footer__logo latin">ANOM</p>
+      <img class="footer__logo" src="/images/logo.png" width="540" height="396" alt="株式会社ANOM" loading="lazy" decoding="async" />
       <dl class="footer__info">
         {
           footer.rows.map((row) => (
@@ -53,8 +54,9 @@ const { footer, nav, privacyUrl } = Astro.props;
 <style>
   .footer {
     padding: 2.5rem 0 calc(var(--bar-h) + 2rem + env(safe-area-inset-bottom));
-    background: var(--color-night);
-    color: var(--color-on-night-soft);
+    border-top: 1px solid var(--color-line);
+    background: var(--color-mist);
+    color: var(--color-ink-soft);
     font-size: 0.8125rem;
   }
 
@@ -64,14 +66,13 @@ const { footer, nav, privacyUrl } = Astro.props;
   }
 
   .footer__logo {
-    color: var(--color-on-night);
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    display: block;
+    width: 9.5rem;
+    height: auto;
   }
 
   .footer__info {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     display: grid;
     gap: 0.25rem;
   }
@@ -82,12 +83,12 @@ const { footer, nav, privacyUrl } = Astro.props;
     gap: 0.75rem;
 
     dt {
-      color: rgb(183 196 220 / 0.75);
+      color: var(--color-muted);
     }
 
     dd {
       margin: 0;
-      color: var(--color-on-night);
+      color: var(--color-ink);
     }
   }
 
@@ -103,7 +104,7 @@ const { footer, nav, privacyUrl } = Astro.props;
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
-    color: var(--color-on-night);
+    color: var(--color-ink);
     text-decoration: none;
 
     &:hover {
@@ -115,7 +116,7 @@ const { footer, nav, privacyUrl } = Astro.props;
   .footer__bottom {
     margin-top: 2rem;
     padding-top: 1.25rem;
-    border-top: 1px solid rgb(238 243 252 / 0.15);
+    border-top: 1px solid var(--color-line);
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;

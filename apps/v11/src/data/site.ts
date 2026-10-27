@@ -6,10 +6,10 @@
 export type ServiceId = 'ai' | 'automation' | 'web-dx' | 'inquiry';
 
 export const site = {
-  name: 'ANOM',
-  title: 'ANOM｜頭の中にあるその悩みを、AIとDXで前に進める。',
+  name: '株式会社ANOM',
+  title: '株式会社ANOM｜頭の中にあるその悩みを、AIとDXで前に進める。',
   description:
-    '「何をDXしたいか分からない」「AIを使ったらどうなる？」その声を起点に、AI導入支援・業務自動化・Web/DX設計・問い合わせ導線改善まで伴走するANOMのサイト（確認用 v11）。',
+    '「何をDXしたいか分からない」「AIを使ったらどうなる？」その声を起点に、AI導入支援・業務自動化・Web/DX設計・問い合わせ導線改善まで伴走する株式会社ANOMのサイト（確認用 v11）。',
   email: 'info@anom-ai.com',
   privacyUrl: 'https://anom-ai.com/privacy.html',
 };
@@ -241,7 +241,7 @@ export const bottomBar = {
 
 export const footer = {
   rows: [
-    { term: '屋号', value: 'ANOM（アノム）※法人化準備中' },
+    { term: '会社名', value: '株式会社ANOM（アノム）' },
     { term: '代表', value: '菊地 隆雅' },
     { term: '所在地', value: '秋田県' },
     { term: '対応エリア', value: '全国（リモート対応）／秋田県内は訪問可' },
@@ -249,6 +249,6 @@ export const footer = {
   ],
   privacy: 'プライバシーポリシー',
   top: 'ページの先頭へ',
-  copyright: '© 2026 ANOM',
+  copyright: '© 2026 株式会社ANOM',
   previewNote: 'このページは確認用（v11）です。',
 };

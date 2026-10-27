@@ -20,7 +20,9 @@ const { nav } = Astro.props;
 
 <header class="header" data-header>
   <div class="header__inner">
-    <a class="header__logo latin" href="#top" aria-label="ANOM ページの先頭へ">ANOM</a>
+    <a class="header__logo" href="#top" aria-label="株式会社ANOM ページの先頭へ">
+      <img src="/images/logo-horizontal.png" width="355" height="96" alt="" decoding="async" />
+    </a>
 
     <nav class="header__nav" aria-label={nav.label}>
       <ul class="header__list">
@@ -108,14 +110,18 @@ const { nav } = Astro.props;
     padding-inline: var(--gutter);
   }
 
+  /* ロゴ（public/images/logo-horizontal.png。原本から tools/images/build-logos.py で書き出す） */
   .header__logo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     margin-right: auto;
-    color: var(--color-ink);
-    font-size: 1.625rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-decoration: none;
-    line-height: 1;
+
+    img {
+      display: block;
+      width: auto;
+      height: 1.625rem;
+    }
   }
 
   .header__nav {
@@ -127,9 +133,16 @@ const { nav } = Astro.props;
     padding: 0.4rem 1rem;
     font-size: 0.8125rem;
     gap: 0.5rem;
+    white-space: nowrap;
+
+    /* 幅 380px 未満は矢印を省いて、ボタンの文字を1行に収める */
+    :global(.btn__arrow) {
+      display: none;
+    }
   }
 
   .header__menu {
+    flex-shrink: 0;
     display: grid;
     place-items: center;
     width: 2.75rem;
@@ -150,7 +163,21 @@ const { nav } = Astro.props;
     display: none;
   }
 
+  @media (min-width: 23.75rem) {
+    .header__logo img {
+      height: 2rem;
+    }
+
+    .header__cta :global(.btn__arrow) {
+      display: block;
+    }
+  }
+
   @media (min-width: 64rem) {
+    .header__logo img {
+      height: 2.5rem;
+    }
+
     .header__nav {
       display: block;
     }

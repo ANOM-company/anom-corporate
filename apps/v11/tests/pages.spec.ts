@@ -56,6 +56,30 @@ test('HTML にインラインのスクリプト・スタイル・イベント属
   }
 });
 
+test('ロゴの画像と社名の表記（株式会社ANOM）', async ({ page, request }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle(/^株式会社ANOM｜/);
+  const headerLogo = page.getByRole('link', { name: '株式会社ANOM ページの先頭へ' });
+  await expect(headerLogo).toBeVisible();
+  const footerLogo = page.locator('footer').getByRole('img', { name: '株式会社ANOM' });
+  await footerLogo.scrollIntoViewIfNeeded();
+  // 画像が読み込めている（壊れた画像になっていない）
+  for (const img of [headerLogo.locator('img'), footerLogo]) {
+    await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
+  }
+  const footer = page.locator('footer');
+  await expect(footer).toContainText('株式会社ANOM（アノム）');
+  await expect(footer).toContainText('© 2026 株式会社ANOM');
+  await expect(footer).not.toContainText('法人化準備中');
+  await expect(footer).not.toContainText('屋号');
+  // ファビコン類
+  for (const href of await page.locator('link[rel="icon"], link[rel="apple-touch-icon"]').evaluateAll((els) => els.map((el) => el.getAttribute('href')))) {
+    const response = await request.get(href!);
+    expect(response.status(), href!).toBe(200);
+    expect(response.headers()['content-type'], href!).toContain('image/png');
+  }
+});
+
 test.describe('404', () => {
   test.use({ allowNotFoundDocument: true });
 
