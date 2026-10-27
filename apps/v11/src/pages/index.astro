@@ -39,11 +39,11 @@ const worryOptions = [...new Set([...worries.map((w) => w.label), ...services.it
   </main>
   <SiteFooter footer={footer} nav={nav} privacyUrl={site.privacyUrl} />
   <BottomBar bar={bottomBar} />
+  <!-- レイアウトの内側に置く（外に置くと </html> の後ろに出力され、HTML として正しくない） -->
+  <script>
+    import '../scripts/main';
+  </script>
 </BaseLayout>
-
-<script>
-  import '../scripts/main';
-</script>
 
 <style>
   .skip {

@@ -83,7 +83,9 @@ const { nav } = Astro.props;
     position: fixed;
     inset: 0 0 auto;
     z-index: 50;
-    height: var(--header-h);
+    /* 画面上端の切り欠き（ノッチ）がある端末では、その分だけ下げて中身を見せる */
+    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
     transition:
       background-color var(--duration-base) var(--ease-out),
       box-shadow var(--duration-base) var(--ease-out),

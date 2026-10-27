@@ -51,6 +51,8 @@ test('HTML にインラインのスクリプト・スタイル・イベント属
     expect(html, path).not.toMatch(/<style[\s>]/i);
     expect(html, path).not.toMatch(/\sstyle=/i);
     expect(html, path).not.toMatch(/\son[a-z]+=/i);
+    // スクリプトなどが </html> の後ろに出力されていない
+    expect(html.trimEnd().endsWith('</html>'), path).toBe(true);
   }
 });
 

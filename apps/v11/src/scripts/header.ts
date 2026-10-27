@@ -53,7 +53,11 @@ export function initHeader(): void {
       // 閉じたあと（フォーカスがボタンに戻ったあと）に移動し、移動先へフォーカスを移す
       window.requestAnimationFrame(() => {
         target.scrollIntoView({ block: 'start' });
-        history.pushState(null, '', link.hash);
+        try {
+          history.pushState(null, '', link.hash);
+        } catch {
+          // 埋め込み表示などで履歴を書き換えられない環境でも、移動とフォーカスは続ける
+        }
         focusTarget(target);
       });
     });
