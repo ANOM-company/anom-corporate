@@ -1,0 +1,96 @@
+---
+// 線のアイコン（24×24、線の色は文字色を引き継ぐ）。飾りなので読み上げない。
+export type IconName =
+  | 'arrow-right'
+  | 'chevron-right'
+  | 'mail'
+  | 'chat'
+  | 'bulb'
+  | 'team'
+  | 'gear'
+  | 'spark'
+  | 'menu'
+  | 'close'
+  | 'pause'
+  | 'play'
+  | 'check'
+  | 'plus';
+
+interface Props {
+  name: IconName;
+  class?: string;
+}
+
+const { name, class: className } = Astro.props;
+---
+
+<svg
+  class={className}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.8"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  {name === 'arrow-right' && <path d="M4 12h15M13 6l6 6-6 6" />}
+  {name === 'chevron-right' && <path d="M9 5l7 7-7 7" />}
+  {
+    name === 'mail' && (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2.5" />
+        <path d="M4 7l8 6 8-6" />
+      </>
+    )
+  }
+  {
+    name === 'chat' && (
+      <>
+        <path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-9l-4.5 3.5V16.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z" />
+        <path d="M7.5 10h9M7.5 13h5.5" />
+      </>
+    )
+  }
+  {
+    name === 'bulb' && (
+      <>
+        <path d="M9 17.5h6M10 20.5h4" />
+        <path d="M12 3.5a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2v1h5v-1c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3.5Z" />
+        <path d="M12 7v3l2 1.5" />
+      </>
+    )
+  }
+  {
+    name === 'team' && (
+      <>
+        <circle cx="12" cy="8" r="3" />
+        <circle cx="5.5" cy="10" r="2.2" />
+        <circle cx="18.5" cy="10" r="2.2" />
+        <path d="M6.5 19.5v-1.2a5.5 5.5 0 0 1 11 0v1.2" />
+        <path d="M2.5 18.5v-.6a3.2 3.2 0 0 1 4.2-3M21.5 18.5v-.6a3.2 3.2 0 0 0-4.2-3" />
+      </>
+    )
+  }
+  {
+    name === 'gear' && (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" />
+        <circle cx="12" cy="12" r="6.5" />
+      </>
+    )
+  }
+  {
+    name === 'spark' && (
+      <path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6L12 3ZM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" />
+    )
+  }
+  {name === 'menu' && <path d="M4 7h16M4 12h16M4 17h16" />}
+  {name === 'close' && <path d="M6 6l12 12M18 6 6 18" />}
+  {name === 'pause' && <path d="M9 6v12M15 6v12" />}
+  {name === 'play' && <path d="M8 5.5v13l10-6.5-10-6.5Z" />}
+  {name === 'check' && <path d="M5 12.5l4.5 4.5L19 7.5" />}
+  {name === 'plus' && <path d="M12 5v14M5 12h14" />}
+</svg>

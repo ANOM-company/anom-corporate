@@ -1,0 +1,614 @@
+---
+// お問い合わせ。確認用のため、入力内容はどこにも送信しない（action なし・CSP でも送信先を許可しない）。
+// - 必須はお名前とメールアドレスだけ。悩みはタップで選べる（ファーストビューで選んだ悩みは最初から選択）
+// - 入力の誤りは、入力を終えたあと（:user-invalid）に欄の下へ表示する
+// - JavaScript 無効時は送信ボタンを押せない状態で表示する（src/scripts/contact.ts が有効にする）
+import Icon from './Icon.astro';
+
+interface Props {
+  contact: {
+    id: string;
+    title: string;
+    lead: string[];
+    body: string;
+    free: string;
+    required: string;
+    optional: string;
+    fields: {
+      name: { label: string; placeholder: string; error: string };
+      company: { label: string; placeholder: string; hint: string };
+      email: { label: string; placeholder: string; error: string };
+      worries: { legend: string; hint: string };
+      message: { label: string; placeholder: string };
+    };
+    privacy: { before: string; link: string; after: string };
+    submit: string;
+    previewNote: string;
+    previewDone: string;
+    invalidSummary: string;
+    aside: { title: string[]; body: string; button: string };
+    mail: { before: string; after: string };
+  };
+  worryOptions: string[];
+  email: string;
+  privacyUrl: string;
+}
+
+const { contact, worryOptions, email, privacyUrl } = Astro.props;
+const f = contact.fields;
+---
+
+<section class="contact" id={contact.id} aria-labelledby="contact-title">
+  <div class="wrap contact__inner">
+    <div class="contact__intro" data-reveal>
+      <h2 id="contact-title" class="contact__title">{contact.title}</h2>
+      <p class="contact__lead serif">
+        <span class="contact__lead-line">{contact.lead[0]}</span>
+        <span class="contact__lead-line">{contact.lead.slice(1).map((part) => <span class="nb">{part}</span>)}</span>
+      </p>
+      <p class="contact__body">{contact.body}</p>
+      <p class="contact__free">
+        <Icon name="check" class="contact__free-icon" />
+        {contact.free}
+      </p>
+    </div>
+
+    <form class="form" data-contact-form data-reveal aria-describedby="contact-preview-note">
+      <p class="form__topic" data-topic hidden>
+        <span>ご相談のサービス：<strong data-topic-name></strong></span>
+        <button class="form__topic-clear" type="button" data-topic-clear>解除</button>
+      </p>
+      <input type="hidden" name="service" value="" data-topic-input />
+
+      <div class="form__grid">
+        <div class="field">
+          <label class="field__label" for="contact-name">
+            {f.name.label}<span class="field__badge field__badge--req">{contact.required}</span>
+          </label>
+          <input
+            class="field__input"
+            id="contact-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            placeholder={f.name.placeholder}
+            required
+            maxlength="100"
+            aria-describedby="contact-name-error"
+          />
+          <p class="field__error" id="contact-name-error">{f.name.error}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="contact-email">
+            {f.email.label}<span class="field__badge field__badge--req">{contact.required}</span>
+          </label>
+          <input
+            class="field__input"
+            id="contact-email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder={f.email.placeholder}
+            required
+            maxlength="254"
+            aria-describedby="contact-email-error"
+          />
+          <p class="field__error" id="contact-email-error">{f.email.error}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="contact-company">
+            {f.company.label}<span class="field__badge">{contact.optional}</span>
+          </label>
+          <input
+            class="field__input"
+            id="contact-company"
+            name="company"
+            type="text"
+            autocomplete="organization"
+            placeholder={f.company.placeholder}
+            maxlength="100"
+            aria-describedby="contact-company-hint"
+          />
+          <p class="field__hint" id="contact-company-hint">{f.company.hint}</p>
+        </div>
+
+        <div class="field field--wide">
+          <label class="field__label" for="contact-message">
+            {f.message.label}<span class="field__badge">{contact.optional}</span>
+          </label>
+          <textarea
+            class="field__input field__input--area"
+            id="contact-message"
+            name="message"
+            rows="3"
+            maxlength="3000"
+            placeholder={f.message.placeholder}></textarea>
+        </div>
+      </div>
+
+      <fieldset class="pills">
+        <legend class="field__label">
+          {f.worries.legend}<span class="field__badge">{contact.optional}</span>
+        </legend>
+        <p class="field__hint" data-worry-hint hidden>{f.worries.hint}</p>
+        <div class="pills__list">
+          {
+            worryOptions.map((option, i) => (
+              <label class="pill">
+                <input class="pill__input" type="checkbox" name="worries" value={option} id={`contact-worry-${i}`} />
+                <span class="pill__mark" aria-hidden="true">
+                  <Icon name="check" />
+                </span>
+                <span class="pill__text">{option}</span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <div class="form__foot">
+        <p class="form__privacy">
+          {contact.privacy.before}<a href={privacyUrl}>{contact.privacy.link}</a>{contact.privacy.after}
+        </p>
+        <button class="btn btn--primary form__submit" type="submit" disabled data-submit data-cta="form-submit">
+          {contact.submit}
+          <Icon name="arrow-right" class="btn__arrow" />
+        </button>
+      </div>
+      <p class="form__note" id="contact-preview-note">{contact.previewNote}</p>
+      <p class="form__status" role="status" data-form-status data-done={contact.previewDone}></p>
+    </form>
+
+    <aside class="contact__aside" aria-labelledby="contact-aside-title" data-reveal>
+      <span class="contact__aside-icon" aria-hidden="true"><Icon name="chat" /></span>
+      <h3 class="contact__aside-title" id="contact-aside-title">{contact.aside.title.map((part) => <span class="nb">{part}</span>)}</h3>
+      <p class="contact__aside-body">{contact.aside.body}</p>
+      <a class="btn btn--ghost contact__aside-btn" href="#contact-name" data-focus-name data-cta="contact-aside">
+        {contact.aside.button}
+        <Icon name="arrow-right" class="btn__arrow" />
+      </a>
+      <p class="contact__mail">
+        {contact.mail.before}
+        <a href={`mailto:${email}`} data-cta="mail">{email}</a>
+        <span class="contact__mail-note">{contact.mail.after}</span>
+      </p>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .contact {
+    padding: clamp(2.75rem, 6vw, 4.5rem) 0 clamp(3rem, 6vw, 4.5rem);
+    background: var(--color-paper);
+  }
+
+  .contact__inner {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .contact__title {
+    justify-self: start;
+    display: inline-block;
+    padding-bottom: 0.375rem;
+    border-bottom: 2px solid var(--color-brand);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .contact__lead {
+    margin-top: 0.875rem;
+    font-size: clamp(1.125rem, 0.95rem + 0.8vw, 1.375rem);
+    line-height: 1.55;
+  }
+
+  .contact__lead-line {
+    display: inline;
+  }
+
+  .contact__body {
+    margin-top: 0.625rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+  }
+
+  .contact__free {
+    margin-top: 0.625rem;
+    display: flex;
+    gap: 0.375rem;
+    color: var(--color-brand-deep);
+    font-size: 0.8125rem;
+    font-weight: 700;
+
+    :global(.contact__free-icon) {
+      flex: none;
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.3rem;
+      color: var(--color-brand);
+    }
+  }
+
+  /* フォーム */
+  .form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .form__topic {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem;
+    background: var(--color-brand-tint);
+    border: 1px solid var(--color-brand-soft);
+    font-size: 0.875rem;
+  }
+
+  .form__topic[hidden] {
+    display: none;
+  }
+
+  .form__topic-clear {
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border: 0;
+    background: none;
+    color: var(--color-brand-strong);
+    font: inherit;
+    font-size: 0.8125rem;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .form__grid {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.3rem;
+    align-content: start;
+  }
+
+  .field__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .field__badge {
+    padding: 0.05rem 0.4rem;
+    border-radius: 0.25rem;
+    background: var(--color-mist-2);
+    color: var(--color-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  .field__badge--req {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  .field__input {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.625rem;
+    border: 1.5px solid var(--color-line-strong);
+    background: var(--color-mist);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 1rem;
+    transition:
+      border-color var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out);
+
+    &::placeholder {
+      color: #7d8aa0;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-brand);
+      background: var(--color-paper);
+      box-shadow: 0 0 0 4px rgb(61 134 255 / 0.22);
+    }
+
+    &:user-invalid {
+      border-color: var(--color-danger);
+      background: var(--color-danger-soft);
+    }
+  }
+
+  .field__input--area {
+    min-height: 6.5rem;
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .field__error {
+    display: none;
+    color: var(--color-danger);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .field:has(.field__input:user-invalid) .field__error {
+    display: block;
+  }
+
+  .field__hint {
+    color: var(--color-muted);
+    font-size: 0.75rem;
+  }
+
+  .field__hint[hidden] {
+    display: none;
+  }
+
+  /* 悩みのタップ選択 */
+  .pills {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .pills .field__hint {
+    margin-top: 0.25rem;
+  }
+
+  .pills__list {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.875rem 0.35rem 0.625rem;
+    border-radius: var(--radius-chip);
+    border: 1.5px solid var(--color-line-strong);
+    background: var(--color-paper);
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out),
+      scale var(--duration-fast) var(--ease-out);
+
+    &:active {
+      scale: 0.97;
+    }
+
+    &:has(.pill__input:checked) {
+      background: var(--color-brand-tint);
+      border-color: var(--color-brand);
+      color: var(--color-brand-deep);
+      font-weight: 700;
+    }
+
+    &:has(.pill__input:focus-visible) {
+      outline: 3px solid var(--color-brand-bright);
+      outline-offset: 2px;
+    }
+  }
+
+  .pill__input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .pill__mark {
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-line-strong);
+    color: #fff;
+    transition:
+      background-color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+
+    :global(svg) {
+      width: 0.75rem;
+      height: 0.75rem;
+      stroke-width: 3;
+      opacity: 0;
+    }
+  }
+
+  .pill:has(.pill__input:checked) .pill__mark {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+
+    :global(svg) {
+      opacity: 1;
+    }
+  }
+
+  .form__foot {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .form__privacy {
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+
+    a {
+      color: var(--color-brand-strong);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+  }
+
+  .form__submit {
+    width: 100%;
+    border-radius: 0.75rem;
+
+    &:disabled {
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+      opacity: 0.7;
+    }
+  }
+
+  .form__note {
+    color: var(--color-muted);
+    font-size: 0.75rem;
+  }
+
+  .form__status:empty {
+    display: none;
+  }
+
+  .form__status {
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--color-brand-tint);
+    border: 1px solid var(--color-brand-soft);
+    color: var(--color-brand-deep);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  /* 右側の案内カード */
+  .contact__aside {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.875rem;
+    row-gap: 0.375rem;
+    align-content: start;
+    padding: 1.25rem;
+    border-radius: var(--radius-card);
+    background: var(--color-mist);
+    border: 1px solid var(--color-line);
+  }
+
+  .contact__aside-icon {
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--color-paper);
+    color: var(--color-brand);
+    box-shadow: var(--shadow-chip);
+
+    :global(svg) {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .contact__aside-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .contact__aside-body {
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    line-height: 1.75;
+  }
+
+  .contact__aside-btn {
+    grid-column: 1 / -1;
+    margin-top: 0.75rem;
+    min-height: 3rem;
+    font-size: 0.875rem;
+  }
+
+  .contact__mail {
+    grid-column: 1 / -1;
+    margin-top: 0.75rem;
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    line-height: 1.8;
+
+    a {
+      color: var(--color-brand-strong);
+      font-weight: 700;
+    }
+  }
+
+  .contact__mail-note {
+    display: block;
+  }
+
+  @media (min-width: 48rem) {
+    .form__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .field--wide {
+      grid-row: span 1;
+    }
+
+    .form__foot {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    .form__submit {
+      width: auto;
+      min-width: 13rem;
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .contact__inner {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 2fr) minmax(0, 0.95fr);
+      column-gap: clamp(1.5rem, 3vw, 2.75rem);
+      align-items: start;
+    }
+
+    .contact__intro {
+      padding-right: 1.5rem;
+      border-right: 1px solid var(--color-line);
+    }
+
+    .contact__lead-line {
+      display: block;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .form__status:not(:empty) {
+      animation: status-in 0.5s var(--ease-out);
+    }
+  }
+
+  @keyframes status-in {
+    from {
+      opacity: 0;
+      translate: 0 0.5rem;
+    }
+  }
+</style>

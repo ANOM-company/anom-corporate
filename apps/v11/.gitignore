@@ -1,0 +1,25 @@
+# 依存・生成物（npm ci と npm run build で再生成できるもの）
+node_modules/
+dist/
+.astro/
+
+# Wrangler のローカル状態
+.wrangler/
+.dev.vars*
+
+# テスト成果物（ログ・スクリーンショット・レポート）
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# 個人環境・秘密情報
+.env
+.env.*
+*.pem
+secrets/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

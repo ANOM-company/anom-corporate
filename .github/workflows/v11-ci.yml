@@ -1,0 +1,86 @@
+# apps/v11（ANOM 自社サイト v11）の検証専用CI。
+# - 配信（deploy）はしない。Cloudflare の資格情報・シークレットは使わない
+# - 公式 Actions はコミットSHAで固定（コメントは対応するタグ）
+# - apps/v11 かこのファイルが変わったときだけ起動する（必須チェックではないため、パス条件で絞る）
+name: v11-ci
+
+on:
+  pull_request:
+    paths:
+      - 'apps/v11/**'
+      - '.github/workflows/v11-ci.yml'
+  push:
+    branches:
+      - 'claude/**'
+    paths:
+      - 'apps/v11/**'
+      - '.github/workflows/v11-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v11-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  v11-quality:
+    name: v11-quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/v11
+    env:
+      CI: 'true'
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js（apps/v11/.nvmrc の版）
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: apps/v11/.nvmrc
+          cache: npm
+          cache-dependency-path: apps/v11/package-lock.json
+
+      - name: 依存の導入（ロックファイルどおり）
+        run: npm ci
+
+      - name: テスト用ブラウザーの導入
+        run: npx playwright install --with-deps chromium
+
+      - name: 型確認
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: ビルド
+        run: npm run build
+
+      - name: 出力先が apps/v11/dist だけであることの確認
+        run: |
+          test -f dist/index.html
+          test -f dist/404.html
+          test -f dist/_headers
+          if [ -e ../../dist ]; then echo "リポジトリ直下に dist/ が作られています" >&2; exit 1; fi
+
+      - name: ブラウザーテスト（dist/ をローカル Wrangler で配信）
+        run: npm run test:e2e
+
+      - name: テスト結果の確認（未実行・スキップ・不安定を合格にしない）
+        run: |
+          node -e '
+            const s = require("./test-results/results.json").stats;
+            console.log(JSON.stringify(s));
+            const ok = s.expected > 0 && s.unexpected === 0 && s.skipped === 0 && s.flaky === 0;
+            if (!ok) { console.error("テスト結果が合格条件を満たしていません"); process.exit(1); }
+          '
+
+      - name: 依存の脆弱性検査（高・重大で失敗）
+        run: npm run audit

@@ -1,0 +1,544 @@
+---
+// サービス内容（4つ）。各カードに「対応する悩み」のタグと、開閉できる詳細を持たせる。
+// - 詳細は JavaScript 無効時は開いたまま。有効時は閉じておき、矢印ボタンで開く（src/scripts/services.ts）
+// - ファーストビューで選んだ悩みと同じタグは強調される（worries.ts が .is-match を付ける）
+// - 「このサービスについて相談する」はフォームへ移動し、相談のテーマとして引き継ぐ
+import Icon from './Icon.astro';
+import ServiceVisual from './ServiceVisual.astro';
+import type { Service } from '../data/site';
+
+interface Props {
+  services: {
+    id: string;
+    title: string;
+    note: string;
+    expandAll: string;
+    collapseAll: string;
+    tagLabel: string;
+    open: string;
+    close: string;
+    forWhomLabel: string;
+    offersLabel: string;
+    priceLabel: string;
+    consult: string;
+    promise: string;
+    items: Service[];
+  };
+}
+
+const { services } = Astro.props;
+---
+
+<section class="services" id={services.id} aria-labelledby="services-title">
+  <div class="wrap">
+    <div class="services__head" data-reveal>
+      <h2 id="services-title" class="services__title section-title">{services.title}</h2>
+      <p class="services__note">{services.note}</p>
+      <button
+        class="services__all"
+        type="button"
+        aria-expanded="false"
+        data-expand-all
+        data-label-open={services.expandAll}
+        data-label-close={services.collapseAll}
+        hidden
+      >
+        <span data-expand-all-label>{services.expandAll}</span>
+        <Icon name="arrow-right" class="services__all-arrow" />
+      </button>
+    </div>
+
+    <ul class="svc-list" data-reveal-group>
+      {
+        services.items.map((service) => (
+          <li class="svc-list__item" data-reveal>
+            <article class="svc" id={service.anchor} aria-labelledby={`${service.anchor}-name`} data-svc={service.id}>
+              <div class="svc__top">
+                <div class="svc__thumb">
+                  <ServiceVisual service={service.id} uid={`svc-${service.id}`} />
+                </div>
+                <div class="svc__intro">
+                  <h3 class="svc__name" id={`${service.anchor}-name`}>
+                    {service.name}
+                  </h3>
+                  <p class="svc__summary">{service.summary}</p>
+                </div>
+                <button
+                  class="svc__toggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls={`${service.anchor}-detail`}
+                  data-svc-toggle
+                  hidden
+                >
+                  <Icon name="arrow-right" />
+                  <span class="sr-only" data-svc-toggle-label data-open={services.open} data-close={services.close}>
+                    {service.name}を{services.open}
+                  </span>
+                </button>
+              </div>
+
+              <div class="svc__tags">
+                <p class="svc__tags-label">{services.tagLabel}</p>
+                <ul class="svc__tag-list">
+                  {service.tags.map((tag) => (
+                    <li class="tag" data-tag={tag}>
+                      {tag}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div class="svc__detail" id={`${service.anchor}-detail`} data-svc-detail>
+                <div class="svc__detail-inner">
+                  <div class="svc__block">
+                    <h4 class="svc__block-title">{services.forWhomLabel}</h4>
+                    <ul class="svc__bullets">
+                      {service.forWhom.map((line) => (
+                        <li>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div class="svc__block">
+                    <h4 class="svc__block-title">{services.offersLabel}</h4>
+                    <ul class="svc__checks">
+                      {service.offers.map((line) => (
+                        <li>
+                          <Icon name="check" class="svc__check" />
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div class="svc__block">
+                    <h4 class="svc__block-title">{services.priceLabel}</h4>
+                    <p class="svc__price">{service.price}</p>
+                  </div>
+                  <a class="svc__consult" href="#contact" data-consult={service.id} data-cta={`service-${service.id}`}>
+                    {services.consult}
+                    <Icon name="arrow-right" class="svc__consult-arrow" />
+                  </a>
+                </div>
+              </div>
+            </article>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="services__promise" data-reveal>
+      <Icon name="check" class="services__promise-icon" />
+      {services.promise}
+    </p>
+  </div>
+</section>
+
+<style>
+  .services {
+    padding: clamp(3rem, 6vw, 4.5rem) 0 clamp(3rem, 6vw, 5rem);
+    background: var(--color-paper);
+  }
+
+  .services__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+  }
+
+  .services__title {
+    font-size: clamp(1.375rem, 1.1rem + 1.2vw, 1.875rem);
+  }
+
+  /* スマホでは見出しと「すべて見る」を1行目に、補足は2行目に置く */
+  .services__note {
+    order: 3;
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+  }
+
+  .services__all {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    padding: 0 0.25rem;
+    border: 0;
+    background: none;
+    color: var(--color-brand);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 0.35em;
+
+    :global(.services__all-arrow) {
+      width: 1rem;
+      height: 1rem;
+      transition: rotate var(--duration-base) var(--ease-out);
+    }
+
+    &[aria-expanded='true'] :global(.services__all-arrow) {
+      rotate: 90deg;
+    }
+  }
+
+  .services__all[hidden] {
+    display: none;
+  }
+
+  .svc-list {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.875rem;
+    align-items: start;
+    list-style: none;
+    padding: 0;
+  }
+
+  .svc {
+    --mx: 50%;
+    --my: 0%;
+    position: relative;
+    isolation: isolate;
+    padding: 0.875rem;
+    border-radius: var(--radius-card);
+    background: var(--color-paper);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition:
+      box-shadow var(--duration-base) var(--ease-out),
+      translate var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+
+    /* カーソルの位置に淡い光（services.ts が --mx / --my を更新） */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(22rem circle at var(--mx) var(--my), rgb(61 134 255 / 0.1), transparent 60%);
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &:hover {
+      border-color: var(--color-line-strong);
+      box-shadow: var(--shadow-lift);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+  }
+
+  /* ファーストビューのカードから移動してきたとき */
+  .svc:target {
+    border-color: var(--color-brand);
+    box-shadow: var(--shadow-lift), 0 0 0 3px rgb(26 92 240 / 0.18);
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: svc-target 1.6s var(--ease-out) 2;
+    }
+  }
+
+  .svc__top {
+    position: relative;
+    display: grid;
+    grid-template-columns: 5.75rem 1fr auto;
+    gap: 0.875rem;
+    align-items: start;
+  }
+
+  .svc__thumb {
+    aspect-ratio: 4 / 3;
+    border-radius: 0.625rem;
+    overflow: hidden;
+  }
+
+  .svc__name {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .svc__summary {
+    margin-top: 0.25rem;
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    line-height: 1.7;
+  }
+
+  .svc__toggle {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: -0.25rem -0.25rem 0 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      grid-area: 1 / 1;
+      width: 1.875rem;
+      height: 1.875rem;
+      border-radius: 50%;
+      background: var(--grad-brand);
+      box-shadow: 0 6px 14px -6px rgb(13 71 214 / 0.7);
+      transition: scale var(--duration-base) var(--ease-spring);
+    }
+
+    :global(svg) {
+      grid-area: 1 / 1;
+      position: relative;
+      width: 1rem;
+      height: 1rem;
+      transition: rotate var(--duration-base) var(--ease-out);
+    }
+
+    &:hover::before {
+      scale: 1.12;
+    }
+
+    &[aria-expanded='true'] :global(svg) {
+      rotate: 90deg;
+    }
+  }
+
+  .svc__toggle[hidden] {
+    display: none;
+  }
+
+  .svc__tags {
+    margin-top: 0.875rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .svc__tags-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--color-ink-soft);
+    font-size: 0.6875rem;
+    font-weight: 700;
+
+    &::before {
+      content: '';
+      width: 2px;
+      height: 0.9em;
+      background: var(--color-brand);
+    }
+  }
+
+  .svc__tag-list {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  .svc__detail {
+    margin-top: 0.875rem;
+  }
+
+  /* 開閉（JavaScript が hidden を外すと、高さを伸ばしながら現れる） */
+  .svc__detail-inner {
+    display: grid;
+    gap: 0.875rem;
+    padding: 1rem;
+    border-radius: 0.875rem;
+    background: var(--color-mist);
+  }
+
+  .svc__detail:not([hidden]) .svc__detail-inner {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: detail-in 0.5s var(--ease-out);
+    }
+  }
+
+  .svc__block-title {
+    color: var(--color-brand-deep);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .svc__bullets,
+  .svc__checks {
+    margin-top: 0.375rem;
+    display: grid;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .svc__bullets li {
+    position: relative;
+    padding-left: 1em;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0.15em;
+      top: 0.75em;
+      width: 0.35em;
+      height: 0.35em;
+      border-radius: 50%;
+      background: var(--color-brand);
+    }
+  }
+
+  .svc__checks li {
+    display: grid;
+    grid-template-columns: 1.1rem 1fr;
+    gap: 0.375rem;
+  }
+
+  .svc__checks :global(.svc__check) {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+    color: var(--color-brand);
+  }
+
+  .svc__price {
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .svc__consult {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.875rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-chip);
+    background: var(--color-paper);
+    border: 1.5px solid var(--color-brand);
+    color: var(--color-brand-strong);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color var(--duration-base) var(--ease-out);
+
+    &:hover {
+      background: var(--color-brand-tint);
+    }
+
+    :global(.svc__consult-arrow) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .services__promise {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+
+    :global(.services__promise-icon) {
+      flex: none;
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.3rem;
+      color: var(--color-brand);
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .svc-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .services__note {
+      order: 0;
+      flex-basis: auto;
+      font-size: 0.8125rem;
+
+      &::before {
+        content: '';
+        width: 1.5rem;
+        height: 1px;
+        background: var(--color-ink-soft);
+      }
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .svc-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .svc {
+      padding: 1rem;
+    }
+
+    /* 4列では幅が狭いので、イラストを上に大きく置き、名前と開閉ボタンをその下に並べる */
+    .svc__top {
+      grid-template-columns: 1fr auto;
+      row-gap: 0.75rem;
+    }
+
+    .svc__thumb {
+      grid-column: 1 / -1;
+      aspect-ratio: 16 / 9;
+    }
+
+    .svc__intro {
+      grid-row: 2;
+      grid-column: 1;
+    }
+
+    .svc__toggle {
+      grid-row: 2;
+      grid-column: 2;
+    }
+
+    .svc__name {
+      font-size: 1.1875rem;
+    }
+
+    .svc__summary {
+      font-size: 0.8125rem;
+    }
+  }
+
+  @keyframes svc-target {
+    0%,
+    100% {
+      box-shadow: var(--shadow-card), 0 0 0 0 rgb(26 92 240 / 0.45);
+    }
+    50% {
+      box-shadow: var(--shadow-lift), 0 0 0 8px rgb(26 92 240 / 0);
+    }
+  }
+
+  @keyframes detail-in {
+    from {
+      opacity: 0;
+      translate: 0 -0.5rem;
+      filter: blur(4px);
+    }
+  }
+</style>

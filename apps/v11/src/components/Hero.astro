@@ -1,0 +1,1151 @@
+---
+// ファーストビュー。見出し・悩みチップ・「この悩みに対応するサービス」・相談ボタン。
+// - 悩みチップは HTML ではサービス欄へのリンク。JavaScript が動くとトグルボタンに置き換わり、
+//   選ぶと右（スマホでは下）のカードが対応サービスに切り替わる（src/scripts/worries.ts）
+// - 背景の横顔と光の帯は canvas（src/scripts/hero-canvas.ts）。読み込み前・JavaScript 無効時は
+//   同じ形の SVG を表示する
+import Icon from './Icon.astro';
+import type { IconName } from './Icon.astro';
+import ServiceVisual from './ServiceVisual.astro';
+import { PROFILE, PROFILE_BOX, smoothPath } from '../lib/profile';
+import type { Service, ServiceId } from '../data/site';
+
+interface Props {
+  hero: {
+    eyebrow: string;
+    title: string[];
+    accent: string[];
+    lead: string[][];
+    primary: { label: string; href: string };
+    secondary: { label: string; href: string };
+    chipsLabel: string;
+    hint: string;
+    previewLabel: string;
+    previewLink: string;
+    pause: string;
+    play: string;
+    ambient: string[];
+  };
+  worries: { id: string; label: string; parts: string[]; service: ServiceId }[];
+  initialWorry: string;
+  services: Service[];
+}
+
+const { hero, worries, initialWorry, services } = Astro.props;
+const initialService = worries.find((w) => w.id === initialWorry)?.service ?? 'automation';
+const silhouette = smoothPath(PROFILE);
+const serviceIcon: Record<ServiceId, IconName> = {
+  ai: 'spark',
+  automation: 'gear',
+  'web-dx': 'bulb',
+  inquiry: 'chat',
+};
+---
+
+<section class="hero" id="top" aria-labelledby="hero-title" data-hero>
+  <div class="hero__backdrop" aria-hidden="true">
+    {hero.ambient.map((word, i) => <span class={`hero__ambient hero__ambient--${i}`}>{word}</span>)}
+  </div>
+
+  <canvas class="hero__canvas" data-hero-canvas aria-hidden="true"></canvas>
+
+  <div class="wrap hero__inner">
+    <div class="hero__copy">
+      <p class="hero__eyebrow">{hero.eyebrow}</p>
+      <h1 id="hero-title" class="hero__title serif">
+        <span class="hero__title-line">{hero.title.map((part) => <span class="nb">{part}</span>)}</span>
+        <span class="hero__title-line hero__title-line--accent grad-text">
+          {hero.accent.map((part) => <span class="nb">{part}</span>)}
+        </span>
+      </h1>
+      <p class="hero__lead">
+        {
+          hero.lead.map((line) => (
+            <span class="hero__lead-line">
+              {line.map((part) => (
+                <span class="nb">{part}</span>
+              ))}
+            </span>
+          ))
+        }
+      </p>
+    </div>
+
+    <!-- 横顔を描く位置（canvas はこの枠の位置と大きさに合わせて描く） -->
+    <div class="hero__head" data-head-slot aria-hidden="true">
+      <svg class="hero__fallback" viewBox={`0 0 ${PROFILE_BOX.width} ${PROFILE_BOX.height}`} preserveAspectRatio="xMidYMax meet">
+        <defs>
+          <pattern id="hero-dots" width="2.6" height="2.6" patternUnits="userSpaceOnUse">
+            <circle cx="1.3" cy="1.3" r="0.55" class="hero__fallback-dot"></circle>
+          </pattern>
+          <linearGradient id="hero-edge" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" class="hero__edge-a"></stop>
+            <stop offset="1" class="hero__edge-b"></stop>
+          </linearGradient>
+          <!-- 胸元は下に向かって溶けるように消す -->
+          <linearGradient id="hero-fade-g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0.68" class="hero__fade-a"></stop>
+            <stop offset="0.96" class="hero__fade-b"></stop>
+          </linearGradient>
+          <mask id="hero-fade">
+            <rect width={PROFILE_BOX.width} height={PROFILE_BOX.height} fill="url(#hero-fade-g)"></rect>
+          </mask>
+        </defs>
+        <g mask="url(#hero-fade)">
+          <path d={silhouette} fill="url(#hero-dots)"></path>
+          <path d={silhouette} fill="none" stroke="url(#hero-edge)" stroke-width="0.5"></path>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero__stage" id="worries">
+      <svg class="hero__link" data-hero-link aria-hidden="true" focusable="false">
+        <path class="hero__link-glow" data-link-glow d=""></path>
+        <path class="hero__link-path" data-link-path d=""></path>
+        <circle class="hero__link-dot" data-link-dot r="4" cx="-20" cy="-20"></circle>
+      </svg>
+
+      <ul class="chips" aria-label={hero.chipsLabel} data-chips>
+        {
+          worries.map((worry, i) => {
+            const service = services.find((s) => s.id === worry.service);
+            return (
+              <li class={`chips__item chips__item--${i}`}>
+                <a
+                  class:list={['chip', { 'is-active': worry.id === initialWorry }]}
+                  href={`#${service?.anchor ?? 'services'}`}
+                  data-worry={worry.id}
+                  data-service={worry.service}
+                >
+                  <span class="chip__label">
+                    {worry.parts.map((part) => (
+                      <span class="nb">{part}</span>
+                    ))}
+                  </span>
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+
+      <p class="hero__hint" aria-hidden="true">
+        <span class="hero__hint-arrow"></span>{hero.hint}
+      </p>
+
+      <div class="preview" data-preview>
+        <p class="preview__label">{hero.previewLabel}</p>
+        {
+          services.map((service) => (
+            <a
+              class="preview__item"
+              href={`#${service.anchor}`}
+              data-preview-item={service.id}
+              hidden={service.id !== initialService}
+            >
+              <span class="preview__thumb">
+                <ServiceVisual service={service.id} uid={`hero-${service.id}`} />
+              </span>
+              <span class="preview__main">
+                <span class="preview__head">
+                  <span class="preview__icon">
+                    <Icon name={serviceIcon[service.id]} />
+                  </span>
+                  <span class="preview__name">{service.name}</span>
+                </span>
+                <span class="preview__text phrase">{service.pitch}</span>
+                <span class="preview__more">
+                  {hero.previewLink}
+                  <Icon name="arrow-right" class="preview__more-arrow" />
+                </span>
+              </span>
+              <span class="preview__chevron">
+                <Icon name="chevron-right" />
+              </span>
+            </a>
+          ))
+        }
+        <p class="sr-only" aria-live="polite" data-preview-status></p>
+      </div>
+    </div>
+
+    <div class="hero__ctas">
+      <a class="btn btn--primary" href={hero.primary.href} data-cta="hero-primary">
+        {hero.primary.label}
+        <Icon name="arrow-right" class="btn__arrow" />
+      </a>
+      <a class="btn btn--ghost" href={hero.secondary.href} data-cta="hero-secondary">
+        {hero.secondary.label}
+        <Icon name="arrow-right" class="btn__arrow" />
+      </a>
+    </div>
+
+    <button class="motion-toggle" type="button" data-motion-toggle hidden>
+      <span class="motion-toggle__icon motion-toggle__icon--pause"><Icon name="pause" /></span>
+      <span class="motion-toggle__icon motion-toggle__icon--play"><Icon name="play" /></span>
+      <span class="motion-toggle__text" data-label-pause={hero.pause} data-label-play={hero.play}>{hero.pause}</span>
+    </button>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    padding-top: calc(var(--header-h) + 1rem);
+    padding-bottom: 1rem;
+    background:
+      radial-gradient(120% 70% at 85% 10%, var(--color-mist-2) 0%, transparent 60%),
+      linear-gradient(180deg, var(--color-paper) 0%, var(--color-mist) 100%);
+  }
+
+  .hero__backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  .hero__ambient {
+    position: absolute;
+    display: none;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-chip);
+    background: rgb(255 255 255 / 0.55);
+    color: var(--color-brand-deep);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    opacity: 0.32;
+    filter: blur(2.5px);
+  }
+
+  .hero__canvas {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* 下端の光の帯が次のセクションとの境目でぷつりと切れないように溶かす */
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 9rem), transparent);
+    opacity: 0;
+    transition: opacity 1s var(--ease-out);
+  }
+
+  :global(.hero-live) .hero__canvas {
+    opacity: 1;
+  }
+
+  .hero__inner {
+    position: relative;
+    display: grid;
+    grid-template-areas: 'copy' 'stage' 'ctas' 'toggle';
+    row-gap: 1.25rem;
+  }
+
+  .hero__copy {
+    grid-area: copy;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero__eyebrow {
+    color: var(--color-brand);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .hero__title {
+    margin-top: 0.5rem;
+    display: grid;
+    gap: 0.1em;
+    line-height: 1.32;
+  }
+
+  .hero__title-line {
+    display: block;
+    font-size: clamp(1.375rem, 0.55rem + 4.1vw, 2.125rem);
+    text-shadow: 0 0 18px rgb(255 255 255 / 0.9);
+  }
+
+  .hero__title-line--accent {
+    font-size: clamp(1.75rem, 0.62rem + 5.6vw, 3rem);
+    line-height: 1.25;
+    text-shadow: none;
+    padding-bottom: 0.06em;
+  }
+
+  .hero__lead {
+    margin-top: 0.75rem;
+    max-width: 34rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    line-height: 1.8;
+  }
+
+  .hero__lead-line {
+    display: block;
+  }
+
+  /* 横顔の枠（スマホ・タブレット: 見出しの右上） */
+  .hero__stage {
+    grid-area: stage;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 横顔の枠: グリッドの領域を基準に絶対配置する（スマホ・タブレットは見出しの右上） */
+  .hero__head {
+    grid-area: copy;
+    position: absolute;
+    z-index: 0;
+    top: -0.75rem;
+    right: calc(-1 * var(--gutter));
+    width: min(48%, 14rem);
+    aspect-ratio: 100 / 120;
+    pointer-events: none;
+  }
+
+  .hero__fallback {
+    width: 100%;
+    height: 100%;
+    opacity: 0.5;
+    transition: opacity 0.8s var(--ease-out);
+  }
+
+  :global(.hero-live) .hero__fallback {
+    opacity: 0;
+  }
+
+  .hero__fallback-dot {
+    fill: var(--color-brand);
+  }
+  .hero__edge-a {
+    stop-color: var(--color-brand-bright);
+    stop-opacity: 0.9;
+  }
+  .hero__edge-b {
+    stop-color: var(--color-brand);
+    stop-opacity: 0.2;
+  }
+  .hero__fade-a {
+    stop-color: #fff;
+  }
+  .hero__fade-b {
+    stop-color: #000;
+  }
+
+  .hero__link {
+    display: none;
+  }
+
+  /* 悩みチップ（スマホ: 3列に詰めて並べる。文字の大きさは並びの幅に合わせて少しだけ変える） */
+  .chips {
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem 0.375rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  .chips__item {
+    display: grid;
+  }
+
+  .chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.375rem;
+    border-radius: 1.375rem;
+    background: rgb(255 255 255 / 0.92);
+    border: 1px solid rgb(189 208 236 / 0.8);
+    box-shadow: var(--shadow-chip);
+    color: var(--color-brand-deep);
+    font-size: clamp(0.625rem, 4.1cqi - 0.15rem, 0.75rem);
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out),
+      scale var(--duration-base) var(--ease-spring);
+
+    &:hover {
+      border-color: var(--color-brand);
+      scale: 1.04;
+    }
+
+    &:active {
+      scale: 0.96;
+    }
+  }
+
+  .chip.is-active,
+  .chip[aria-pressed='true'] {
+    background: var(--grad-brand);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 14px 30px -10px rgb(13 71 214 / 0.7);
+  }
+
+  .chip__label {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* タップしたときの波紋（JavaScript が .chip__ripple を足す） */
+  .chip :global(.chip__ripple) {
+    position: absolute;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.55);
+    pointer-events: none;
+    translate: -50% -50%;
+    scale: 0;
+    animation: chip-ripple 650ms var(--ease-out) forwards;
+  }
+
+  .chip,
+  .chip :global(.chip__ripple) {
+    overflow: hidden;
+  }
+
+  .hero__hint {
+    margin-top: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+  }
+
+  .hero__hint-arrow::before {
+    content: '↑';
+    color: var(--color-brand);
+    font-weight: 700;
+  }
+
+  /* この悩みに対応するサービス（スマホ: 横長のカード） */
+  .preview {
+    position: relative;
+    margin-top: 0.75rem;
+    border-radius: var(--radius-card);
+    background: rgb(255 255 255 / 0.94);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+
+  .preview::after {
+    /* 切り替えのときに走る光（JavaScript が .is-scanning を付ける） */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgb(61 134 255 / 0.18) 48%, rgb(69 196 255 / 0.28) 52%, transparent 70%);
+    translate: -110% 0;
+    pointer-events: none;
+  }
+
+  .preview:global(.is-scanning)::after {
+    animation: preview-scan 700ms var(--ease-out);
+  }
+
+  .preview__label {
+    position: absolute;
+    top: 0.625rem;
+    left: calc(38% + 0.875rem);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--color-brand);
+    font-size: 0.6875rem;
+    font-weight: 700;
+
+    &::before {
+      content: '';
+      width: 2px;
+      height: 0.9em;
+      background: var(--color-brand);
+    }
+  }
+
+  .preview__item {
+    display: grid;
+    grid-template-columns: 38% 1fr auto;
+    align-items: stretch;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .preview__item[hidden] {
+    display: none;
+  }
+
+  .preview__thumb {
+    display: block;
+    min-height: 7.25rem;
+    margin: 0.5rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .preview__main {
+    display: grid;
+    align-content: center;
+    gap: 0.25rem;
+    padding: 1.75rem 0.25rem 0.875rem 0.375rem;
+  }
+
+  .preview__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .preview__icon {
+    display: none;
+  }
+
+  .preview__name {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .preview__text {
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    line-height: 1.7;
+  }
+
+  .preview__more {
+    display: none;
+  }
+
+  .preview__chevron {
+    display: grid;
+    place-items: center;
+    padding-inline: 0.625rem 0.875rem;
+    color: var(--color-brand);
+
+    :global(svg) {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  .preview__item:hover .preview__chevron {
+    translate: 3px 0;
+    transition: translate var(--duration-base) var(--ease-out);
+  }
+
+  .preview__item:global(.is-entering) .preview__main,
+  .preview__item:global(.is-entering) .preview__thumb {
+    animation: preview-in 520ms var(--ease-out) both;
+  }
+
+  .preview__item:global(.is-entering) .preview__thumb {
+    animation-delay: 60ms;
+  }
+
+  .hero__ctas {
+    grid-area: ctas;
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 0.82fr 1.18fr;
+    gap: 0.625rem;
+
+    .btn {
+      padding-inline: 0.75rem;
+      gap: 0.4rem;
+      font-size: 0.8125rem;
+      min-height: 3.25rem;
+    }
+  }
+
+  .motion-toggle {
+    grid-area: toggle;
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    padding: 0.25rem 0.75rem;
+    border: 0;
+    border-radius: var(--radius-chip);
+    background: transparent;
+    color: var(--color-muted);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--color-brand-strong);
+    }
+
+    :global(svg) {
+      width: 0.95rem;
+      height: 0.95rem;
+    }
+  }
+
+  .motion-toggle[hidden] {
+    display: none;
+  }
+
+  .motion-toggle__icon--play,
+  .motion-toggle.is-stopped .motion-toggle__icon--pause {
+    display: none;
+  }
+
+  .motion-toggle.is-stopped .motion-toggle__icon--play {
+    display: inline-flex;
+  }
+
+  /* ふわふわ漂う動き（チップごとに周期をずらす） */
+  @media (prefers-reduced-motion: no-preference) {
+    .chips__item {
+      animation: chip-float 6s ease-in-out infinite alternate;
+    }
+    .chips__item--1 {
+      animation-duration: 7.2s;
+      animation-delay: -1.3s;
+    }
+    .chips__item--2 {
+      animation-duration: 5.4s;
+      animation-delay: -2.1s;
+    }
+    .chips__item--3 {
+      animation-duration: 6.8s;
+      animation-delay: -0.6s;
+    }
+    .chips__item--4 {
+      animation-duration: 7.6s;
+      animation-delay: -3.2s;
+    }
+    .chips__item--5 {
+      animation-duration: 5.9s;
+      animation-delay: -1.8s;
+    }
+    .chips__item--6 {
+      animation-duration: 6.4s;
+      animation-delay: -2.7s;
+    }
+    .chips__item--7 {
+      animation-duration: 7s;
+      animation-delay: -0.9s;
+    }
+    .chips__item--8 {
+      animation-duration: 5.6s;
+      animation-delay: -3.6s;
+    }
+
+    /* 選ばれているチップは漂うのをやめて、つながる線の起点になる */
+    .chips__item:has(.chip[aria-pressed='true']) {
+      animation-play-state: paused;
+    }
+
+    .hero__ambient {
+      animation: ambient-drift 14s ease-in-out infinite alternate;
+    }
+
+    /* 読み込み時の登場 */
+    .hero__eyebrow,
+    .hero__title-line,
+    .hero__lead,
+    .hero__ctas {
+      animation: hero-rise 1s var(--ease-out) both;
+    }
+    .hero__title-line {
+      animation-delay: 0.08s;
+    }
+    .hero__title-line--accent {
+      animation-delay: 0.2s;
+    }
+    .hero__lead {
+      animation-delay: 0.34s;
+    }
+    .hero__ctas {
+      animation-delay: 0.5s;
+    }
+    .chip {
+      animation: chip-pop 0.7s var(--ease-spring) both;
+      animation-delay: calc(0.45s + var(--chip-i, 0) * 70ms);
+    }
+    .preview {
+      animation: hero-rise 0.9s var(--ease-out) 0.7s both;
+    }
+  }
+
+  :global(.is-paused) .chips__item,
+  :global(.is-paused) .hero__ambient {
+    animation-play-state: paused;
+  }
+
+  .chips__item--1 .chip {
+    --chip-i: 1;
+  }
+  .chips__item--2 .chip {
+    --chip-i: 2;
+  }
+  .chips__item--3 .chip {
+    --chip-i: 3;
+  }
+  .chips__item--4 .chip {
+    --chip-i: 4;
+  }
+  .chips__item--5 .chip {
+    --chip-i: 5;
+  }
+  .chips__item--6 .chip {
+    --chip-i: 6;
+  }
+  .chips__item--7 .chip {
+    --chip-i: 7;
+  }
+  .chips__item--8 .chip {
+    --chip-i: 8;
+  }
+
+  /* タブレット */
+  @media (min-width: 48rem) {
+    .hero {
+      padding-top: calc(var(--header-h) + 2.5rem);
+      padding-bottom: 3rem;
+    }
+
+    .hero__head {
+      width: min(36%, 18rem);
+      top: -1.5rem;
+      right: 0;
+    }
+
+    .hero__lead {
+      font-size: 0.9375rem;
+    }
+
+    /* タブレット: 幅に余裕があるので、文字の長さなりに折り返して並べる */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 44rem;
+    }
+
+    .chip {
+      max-width: 11.5em;
+      font-size: 0.8125rem;
+      padding-inline: 0.95rem;
+    }
+
+    .preview {
+      max-width: 40rem;
+    }
+
+    .hero__ctas {
+      display: flex;
+      flex-wrap: wrap;
+
+      .btn {
+        padding-inline: 1.75rem;
+        font-size: 1rem;
+      }
+    }
+  }
+
+  /* PC（1200px以上）: 左に見出し、右に横顔とチップ、右端にカード */
+  @media (min-width: 75rem) {
+    .hero {
+      min-height: min(46rem, max(40rem, 100svh));
+      padding-top: calc(var(--header-h) + 2rem);
+      padding-bottom: 1.5rem;
+      display: grid;
+      align-items: center;
+    }
+
+    .hero__inner {
+      --wrap: 86rem;
+      grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+      grid-template-rows: auto auto auto;
+      grid-template-areas:
+        'copy stage'
+        'ctas stage'
+        'toggle stage';
+      column-gap: 1.5rem;
+      row-gap: 0;
+      align-content: center;
+    }
+
+    .hero__copy {
+      align-self: end;
+    }
+
+    .hero__eyebrow {
+      font-size: 0.875rem;
+    }
+
+    .hero__title-line {
+      font-size: clamp(1.75rem, 0.7rem + 1.45vw, 2.375rem);
+    }
+
+    .hero__title-line--accent {
+      font-size: clamp(2.25rem, 0.9rem + 2vw, 3.125rem);
+    }
+
+    .hero__lead {
+      margin-top: 1.25rem;
+      font-size: 0.9375rem;
+    }
+
+    .hero__ctas {
+      align-self: start;
+      margin-top: 2rem;
+      flex-wrap: nowrap;
+    }
+
+    .motion-toggle {
+      justify-self: start;
+      align-self: start;
+      margin-top: 1rem;
+      margin-left: -0.75rem;
+    }
+
+    .hero__stage {
+      --card-w: 15.5rem;
+      min-height: 34rem;
+    }
+
+    .hero__head {
+      grid-area: stage;
+      top: 5%;
+      right: auto;
+      left: 11%;
+      width: auto;
+      height: 95%;
+    }
+
+    .hero__fallback {
+      opacity: 0.55;
+    }
+
+    .hero__link {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .hero__link-path {
+      fill: none;
+      stroke: var(--color-brand);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+    }
+
+    .hero__link-glow {
+      fill: none;
+      stroke: var(--color-glow);
+      stroke-width: 6;
+      stroke-linecap: round;
+      opacity: 0.35;
+    }
+
+    .hero__link-dot {
+      fill: var(--color-brand);
+      stroke: #fff;
+      stroke-width: 2;
+    }
+
+    .chips {
+      display: block;
+      position: absolute;
+      inset: 0;
+      max-width: none;
+      z-index: 3;
+    }
+
+    .chips__item {
+      position: absolute;
+    }
+
+    .chip {
+      max-width: none;
+      font-size: 0.875rem;
+      padding: 0.5rem 1.05rem;
+    }
+
+    /* PCでは区切りごとに改行して、どのチップも2行のコンパクトな形にそろえる */
+    .chip__label :global(.nb) {
+      display: block;
+    }
+
+    .chips__item--0 {
+      left: 6%;
+      top: 7%;
+    }
+    .chips__item--1 {
+      left: 0%;
+      top: 23%;
+    }
+    .chips__item--2 {
+      left: 4%;
+      top: 40%;
+    }
+    .chips__item--3 {
+      left: 0%;
+      top: 56%;
+    }
+    .chips__item--4 {
+      left: 5%;
+      top: 74%;
+    }
+    /* 右側のチップは、カードの左端を基準に置く（カードと重ならない） */
+    .chips__item--5 {
+      right: calc(var(--card-w) + 2.25rem);
+      top: 6%;
+    }
+    .chips__item--6 {
+      right: calc(var(--card-w) + 1.25rem);
+      top: 23%;
+    }
+    .chips__item--7 {
+      right: calc(var(--card-w) + 2.75rem);
+      top: 39%;
+    }
+    .chips__item--8 {
+      right: calc(var(--card-w) + 1.5rem);
+      top: 56%;
+    }
+
+    .hero__hint {
+      position: absolute;
+      top: 1%;
+      right: 0;
+      margin: 0;
+      z-index: 3;
+    }
+
+    .hero__hint-arrow::before {
+      content: '↙';
+    }
+
+    .preview {
+      position: absolute;
+      z-index: 4;
+      right: 0;
+      top: 13%;
+      width: var(--card-w);
+      margin: 0;
+      max-width: none;
+    }
+
+    .preview__label {
+      position: static;
+      padding: 1.125rem 1.25rem 0;
+    }
+
+    .preview__item {
+      grid-template-columns: 1fr;
+    }
+
+    .preview__thumb {
+      order: 2;
+      min-height: 0;
+      aspect-ratio: 16 / 9;
+      margin: 0 1.25rem 1.25rem;
+    }
+
+    .preview__main {
+      padding: 0.75rem 1.25rem 1rem;
+      gap: 0.625rem;
+    }
+
+    .preview__icon {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      flex: none;
+      border-radius: 0.75rem;
+      background: var(--color-brand-tint);
+      color: var(--color-brand);
+
+      :global(svg) {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+
+    .preview__name {
+      font-size: 1.25rem;
+    }
+
+    .preview__text {
+      font-size: 0.8125rem;
+    }
+
+    .preview__more {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      width: fit-content;
+      color: var(--color-brand);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      border-bottom: 1px solid currentColor;
+
+      :global(.preview__more-arrow) {
+        width: 1rem;
+        height: 1rem;
+        transition: translate var(--duration-base) var(--ease-out);
+      }
+    }
+
+    .preview__item:hover :global(.preview__more-arrow) {
+      translate: 3px 0;
+    }
+
+    .preview__chevron {
+      display: none;
+    }
+
+    .hero__ambient {
+      display: block;
+    }
+    .hero__ambient--0 {
+      left: 36%;
+      top: 16%;
+    }
+    .hero__ambient--1 {
+      left: 57%;
+      top: 13%;
+    }
+    .hero__ambient--2 {
+      left: 80%;
+      top: 15%;
+    }
+    .hero__ambient--3 {
+      left: 41%;
+      top: 84%;
+    }
+    .hero__ambient--4 {
+      left: 66%;
+      top: 80%;
+    }
+    .hero__ambient--5 {
+      left: 88%;
+      top: 88%;
+    }
+    .hero__ambient--6 {
+      left: 33%;
+      top: 62%;
+    }
+    .hero__ambient--7 {
+      left: 74%;
+      top: 66%;
+    }
+  }
+
+  /* PCの中でも幅が狭め（1200〜1439px）のときは、チップとカードを少し小さくして重なりを防ぐ */
+  @media (min-width: 75rem) and (max-width: 89.99rem) {
+    .hero__inner {
+      --card-w: 14rem;
+    }
+
+    .chip {
+      font-size: 0.8125rem;
+      padding: 0.45rem 0.85rem;
+    }
+
+    .chips__item--5 {
+      right: calc(var(--card-w) + 1.5rem);
+    }
+    .chips__item--6 {
+      right: calc(var(--card-w) + 0.75rem);
+    }
+    .chips__item--7 {
+      right: calc(var(--card-w) + 1.75rem);
+    }
+    .chips__item--8 {
+      right: calc(var(--card-w) + 1rem);
+    }
+  }
+
+  @keyframes chip-float {
+    0% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 3px -7px;
+    }
+    100% {
+      translate: -2px 5px;
+    }
+  }
+
+  @keyframes ambient-drift {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 24px -10px;
+    }
+  }
+
+  @keyframes chip-ripple {
+    to {
+      scale: 1;
+      opacity: 0;
+    }
+  }
+
+  @keyframes chip-pop {
+    from {
+      opacity: 0;
+      scale: 0.7;
+      filter: blur(4px);
+    }
+  }
+
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      translate: 0 1.25rem;
+      filter: blur(8px);
+    }
+  }
+
+  @keyframes preview-scan {
+    from {
+      translate: -110% 0;
+    }
+    to {
+      translate: 110% 0;
+    }
+  }
+
+  @keyframes preview-in {
+    from {
+      opacity: 0;
+      translate: 0 0.5rem;
+      filter: blur(6px);
+    }
+  }
+</style>
