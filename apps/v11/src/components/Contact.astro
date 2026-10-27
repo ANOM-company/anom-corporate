@@ -315,14 +315,14 @@ const f = contact.fields;
       background-color var(--duration-base) var(--ease-out);
 
     &::placeholder {
-      color: #7d8aa0;
+      color: var(--color-placeholder);
     }
 
     &:focus {
       outline: none;
       border-color: var(--color-brand);
       background: var(--color-paper);
-      box-shadow: 0 0 0 4px rgb(61 134 255 / 0.22);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-bright) 22%, transparent);
     }
 
     &:user-invalid {

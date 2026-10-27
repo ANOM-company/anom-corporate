@@ -224,7 +224,7 @@ const { services } = Astro.props;
       position: absolute;
       inset: 0;
       z-index: -1;
-      background: radial-gradient(22rem circle at var(--mx) var(--my), rgb(61 134 255 / 0.1), transparent 60%);
+      background: radial-gradient(22rem circle at var(--mx) var(--my), color-mix(in srgb, var(--color-brand-bright) 10%, transparent), transparent 60%);
       opacity: 0;
       transition: opacity var(--duration-base) var(--ease-out);
     }
@@ -242,7 +242,7 @@ const { services } = Astro.props;
   /* ファーストビューのカードから移動してきたとき */
   .svc:target {
     border-color: var(--color-brand);
-    box-shadow: var(--shadow-lift), 0 0 0 3px rgb(26 92 240 / 0.18);
+    box-shadow: var(--shadow-lift), 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent);
 
     @media (prefers-reduced-motion: no-preference) {
       animation: svc-target 1.6s var(--ease-out) 2;
@@ -295,7 +295,7 @@ const { services } = Astro.props;
       height: 1.875rem;
       border-radius: 50%;
       background: var(--grad-brand);
-      box-shadow: 0 6px 14px -6px rgb(13 71 214 / 0.7);
+      box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--color-brand-strong) 70%, transparent);
       transition: scale var(--duration-base) var(--ease-spring);
     }
 
@@ -527,10 +527,10 @@ const { services } = Astro.props;
   @keyframes svc-target {
     0%,
     100% {
-      box-shadow: var(--shadow-card), 0 0 0 0 rgb(26 92 240 / 0.45);
+      box-shadow: var(--shadow-card), 0 0 0 0 color-mix(in srgb, var(--color-brand) 45%, transparent);
     }
     50% {
-      box-shadow: var(--shadow-lift), 0 0 0 8px rgb(26 92 240 / 0);
+      box-shadow: var(--shadow-lift), 0 0 0 8px color-mix(in srgb, var(--color-brand) 0%, transparent);
     }
   }
 

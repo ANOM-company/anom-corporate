@@ -13,28 +13,32 @@
 @import './fonts.css';
 @import './serif-font.css';
 
-/* 2. デザイントークン（デザイン画像の配色: 白〜淡い青の地、鮮やかな青、紺の文字） */
+/* 2. デザイントークン
+ * 配色はオーナー指定の4色: BASE #FFFFFF（地）／MAIN #18181B（文字・濃い面）／SUB #52525B（補足の文字）／ACCENT #2563EB（強調・ボタン）
+ * 線・淡い地は MAIN と同じ無彩色（zinc）の薄い段階、青の濃淡は ACCENT と同じ青（blue）の段階から取る
+ */
 @theme {
-  --color-ink: #0b1b36;
-  --color-ink-soft: #2c3d5a;
-  --color-muted: #5b6b85;
-  --color-line: #dce6f4;
-  --color-line-strong: #bdd0ec;
+  --color-ink: #18181b;
+  --color-ink-soft: #3f3f46;
+  --color-muted: #52525b;
+  --color-placeholder: #71717a;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
   --color-paper: #ffffff;
-  --color-mist: #f4f8fe;
-  --color-mist-2: #e8f0fc;
-  --color-brand: #1a5cf0;
-  --color-brand-strong: #0d47d6;
-  --color-brand-deep: #0a2f8f;
-  --color-brand-bright: #3d86ff;
-  --color-brand-soft: #e3ecff;
-  --color-brand-tint: #f0f5ff;
-  --color-glow: #8fbaff;
-  --color-cyan: #45c4ff;
-  --color-night: #0a1426;
-  --color-night-2: #13223f;
-  --color-on-night: #eef3fc;
-  --color-on-night-soft: #b7c4dc;
+  --color-mist: #fafafa;
+  --color-mist-2: #f4f4f5;
+  --color-brand: #2563eb;
+  --color-brand-strong: #1d4ed8;
+  --color-brand-deep: #1e3a8a;
+  --color-brand-bright: #3b82f6;
+  --color-brand-soft: #dbeafe;
+  --color-brand-tint: #eff6ff;
+  --color-glow: #93c5fd;
+  --color-sky: #60a5fa;
+  --color-night: #18181b;
+  --color-night-2: #27272a;
+  --color-on-night: #fafafa;
+  --color-on-night-soft: #a1a1aa;
   --color-danger: #c22e3b;
   --color-danger-soft: #fdecee;
   --color-success: #11784a;
@@ -49,10 +53,10 @@
   --radius-card: 1.125rem;
   --radius-panel: 1.5rem;
 
-  --shadow-card: 0 18px 40px -22px rgb(26 92 240 / 0.35), 0 2px 8px rgb(11 27 54 / 0.05);
-  --shadow-lift: 0 26px 60px -24px rgb(26 92 240 / 0.45), 0 4px 14px rgb(11 27 54 / 0.08);
-  --shadow-chip: 0 8px 22px -10px rgb(26 92 240 / 0.38), 0 1px 3px rgb(11 27 54 / 0.06);
-  --shadow-cta: 0 14px 30px -12px rgb(13 71 214 / 0.65);
+  --shadow-card: 0 18px 40px -22px color-mix(in srgb, var(--color-brand) 35%, transparent), 0 2px 8px color-mix(in srgb, var(--color-ink) 5%, transparent);
+  --shadow-lift: 0 26px 60px -24px color-mix(in srgb, var(--color-brand) 45%, transparent), 0 4px 14px color-mix(in srgb, var(--color-ink) 8%, transparent);
+  --shadow-chip: 0 8px 22px -10px color-mix(in srgb, var(--color-brand) 38%, transparent), 0 1px 3px color-mix(in srgb, var(--color-ink) 6%, transparent);
+  --shadow-cta: 0 14px 30px -12px color-mix(in srgb, var(--color-brand-strong) 65%, transparent);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -249,7 +253,7 @@
     }
 
     &:hover {
-      box-shadow: 0 18px 36px -12px rgb(13 71 214 / 0.75);
+      box-shadow: 0 18px 36px -12px color-mix(in srgb, var(--color-brand-strong) 75%, transparent);
     }
 
     @media (forced-colors: active) {
@@ -270,10 +274,10 @@
   .btn--night {
     color: var(--color-on-night);
     background: transparent;
-    border: 1.5px solid rgb(238 243 252 / 0.7);
+    border: 1.5px solid color-mix(in srgb, var(--color-on-night) 70%, transparent);
 
     &:hover {
-      background: rgb(238 243 252 / 0.1);
+      background: color-mix(in srgb, var(--color-on-night) 10%, transparent);
     }
   }
 

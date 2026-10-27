@@ -167,8 +167,9 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
     height: 100%;
   }
 
+  /* 地は MAIN の濃い無彩色、光と線を ACCENT の青で */
   .sv-stop-a {
-    stop-color: var(--color-brand-deep);
+    stop-color: var(--color-night-2);
   }
   .sv-stop-b {
     stop-color: var(--color-night);
@@ -193,11 +194,11 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
 
   /* AI導入支援 */
   .sv-edge {
-    stroke: rgb(143 186 255 / 0.35);
+    stroke: color-mix(in srgb, var(--color-glow) 35%, transparent);
     stroke-width: 1;
   }
   .sv-pulse {
-    stroke: var(--color-cyan);
+    stroke: var(--color-sky);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-dasharray: 10 90;
@@ -206,7 +207,7 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
   }
   .sv-node {
     fill: #fff;
-    stroke: var(--color-cyan);
+    stroke: var(--color-sky);
     stroke-width: 1.5;
     transform-box: fill-box;
     transform-origin: center;
@@ -214,14 +215,14 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
 
   /* 業務自動化 */
   .sv-gear path {
-    fill: rgb(143 186 255 / 0.18);
-    stroke: rgb(214 230 255 / 0.9);
+    fill: color-mix(in srgb, var(--color-glow) 18%, transparent);
+    stroke: color-mix(in srgb, var(--color-brand-soft) 90%, transparent);
     stroke-width: 1.4;
     stroke-linejoin: round;
   }
   .sv-gear-hole {
     fill: var(--color-brand-deep);
-    stroke: var(--color-cyan);
+    stroke: var(--color-sky);
     stroke-width: 1.4;
   }
   .sv-gear {
@@ -229,11 +230,11 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
     transform-origin: center;
   }
   .sv-belt {
-    stroke: rgb(214 230 255 / 0.45);
+    stroke: color-mix(in srgb, var(--color-brand-soft) 45%, transparent);
     stroke-width: 2;
   }
   .sv-belt-flow {
-    stroke: var(--color-cyan);
+    stroke: var(--color-sky);
     stroke-width: 2;
     stroke-dasharray: 6 6;
     opacity: 0.8;
@@ -264,23 +265,23 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
 
   /* Web / DX設計 */
   .sv-window {
-    fill: rgb(10 20 38 / 0.55);
-    stroke: rgb(214 230 255 / 0.85);
+    fill: color-mix(in srgb, var(--color-night) 55%, transparent);
+    stroke: color-mix(in srgb, var(--color-brand-soft) 85%, transparent);
     stroke-width: 1.4;
   }
   .sv-window-bar {
-    stroke: rgb(214 230 255 / 0.5);
+    stroke: color-mix(in srgb, var(--color-brand-soft) 50%, transparent);
   }
   .sv-dot {
-    fill: rgb(214 230 255 / 0.7);
+    fill: color-mix(in srgb, var(--color-brand-soft) 70%, transparent);
   }
   .sv-block {
-    fill: rgb(143 186 255 / 0.55);
+    fill: color-mix(in srgb, var(--color-glow) 55%, transparent);
     transform-box: fill-box;
     transform-origin: left center;
   }
   .sv-block--hero {
-    fill: var(--color-cyan);
+    fill: var(--color-sky);
     opacity: 0.85;
   }
   .sv-cursor {
@@ -330,7 +331,7 @@ const point = (i: number): readonly [number, number] => nodes[i] as readonly [nu
     stroke-linejoin: round;
   }
   .sv-route {
-    stroke: var(--color-cyan);
+    stroke: var(--color-sky);
     stroke-width: 2;
     stroke-dasharray: 30 70;
     stroke-linecap: round;

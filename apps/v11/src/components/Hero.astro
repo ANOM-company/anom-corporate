@@ -364,7 +364,7 @@ const serviceIcon: Record<ServiceId, IconName> = {
     padding: 0.35rem 0.375rem;
     border-radius: 1.375rem;
     background: rgb(255 255 255 / 0.92);
-    border: 1px solid rgb(189 208 236 / 0.8);
+    border: 1px solid color-mix(in srgb, var(--color-line-strong) 80%, transparent);
     box-shadow: var(--shadow-chip);
     color: var(--color-brand-deep);
     font-size: clamp(0.625rem, 4.1cqi - 0.15rem, 0.75rem);
@@ -397,7 +397,7 @@ const serviceIcon: Record<ServiceId, IconName> = {
     background: var(--grad-brand);
     border-color: transparent;
     color: #fff;
-    box-shadow: 0 14px 30px -10px rgb(13 71 214 / 0.7);
+    box-shadow: 0 14px 30px -10px color-mix(in srgb, var(--color-brand-strong) 70%, transparent);
   }
 
   .chip__label {
@@ -454,7 +454,7 @@ const serviceIcon: Record<ServiceId, IconName> = {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(100deg, transparent 30%, rgb(61 134 255 / 0.18) 48%, rgb(69 196 255 / 0.28) 52%, transparent 70%);
+    background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--color-brand-bright) 18%, transparent) 48%, color-mix(in srgb, var(--color-sky) 28%, transparent) 52%, transparent 70%);
     translate: -110% 0;
     pointer-events: none;
   }

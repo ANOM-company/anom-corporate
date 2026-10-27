@@ -80,6 +80,23 @@ test('ロゴの画像と社名の表記（株式会社ANOM）', async ({ page, r
   }
 });
 
+test('配色はオーナー指定の4色（BASE・MAIN・SUB・ACCENT）', async ({ page }) => {
+  await page.goto('/');
+  const tokens = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    const read = (name: string) => style.getPropertyValue(`--color-${name}`).trim().toLowerCase();
+    return { base: read('paper'), main: read('ink'), sub: read('muted'), accent: read('brand') };
+  });
+  // ビルドで #ffffff が #fff に縮められることがある
+  expect(['#ffffff', '#fff']).toContain(tokens.base);
+  expect(tokens.main).toBe('#18181b');
+  expect(tokens.sub).toBe('#52525b');
+  expect(tokens.accent).toBe('#2563eb');
+  // 本文の地と文字の色
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(page.locator('body')).toHaveCSS('color', 'rgb(24, 24, 27)');
+});
+
 test.describe('404', () => {
   test.use({ allowNotFoundDocument: true });
 

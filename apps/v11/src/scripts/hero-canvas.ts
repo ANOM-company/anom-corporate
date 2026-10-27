@@ -58,6 +58,15 @@ const RIBBONS: Ribbon[] = [
 const easeOut = (t: number): number => 1 - Math.pow(1 - t, 3);
 const rand = (min: number, max: number): number => min + Math.random() * (max - min);
 
+/** global.css の @theme の色を「r, g, b」の形で読む（配色を変えると canvas の色も変わる）。読めないときは既定値 */
+function themeRgb(name: string, fallback: string): string {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(`--color-${name}`).trim();
+  let hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value.slice(1) : fallback.slice(1);
+  if (hex.length === 3) hex = [...hex].map((c) => c + c).join('');
+  const n = parseInt(hex, 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+}
+
 export function initHeroCanvas(): void {
   const hero = document.querySelector<HTMLElement>('[data-hero]');
   const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-canvas]');
@@ -84,6 +93,14 @@ export function initHeroCanvas(): void {
   let compact = false;
   const pointer = { x: -9999, y: -9999 };
   const tilt = { x: 0, y: 0, tx: 0, ty: 0 };
+
+  const color = {
+    brand: themeRgb('brand', '#2563eb'),
+    bright: themeRgb('brand-bright', '#3b82f6'),
+    deep: themeRgb('brand-deep', '#1e3a8a'),
+    glow: themeRgb('glow', '#93c5fd'),
+    sky: themeRgb('sky', '#60a5fa'),
+  };
 
   const toCanvas = (nx: number, ny: number): [number, number] => [originX + nx * scale, originY + ny * scale];
 
@@ -200,10 +217,10 @@ export function initHeroCanvas(): void {
         bottom.push([x + tilt.x * -0.4, y + thick]);
       }
       const gradient = ctx!.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, 'rgba(143, 186, 255, 0)');
-      gradient.addColorStop(0.35, `rgba(143, 186, 255, ${ribbon.alpha * 0.55 * fade})`);
-      gradient.addColorStop(0.7, `rgba(120, 170, 255, ${ribbon.alpha * fade})`);
-      gradient.addColorStop(1, 'rgba(143, 186, 255, 0)');
+      gradient.addColorStop(0, `rgba(${color.glow}, 0)`);
+      gradient.addColorStop(0.35, `rgba(${color.glow}, ${ribbon.alpha * 0.55 * fade})`);
+      gradient.addColorStop(0.7, `rgba(${color.sky}, ${ribbon.alpha * fade})`);
+      gradient.addColorStop(1, `rgba(${color.glow}, 0)`);
       ctx!.beginPath();
       ctx!.moveTo(top[0]![0], top[0]![1]);
       for (const [x, y] of top) ctx!.lineTo(x, y);
@@ -240,9 +257,9 @@ export function initHeroCanvas(): void {
     const pulse = animate ? 0.5 + 0.5 * Math.sin(t * 1.6) : 0.6;
     const glowR = scale * (22 + pulse * 6);
     const glow = ctx!.createRadialGradient(bx, by, 0, bx, by, glowR);
-    glow.addColorStop(0, `rgba(69, 196, 255, ${0.42 * intro})`);
-    glow.addColorStop(0.45, `rgba(61, 134, 255, ${0.16 * intro})`);
-    glow.addColorStop(1, 'rgba(61, 134, 255, 0)');
+    glow.addColorStop(0, `rgba(${color.sky}, ${0.42 * intro})`);
+    glow.addColorStop(0.45, `rgba(${color.bright}, ${0.16 * intro})`);
+    glow.addColorStop(1, `rgba(${color.bright}, 0)`);
     ctx!.fillStyle = glow;
     ctx!.beginPath();
     ctx!.arc(bx, by, glowR, 0, Math.PI * 2);
@@ -290,13 +307,13 @@ export function initHeroCanvas(): void {
     ctx!.lineWidth = 0.7;
     const linkAlpha = [0.1, 0.18, 0.28];
     buckets.forEach((path, i) => {
-      ctx!.strokeStyle = `rgba(26, 92, 240, ${linkAlpha[i]! * intro})`;
+      ctx!.strokeStyle = `rgba(${color.brand}, ${linkAlpha[i]! * intro})`;
       ctx!.stroke(path);
     });
 
     // 輪郭
     const edgeAlpha = animate ? Math.max(0, (now - introStart - 700) / 1200) : 1;
-    ctx!.strokeStyle = `rgba(26, 92, 240, ${0.38 * Math.min(1, edgeAlpha)})`;
+    ctx!.strokeStyle = `rgba(${color.brand}, ${0.38 * Math.min(1, edgeAlpha)})`;
     ctx!.lineWidth = 1.1;
     ctx!.stroke(outline);
 
@@ -316,7 +333,7 @@ export function initHeroCanvas(): void {
       const b = particles[spark.b];
       if (!a || !b) continue;
       const life = (now - spark.born) / 700;
-      ctx!.strokeStyle = `rgba(69, 196, 255, ${0.75 * (1 - life)})`;
+      ctx!.strokeStyle = `rgba(${color.sky}, ${0.75 * (1 - life)})`;
       ctx!.lineWidth = 1.4;
       ctx!.beginPath();
       ctx!.moveTo(a.x, a.y);
@@ -329,8 +346,8 @@ export function initHeroCanvas(): void {
       const k = animate ? Math.min(1, Math.max(0, (now - introStart - p.delay) / 600)) : 1;
       const twinkle = animate ? 0.6 + 0.4 * Math.sin(t * 2 * p.speed + p.phase) : 0.85;
       ctx!.fillStyle = p.brain
-        ? `rgba(69, 196, 255, ${twinkle * k})`
-        : `rgba(26, 92, 240, ${(p.edge ? 0.75 : 0.55) * twinkle * k})`;
+        ? `rgba(${color.sky}, ${twinkle * k})`
+        : `rgba(${color.brand}, ${(p.edge ? 0.75 : 0.55) * twinkle * k})`;
       ctx!.beginPath();
       ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx!.fill();
@@ -338,7 +355,7 @@ export function initHeroCanvas(): void {
 
     // 目の光
     const [ex, ey] = toCanvas(EYE[0], EYE[1]);
-    ctx!.fillStyle = `rgba(10, 47, 143, ${0.8 * intro})`;
+    ctx!.fillStyle = `rgba(${color.deep}, ${0.8 * intro})`;
     ctx!.beginPath();
     ctx!.arc(ex, ey, Math.max(1.6, scale * 0.65), 0, Math.PI * 2);
     ctx!.fill();
@@ -378,7 +395,7 @@ export function initHeroCanvas(): void {
           const x = v * v * th.x0 + 2 * v * u * th.cx + u * u * th.x1 + tilt.x * v;
           const y = v * v * th.y0 + 2 * v * u * th.cy + u * u * th.y1 + tilt.y * v;
           const alpha = (1 - k / 7) * Math.sin(Math.PI * Math.min(1, life * 1.05)) * (th.bright ? 1 : 0.7);
-          ctx!.fillStyle = th.bright ? `rgba(26, 92, 240, ${alpha})` : `rgba(61, 134, 255, ${alpha})`;
+          ctx!.fillStyle = th.bright ? `rgba(${color.brand}, ${alpha})` : `rgba(${color.bright}, ${alpha})`;
           ctx!.beginPath();
           ctx!.arc(x, y, (th.bright ? 3 : 2.2) * (1 - k * 0.1), 0, Math.PI * 2);
           ctx!.fill();

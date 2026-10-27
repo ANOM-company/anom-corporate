@@ -96,7 +96,7 @@ const { nav } = Astro.props;
 
   .header:global(.is-scrolled) {
     background: rgb(255 255 255 / 0.86);
-    box-shadow: 0 1px 0 var(--color-line), 0 10px 30px -20px rgb(11 27 54 / 0.25);
+    box-shadow: 0 1px 0 var(--color-line), 0 10px 30px -20px color-mix(in srgb, var(--color-ink) 25%, transparent);
     backdrop-filter: blur(14px) saturate(1.4);
   }
 
@@ -243,7 +243,7 @@ const { nav } = Astro.props;
     border: 0;
     background: var(--color-paper);
     color: var(--color-ink);
-    box-shadow: -20px 0 60px -30px rgb(11 27 54 / 0.5);
+    box-shadow: -20px 0 60px -30px color-mix(in srgb, var(--color-ink) 50%, transparent);
     translate: 100% 0;
     transition:
       translate 380ms var(--ease-out),
@@ -266,7 +266,7 @@ const { nav } = Astro.props;
   }
 
   .menu::backdrop {
-    background: rgb(10 20 38 / 0.45);
+    background: color-mix(in srgb, var(--color-night) 45%, transparent);
     backdrop-filter: blur(3px);
     overflow: hidden;
     overscroll-behavior: contain;

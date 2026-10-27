@@ -132,7 +132,7 @@ const { solution } = Astro.props;
     height: 4rem;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #fff 0%, var(--color-brand-tint) 70%);
-    box-shadow: 0 10px 24px -12px rgb(26 92 240 / 0.5), inset 0 0 0 1px var(--color-line);
+    box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--color-brand) 50%, transparent), inset 0 0 0 1px var(--color-line);
     color: var(--color-brand);
 
     :global(svg) {
@@ -146,7 +146,7 @@ const { solution } = Astro.props;
     position: absolute;
     inset: -6px;
     border-radius: 50%;
-    border: 1.5px dashed rgb(26 92 240 / 0.35);
+    border: 1.5px dashed color-mix(in srgb, var(--color-brand) 35%, transparent);
   }
 
   .step__body {
@@ -259,7 +259,7 @@ const { solution } = Astro.props;
       height: 2px;
       overflow: hidden;
       border-radius: 2px;
-      background: rgb(26 92 240 / 0.15);
+      background: color-mix(in srgb, var(--color-brand) 15%, transparent);
 
       &::after {
         content: '';
