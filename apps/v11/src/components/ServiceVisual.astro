@@ -1,0 +1,608 @@
+---
+// サービスごとの動くイラスト（写真の代わり）。SVG と CSS アニメーションだけで描く。
+// - 同じサービスの絵をページ内で複数回使うため、グラデーションの id に uid を付けて重複を避ける
+// - 写真に差し替えるときは、この部品の代わりに <img> を置けば同じ枠に収まる
+// - 動きを減らす設定・一時停止中・画面外では止まる（静止した完成形を表示）
+import type { ServiceId } from '../data/site';
+
+interface Props {
+  service: ServiceId;
+  uid: string;
+  class?: string;
+}
+
+const { service, uid, class: className } = Astro.props;
+const id = (name: string): string => `${name}-${uid}`;
+
+/** 歯車の輪郭（中心・外半径・内半径・歯の数） */
+function gear(cx: number, cy: number, ro: number, ri: number, teeth: number): string {
+  const step = (Math.PI * 2) / teeth;
+  const pts: string[] = [];
+  for (let i = 0; i < teeth; i += 1) {
+    const a = i * step;
+    const corners = [
+      [ri, a],
+      [ro, a + step * 0.18],
+      [ro, a + step * 0.5],
+      [ri, a + step * 0.68],
+    ] as const;
+    for (const [r, t] of corners) {
+      pts.push(`${(cx + r * Math.cos(t)).toFixed(2)} ${(cy + r * Math.sin(t)).toFixed(2)}`);
+    }
+  }
+  return `M${pts.join(' L')} Z`;
+}
+
+// AI導入支援: ネットワークの点と線
+const nodes = [
+  [160, 54], [124, 68], [196, 66], [98, 98], [142, 96], [180, 100], [222, 96],
+  [112, 132], [154, 128], [200, 132], [134, 158], [178, 156], [86, 70], [236, 128],
+] as const;
+const edges = [
+  [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [4, 8], [5, 8], [5, 9], [6, 9],
+  [7, 10], [8, 10], [8, 11], [9, 11], [4, 5], [3, 12], [12, 1], [6, 13], [9, 13], [0, 4],
+] as const;
+const point = (i: number): readonly [number, number] => nodes[i] as readonly [number, number];
+---
+
+<svg
+  class:list={['svc-visual', `svc-visual--${service}`, className]}
+  viewBox="0 0 320 200"
+  preserveAspectRatio="xMidYMid slice"
+  aria-hidden="true"
+  focusable="false"
+  data-visual
+>
+  <defs>
+    <linearGradient id={id('bg')} x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" class="sv-stop-a"></stop>
+      <stop offset="1" class="sv-stop-b"></stop>
+    </linearGradient>
+    <radialGradient id={id('glow')} cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" class="sv-glow-a"></stop>
+      <stop offset="1" class="sv-glow-b"></stop>
+    </radialGradient>
+    <pattern id={id('grid')} width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.9" class="sv-grid-dot"></circle>
+    </pattern>
+  </defs>
+  <rect width="320" height="200" fill={`url(#${id('bg')})`}></rect>
+  <rect width="320" height="200" fill={`url(#${id('grid')})`}></rect>
+
+  {
+    service === 'ai' && (
+      <g class="sv-ai">
+        <circle class="sv-core" cx="160" cy="104" r="78" fill={`url(#${id('glow')})`} />
+        {edges.map(([a, b], i) => {
+          const [x1, y1] = point(a);
+          const [x2, y2] = point(b);
+          return (
+            <>
+              <line class="sv-edge" x1={x1} y1={y1} x2={x2} y2={y2} />
+              <line class={`sv-pulse sv-d${i % 6}`} x1={x1} y1={y1} x2={x2} y2={y2} pathLength="100" />
+            </>
+          );
+        })}
+        {nodes.map(([x, y], i) => (
+          <circle class={`sv-node sv-d${i % 6}`} cx={x} cy={y} r={i === 0 || i === 8 ? 4.5 : 3.2} />
+        ))}
+      </g>
+    )
+  }
+
+  {
+    service === 'automation' && (
+      <g class="sv-auto">
+        <circle class="sv-core" cx="132" cy="90" r="80" fill={`url(#${id('glow')})`} />
+        <g class="sv-gear sv-gear--a">
+          <path d={gear(122, 86, 46, 37, 12)} />
+          <circle cx="122" cy="86" r="14" class="sv-gear-hole" />
+        </g>
+        <g class="sv-gear sv-gear--b">
+          <path d={gear(190, 62, 28, 22, 9)} />
+          <circle cx="190" cy="62" r="8" class="sv-gear-hole" />
+        </g>
+        <line class="sv-belt" x1="24" y1="162" x2="296" y2="162" />
+        <line class="sv-belt-flow" x1="24" y1="162" x2="296" y2="162" pathLength="100" />
+        {[0, 1, 2].map((i) => (
+          <g class={`sv-doc sv-doc--${i}`}>
+            <rect x="0" y="134" width="30" height="22" rx="3" />
+            <path d="M6 141h18M6 147h12" class="sv-doc-line" />
+            <path d="M20 146l3 3 6-7" class="sv-doc-check" />
+          </g>
+        ))}
+      </g>
+    )
+  }
+
+  {
+    service === 'web-dx' && (
+      <g class="sv-web">
+        <circle class="sv-core" cx="200" cy="80" r="90" fill={`url(#${id('glow')})`} />
+        <rect class="sv-window" x="58" y="34" width="204" height="138" rx="10" />
+        <line class="sv-window-bar" x1="58" y1="54" x2="262" y2="54" />
+        <circle class="sv-dot" cx="72" cy="44" r="3" />
+        <circle class="sv-dot" cx="82" cy="44" r="3" />
+        <circle class="sv-dot" cx="92" cy="44" r="3" />
+        <rect class="sv-block sv-b0" x="72" y="66" width="112" height="12" rx="3" />
+        <rect class="sv-block sv-b1" x="72" y="84" width="76" height="8" rx="2" />
+        <rect class="sv-block sv-b2 sv-block--hero" x="196" y="64" width="54" height="40" rx="5" />
+        <rect class="sv-block sv-b3" x="72" y="114" width="54" height="44" rx="5" />
+        <rect class="sv-block sv-b4" x="134" y="114" width="54" height="44" rx="5" />
+        <rect class="sv-block sv-b5" x="196" y="114" width="54" height="44" rx="5" />
+        <path class="sv-cursor" d="M0 0l0 14 4-3.5 3 6.5 2.6-1.2-3-6.3 5.4-.4Z" />
+      </g>
+    )
+  }
+
+  {
+    service === 'inquiry' && (
+      <g class="sv-inq">
+        <circle class="sv-core" cx="160" cy="100" r="86" fill={`url(#${id('glow')})`} />
+        <g class="sv-bubble sv-bubble--q">
+          <path d="M44 46h112a10 10 0 0 1 10 10v22a10 10 0 0 1-10 10H70l-14 11v-11h-12a10 10 0 0 1-10-10V56a10 10 0 0 1 10-10Z" />
+          <path class="sv-bubble-line" d="M50 61h84M50 72h56" />
+        </g>
+        <g class="sv-typing">
+          <circle cx="232" cy="88" r="4" />
+          <circle cx="246" cy="88" r="4" />
+          <circle cx="260" cy="88" r="4" />
+        </g>
+        <g class="sv-bubble sv-bubble--a">
+          <path d="M276 104H160a10 10 0 0 0-10 10v24a10 10 0 0 0 10 10h88l14 11v-11h14a10 10 0 0 0 10-10v-24a10 10 0 0 0-10-10Z" />
+          <path class="sv-bubble-line" d="M166 119h92M166 131h64" />
+          <circle class="sv-check-ring" cx="266" cy="133" r="8" />
+          <path class="sv-check" d="M262 133l3 3 5-6" />
+        </g>
+        <line class="sv-route" x1="40" y1="176" x2="280" y2="176" pathLength="100" />
+      </g>
+    )
+  }
+</svg>
+
+<style>
+  .svc-visual {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 地は MAIN の濃い無彩色、光と線を ACCENT の青で */
+  .sv-stop-a {
+    stop-color: var(--color-night-2);
+  }
+  .sv-stop-b {
+    stop-color: var(--color-night);
+  }
+  .sv-glow-a {
+    stop-color: var(--color-brand-bright);
+    stop-opacity: 0.55;
+  }
+  .sv-glow-b {
+    stop-color: var(--color-brand-bright);
+    stop-opacity: 0;
+  }
+  .sv-grid-dot {
+    fill: rgb(255 255 255 / 0.12);
+  }
+
+  /* 共通: 中心の光がゆっくり脈打つ */
+  .sv-core {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* AI導入支援 */
+  .sv-edge {
+    stroke: color-mix(in srgb, var(--color-glow) 35%, transparent);
+    stroke-width: 1;
+  }
+  .sv-pulse {
+    stroke: var(--color-sky);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 10 90;
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  .sv-node {
+    fill: #fff;
+    stroke: var(--color-sky);
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* 業務自動化 */
+  .sv-gear path {
+    fill: color-mix(in srgb, var(--color-glow) 18%, transparent);
+    stroke: color-mix(in srgb, var(--color-brand-soft) 90%, transparent);
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+  }
+  .sv-gear-hole {
+    fill: var(--color-brand-deep);
+    stroke: var(--color-sky);
+    stroke-width: 1.4;
+  }
+  .sv-gear {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .sv-belt {
+    stroke: color-mix(in srgb, var(--color-brand-soft) 45%, transparent);
+    stroke-width: 2;
+  }
+  .sv-belt-flow {
+    stroke: var(--color-sky);
+    stroke-width: 2;
+    stroke-dasharray: 6 6;
+    opacity: 0.8;
+  }
+  .sv-doc rect {
+    fill: #fff;
+  }
+  .sv-doc-line {
+    stroke: var(--color-brand);
+    stroke-width: 1.6;
+  }
+  .sv-doc-check {
+    fill: none;
+    stroke: var(--color-success);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .sv-doc--0 {
+    translate: 40px 0;
+  }
+  .sv-doc--1 {
+    translate: 140px 0;
+  }
+  .sv-doc--2 {
+    translate: 240px 0;
+  }
+
+  /* Web / DX設計 */
+  .sv-window {
+    fill: color-mix(in srgb, var(--color-night) 55%, transparent);
+    stroke: color-mix(in srgb, var(--color-brand-soft) 85%, transparent);
+    stroke-width: 1.4;
+  }
+  .sv-window-bar {
+    stroke: color-mix(in srgb, var(--color-brand-soft) 50%, transparent);
+  }
+  .sv-dot {
+    fill: color-mix(in srgb, var(--color-brand-soft) 70%, transparent);
+  }
+  .sv-block {
+    fill: color-mix(in srgb, var(--color-glow) 55%, transparent);
+    transform-box: fill-box;
+    transform-origin: left center;
+  }
+  .sv-block--hero {
+    fill: var(--color-sky);
+    opacity: 0.85;
+  }
+  .sv-cursor {
+    fill: #fff;
+    stroke: var(--color-brand-deep);
+    stroke-width: 1;
+    translate: 214px 136px;
+  }
+
+  /* 問い合わせ導線改善 */
+  .sv-bubble path:first-child {
+    fill: rgb(255 255 255 / 0.95);
+  }
+  .sv-bubble--a path:first-child {
+    fill: var(--color-brand-bright);
+  }
+  .sv-bubble-line {
+    fill: none;
+    stroke: var(--color-brand);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+  .sv-bubble--a .sv-bubble-line {
+    stroke: rgb(255 255 255 / 0.9);
+  }
+  .sv-bubble {
+    transform-box: fill-box;
+  }
+  .sv-bubble--q {
+    transform-origin: left bottom;
+  }
+  .sv-bubble--a {
+    transform-origin: right bottom;
+  }
+  .sv-typing circle {
+    fill: rgb(255 255 255 / 0.85);
+    opacity: 0;
+  }
+  .sv-check-ring {
+    fill: #fff;
+  }
+  .sv-check {
+    fill: none;
+    stroke: var(--color-success);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .sv-route {
+    stroke: var(--color-sky);
+    stroke-width: 2;
+    stroke-dasharray: 30 70;
+    stroke-linecap: round;
+    opacity: 0.8;
+  }
+
+  /* 動き（動きを減らす設定では付けない＝上の静止状態のまま） */
+  @media (prefers-reduced-motion: no-preference) {
+    .sv-core {
+      animation: sv-breathe 5s ease-in-out infinite;
+    }
+
+    .sv-pulse {
+      animation: sv-travel 3.2s linear infinite;
+    }
+    .sv-node {
+      animation: sv-blink 3.2s ease-in-out infinite;
+    }
+    .sv-d1 {
+      animation-delay: -0.5s;
+    }
+    .sv-d2 {
+      animation-delay: -1.1s;
+    }
+    .sv-d3 {
+      animation-delay: -1.6s;
+    }
+    .sv-d4 {
+      animation-delay: -2.2s;
+    }
+    .sv-d5 {
+      animation-delay: -2.7s;
+    }
+
+    .sv-gear--a {
+      animation: sv-spin 9s linear infinite;
+    }
+    .sv-gear--b {
+      animation: sv-spin 6s linear infinite reverse;
+    }
+    .sv-belt-flow {
+      animation: sv-belt 1.2s linear infinite;
+    }
+    .sv-doc {
+      animation: sv-doc 6s linear infinite;
+    }
+    .sv-doc--1 {
+      animation-delay: -2s;
+    }
+    .sv-doc--2 {
+      animation-delay: -4s;
+    }
+    .sv-doc-check {
+      stroke-dasharray: 14;
+      animation: sv-check-draw 6s linear infinite;
+      animation-delay: inherit;
+    }
+
+    .sv-block {
+      animation: sv-build 6s var(--ease-out) infinite;
+    }
+    .sv-b1 {
+      animation-delay: 0.25s;
+    }
+    .sv-b2 {
+      animation-delay: 0.5s;
+    }
+    .sv-b3 {
+      animation-delay: 0.75s;
+    }
+    .sv-b4 {
+      animation-delay: 1s;
+    }
+    .sv-b5 {
+      animation-delay: 1.25s;
+    }
+    .sv-cursor {
+      animation: sv-cursor 6s var(--ease-out) infinite;
+    }
+
+    .sv-bubble--q {
+      animation: sv-pop-q 6s var(--ease-spring) infinite;
+    }
+    .sv-typing circle {
+      animation: sv-typing 6s ease-in-out infinite;
+    }
+    .sv-typing circle:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    .sv-typing circle:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+    .sv-bubble--a {
+      animation: sv-pop-a 6s var(--ease-spring) infinite;
+    }
+    .sv-route {
+      animation: sv-route 2.4s linear infinite;
+    }
+  }
+
+  /* 一時停止中・画面外では止める */
+  :global(.is-paused) .svc-visual *,
+  .svc-visual.is-offscreen * {
+    animation-play-state: paused;
+  }
+
+  @keyframes sv-breathe {
+    0%,
+    100% {
+      scale: 0.92;
+      opacity: 0.75;
+    }
+    50% {
+      scale: 1.06;
+      opacity: 1;
+    }
+  }
+  @keyframes sv-travel {
+    0% {
+      stroke-dashoffset: 100;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    60% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    70%,
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+  }
+  @keyframes sv-blink {
+    0%,
+    100% {
+      scale: 1;
+    }
+    50% {
+      scale: 1.35;
+    }
+  }
+  @keyframes sv-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+  @keyframes sv-belt {
+    to {
+      stroke-dashoffset: -12;
+    }
+  }
+  @keyframes sv-doc {
+    0% {
+      translate: -30px 0;
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    92% {
+      opacity: 1;
+    }
+    100% {
+      translate: 320px 0;
+      opacity: 0;
+    }
+  }
+  @keyframes sv-check-draw {
+    0%,
+    45% {
+      stroke-dashoffset: 14;
+    }
+    55%,
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes sv-build {
+    0% {
+      scale: 0 1;
+      opacity: 0;
+    }
+    14%,
+    82% {
+      scale: 1 1;
+      opacity: 1;
+    }
+    94%,
+    100% {
+      scale: 1 1;
+      opacity: 0;
+    }
+  }
+  @keyframes sv-cursor {
+    0% {
+      translate: 120px 170px;
+    }
+    30% {
+      translate: 214px 90px;
+    }
+    55% {
+      translate: 160px 140px;
+    }
+    80%,
+    100% {
+      translate: 214px 136px;
+    }
+  }
+  @keyframes sv-pop-q {
+    0% {
+      scale: 0.6;
+      opacity: 0;
+    }
+    8%,
+    88% {
+      scale: 1;
+      opacity: 1;
+    }
+    96%,
+    100% {
+      scale: 1;
+      opacity: 0;
+    }
+  }
+  @keyframes sv-typing {
+    0%,
+    14% {
+      opacity: 0;
+      translate: 0 0;
+    }
+    18% {
+      opacity: 1;
+      translate: 0 -4px;
+    }
+    22% {
+      opacity: 1;
+      translate: 0 0;
+    }
+    26% {
+      opacity: 1;
+      translate: 0 -4px;
+    }
+    32%,
+    100% {
+      opacity: 0;
+      translate: 0 0;
+    }
+  }
+  @keyframes sv-pop-a {
+    0%,
+    32% {
+      scale: 0.6;
+      opacity: 0;
+    }
+    40%,
+    88% {
+      scale: 1;
+      opacity: 1;
+    }
+    96%,
+    100% {
+      scale: 1;
+      opacity: 0;
+    }
+  }
+  @keyframes sv-route {
+    to {
+      stroke-dashoffset: -100;
+    }
+  }
+</style>

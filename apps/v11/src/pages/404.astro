@@ -1,0 +1,42 @@
+---
+// 見つからないページ。
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+---
+
+<BaseLayout title={`ページが見つかりません｜${site.name}`} description="お探しのページは見つかりませんでした。">
+  <main class="nf">
+    <p class="nf__code latin">404</p>
+    <h1 class="nf__title serif">ページが見つかりません</h1>
+    <p class="nf__text">URLが変わったか、削除された可能性があります。</p>
+    <a class="btn btn--primary" href="/">トップページへ戻る</a>
+  </main>
+</BaseLayout>
+
+<style>
+  .nf {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 1rem;
+    min-height: 100svh;
+    padding: 2rem var(--gutter);
+    text-align: center;
+    background: linear-gradient(180deg, var(--color-paper), var(--color-mist-2));
+  }
+
+  .nf__code {
+    color: var(--color-brand);
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .nf__title {
+    font-size: 1.75rem;
+  }
+
+  .nf__text {
+    color: var(--color-ink-soft);
+  }
+</style>

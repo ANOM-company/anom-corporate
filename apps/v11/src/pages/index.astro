@@ -1,0 +1,65 @@
+---
+// トップページ（v11）。原稿は src/data/site.ts、各セクションは src/components/ にある。
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import Hero from '../components/Hero.astro';
+import Solution from '../components/Solution.astro';
+import Services from '../components/Services.astro';
+import Philosophy from '../components/Philosophy.astro';
+import Contact from '../components/Contact.astro';
+import BottomBar from '../components/BottomBar.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import {
+  bottomBar,
+  contact,
+  footer,
+  hero,
+  initialWorry,
+  nav,
+  philosophy,
+  services,
+  site,
+  solution,
+  worries,
+} from '../data/site';
+
+// フォームで選べる悩み = ファーストビューの悩み＋サービス欄にだけある悩み（重複なし）
+const worryOptions = [...new Set([...worries.map((w) => w.label), ...services.items.flatMap((s) => s.tags)])];
+---
+
+<BaseLayout title={site.title} description={site.description}>
+  <a class="skip" href="#main">本文へ移動</a>
+  <SiteHeader nav={nav} />
+  <main id="main">
+    <Hero hero={hero} worries={worries} initialWorry={initialWorry} services={services.items} />
+    <Solution solution={solution} />
+    <Services services={services} />
+    <Philosophy philosophy={philosophy} />
+    <Contact contact={contact} worryOptions={worryOptions} email={site.email} privacyUrl={site.privacyUrl} />
+  </main>
+  <SiteFooter footer={footer} nav={nav} privacyUrl={site.privacyUrl} />
+  <BottomBar bar={bottomBar} />
+  <!-- レイアウトの内側に置く（外に置くと </html> の後ろに出力され、HTML として正しくない） -->
+  <script>
+    import '../scripts/main';
+  </script>
+</BaseLayout>
+
+<style>
+  .skip {
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--color-ink);
+    color: #fff;
+    font-weight: 700;
+    translate: 0 -200%;
+
+    &:focus-visible {
+      translate: 0 0;
+    }
+  }
+</style>

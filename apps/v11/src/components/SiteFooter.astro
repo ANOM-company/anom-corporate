@@ -1,0 +1,138 @@
+---
+// フッター。ロゴ、会社の基本情報（現行サイトに掲載している内容だけ）とページ内のリンク。
+// - ロゴは紺と黒の原本の色のまま使うため、フッターは明るい地にする（public/images/logo.png）
+interface Props {
+  footer: {
+    rows: { term: string; value: string }[];
+    privacy: string;
+    top: string;
+    copyright: string;
+    previewNote: string;
+  };
+  nav: { label: string; items: { label: string; href: string }[] };
+  privacyUrl: string;
+}
+
+const { footer, nav, privacyUrl } = Astro.props;
+---
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__brand">
+      <img class="footer__logo" src="/images/logo.png" width="540" height="396" alt="株式会社ANOM" loading="lazy" decoding="async" />
+      <dl class="footer__info">
+        {
+          footer.rows.map((row) => (
+            <div class="footer__row">
+              <dt>{row.term}</dt>
+              <dd>{row.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+    <nav class="footer__nav" aria-label={`${nav.label}（フッター）`}>
+      <ul>
+        {
+          nav.items.map((item) => (
+            <li>
+              <a href={item.href}>{item.label}</a>
+            </li>
+          ))
+        }
+        <li><a href={privacyUrl}>{footer.privacy}</a></li>
+        <li><a href="#top">{footer.top}</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="wrap footer__bottom">
+    <p>{footer.copyright}</p>
+    <p>{footer.previewNote}</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: 2.5rem 0 calc(var(--bar-h) + 2rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-line);
+    background: var(--color-mist);
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+  }
+
+  .footer__inner {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .footer__logo {
+    display: block;
+    width: 9.5rem;
+    height: auto;
+  }
+
+  .footer__info {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .footer__row {
+    display: grid;
+    grid-template-columns: 6.5em 1fr;
+    gap: 0.75rem;
+
+    dt {
+      color: var(--color-muted);
+    }
+
+    dd {
+      margin: 0;
+      color: var(--color-ink);
+    }
+  }
+
+  .footer__nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  .footer__nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--color-ink);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.3em;
+    }
+  }
+
+  .footer__bottom {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    font-size: 0.75rem;
+  }
+
+  @media (min-width: 64rem) {
+    .footer__inner {
+      grid-template-columns: 1fr auto;
+      align-items: start;
+    }
+
+    .footer__nav ul {
+      max-width: 28rem;
+      justify-content: flex-end;
+    }
+  }
+</style>

@@ -1,0 +1,381 @@
+/*
+ * v11 全体のスタイル（目次）
+ * 1. 読み込み（Tailwind・自己配信フォント）
+ * 2. デザイントークン（@theme）… 色・書体・角丸・影・動きの値はここに集約する
+ * 3. 土台（本文・リンク・フォーカス・スクロール）
+ * 4. 共通の部品（レイアウト枠・ボタン・見出し・チップ）
+ * 5. 出現演出（data-reveal）と、動きを止める設定
+ * 各セクション固有のスタイルは src/components/*.astro の <style> にある
+ */
+
+/* 1. 読み込み */
+@import 'tailwindcss';
+@import './fonts.css';
+@import './serif-font.css';
+
+/* 2. デザイントークン
+ * 配色はオーナー指定の4色: BASE #FFFFFF（地）／MAIN #18181B（文字・濃い面）／SUB #52525B（補足の文字）／ACCENT #2563EB（強調・ボタン）
+ * 線・淡い地は MAIN と同じ無彩色（zinc）の薄い段階、青の濃淡は ACCENT と同じ青（blue）の段階から取る
+ */
+@theme {
+  --color-ink: #18181b;
+  --color-ink-soft: #3f3f46;
+  --color-muted: #52525b;
+  --color-placeholder: #71717a;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
+  --color-paper: #ffffff;
+  --color-mist: #fafafa;
+  --color-mist-2: #f4f4f5;
+  --color-brand: #2563eb;
+  --color-brand-strong: #1d4ed8;
+  --color-brand-deep: #1e3a8a;
+  --color-brand-bright: #3b82f6;
+  --color-brand-soft: #dbeafe;
+  --color-brand-tint: #eff6ff;
+  --color-glow: #93c5fd;
+  --color-sky: #60a5fa;
+  --color-night: #18181b;
+  --color-night-2: #27272a;
+  --color-on-night: #fafafa;
+  --color-on-night-soft: #a1a1aa;
+  --color-danger: #c22e3b;
+  --color-danger-soft: #fdecee;
+  --color-success: #11784a;
+
+  --font-sans:
+    'LINE Seed JP', system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP',
+    'Yu Gothic UI', Meiryo, sans-serif;
+  --font-serif: 'ANOM Serif', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+  --font-latin: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-chip: 999px;
+  --radius-card: 1.125rem;
+  --radius-panel: 1.5rem;
+
+  --shadow-card: 0 18px 40px -22px color-mix(in srgb, var(--color-brand) 35%, transparent), 0 2px 8px color-mix(in srgb, var(--color-ink) 5%, transparent);
+  --shadow-lift: 0 26px 60px -24px color-mix(in srgb, var(--color-brand) 45%, transparent), 0 4px 14px color-mix(in srgb, var(--color-ink) 8%, transparent);
+  --shadow-chip: 0 8px 22px -10px color-mix(in srgb, var(--color-brand) 38%, transparent), 0 1px 3px color-mix(in srgb, var(--color-ink) 6%, transparent);
+  --shadow-cta: 0 14px 30px -12px color-mix(in srgb, var(--color-brand-strong) 65%, transparent);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 160ms;
+  --duration-base: 320ms;
+  --duration-slow: 720ms;
+}
+
+/* ヘッダー・下部バーの高さ（スクロール位置の調整に使う） */
+:root {
+  --header-h: 4rem;
+  --bar-h: 4.75rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --wrap: 78rem;
+  --grad-brand: linear-gradient(135deg, var(--color-brand-bright) 0%, var(--color-brand) 45%, var(--color-brand-strong) 100%);
+  --grad-text: linear-gradient(100deg, var(--color-brand-strong) 0%, var(--color-brand) 40%, var(--color-brand-bright) 100%);
+
+  @media (min-width: 64rem) {
+    --header-h: 4.5rem;
+    --bar-h: 5rem;
+  }
+}
+
+/* 3. 土台 */
+@layer base {
+  html {
+    scroll-padding-top: calc(var(--header-h) + 0.75rem);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    @media (prefers-reduced-motion: no-preference) {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: var(--color-paper);
+    line-height: 1.8;
+    font-synthesis: none;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-brand-soft);
+    color: var(--color-ink);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-brand-bright);
+    outline-offset: 3px;
+    border-radius: 0.375rem;
+  }
+
+  /* 日本語の改行: 語の途中で折り返さない（はみ出しそうなときだけ任意の位置で折る） */
+  h1,
+  h2,
+  h3,
+  .keep {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    line-break: strict;
+  }
+
+  /*
+   * JavaScript が動かない（=「動きを止める」ボタンが使えない）ときは、くり返しの動きを1回で終える。
+   * JavaScript が動くと main.ts が html に .js を付け、ボタンで止められる通常の動きに戻る
+   */
+  :root:not(.js) *,
+  :root:not(.js) *::before,
+  :root:not(.js) *::after {
+    animation-iteration-count: 1 !important;
+  }
+
+  /* 本文: 対応ブラウザ（Chrome など）では文節の途中で折り返さず、最後の行が1〜2文字だけにならないようにする */
+  p,
+  li,
+  dd,
+  label,
+  legend,
+  blockquote,
+  .phrase {
+    word-break: auto-phrase;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+  }
+}
+
+/* 4. 共通の部品 */
+@layer components {
+  .wrap {
+    width: min(100%, var(--wrap));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* 文節のかたまり（この中では改行しない） */
+  .nb {
+    display: inline-block;
+  }
+
+  .serif {
+    font-family: var(--font-serif);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+
+  .latin {
+    font-family: var(--font-latin);
+  }
+
+  /* 青いグラデーションの文字（ゆっくり光が流れる） */
+  .grad-text {
+    background: var(--grad-text);
+    background-size: 220% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: grad-shift 9s ease-in-out infinite alternate;
+    }
+
+    @media (forced-colors: active) {
+      color: LinkText;
+      background: none;
+    }
+  }
+
+  /* ボタン */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 3.25rem;
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius-chip);
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.3;
+    text-decoration: none;
+    isolation: isolate;
+    overflow: hidden;
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    .btn__arrow {
+      flex: none;
+      width: 1.1em;
+      height: 1.1em;
+      transition: translate var(--duration-base) var(--ease-out);
+    }
+
+    &:hover .btn__arrow {
+      translate: 0.25em 0;
+    }
+  }
+
+  .btn--primary {
+    color: #fff;
+    background: var(--grad-brand);
+    box-shadow: var(--shadow-cta);
+
+    /* 光の帯がときどき走る */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+      translate: -120% 0;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      &::after {
+        animation: btn-shine 5.5s var(--ease-out) 2.2s infinite;
+      }
+    }
+
+    &:hover {
+      box-shadow: 0 18px 36px -12px color-mix(in srgb, var(--color-brand-strong) 75%, transparent);
+    }
+
+    @media (forced-colors: active) {
+      border: 2px solid ButtonText;
+    }
+  }
+
+  .btn--ghost {
+    color: var(--color-brand-strong);
+    background: rgb(255 255 255 / 0.85);
+    border: 1.5px solid var(--color-brand);
+
+    &:hover {
+      background: var(--color-brand-tint);
+    }
+  }
+
+  .btn--night {
+    color: var(--color-on-night);
+    background: transparent;
+    border: 1.5px solid color-mix(in srgb, var(--color-on-night) 70%, transparent);
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-on-night) 10%, transparent);
+    }
+  }
+
+  /* セクション見出しの小見出し（青い縦線つき） */
+  .label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-brand-strong);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 0.95em;
+      border-radius: 2px;
+      background: var(--color-brand);
+    }
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-weight: 800;
+    font-size: clamp(1.625rem, 1.1rem + 2.2vw, 2.5rem);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  /* 悩みのタグ（サービス欄・フォームで共通の見た目） */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--color-mist);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    transition:
+      background-color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out);
+  }
+
+  .tag.is-match {
+    background: var(--color-brand-soft);
+    border-color: var(--color-brand);
+    color: var(--color-brand-deep);
+    font-weight: 700;
+  }
+}
+
+/* 5. 出現演出
+ * - JavaScript が動き、読み込み時に画面外にある [data-reveal] だけを一度隠し、画面に入ったら表示する
+ *   （最初から見えている要素は隠さないので、読み込み時のちらつきがない）
+ * - JavaScript 無効・動きを減らす設定では、最初から表示したまま
+ */
+@layer utilities {
+  [data-reveal].is-pending {
+    opacity: 0;
+    translate: 0 1.75rem;
+    filter: blur(6px);
+  }
+
+  [data-reveal].is-shown {
+    transition:
+      opacity 0.9s var(--ease-out),
+      translate 0.9s var(--ease-out),
+      filter 0.9s var(--ease-out);
+    transition-delay: calc(var(--reveal-i, 0) * 90ms);
+  }
+
+  /* 一時停止ボタンで止めたとき（html に .is-paused）は、くり返しの動きを止める */
+  .is-paused .grad-text,
+  .is-paused .btn--primary::after {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes grad-shift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes btn-shine {
+  0% {
+    translate: -120% 0;
+  }
+  28%,
+  100% {
+    translate: 120% 0;
+  }
+}

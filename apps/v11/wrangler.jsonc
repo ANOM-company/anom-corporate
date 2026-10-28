@@ -1,0 +1,16 @@
+// ローカル検証専用の Wrangler 設定（クラウドへは配信しない）。
+// - 本番の Worker 名・独自ドメイン・資格情報はここに書かない
+// - 使い方: npm run build のあと npm run preview（= wrangler dev）
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "anom-v11-preview",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // 見つからないURLは dist/404.html を 404 ステータスで返す
+    "not_found_handling": "404-page"
+  },
+  // workers.dev の公開URL・プレビューURLは作らない
+  "workers_dev": false,
+  "preview_urls": false
+}

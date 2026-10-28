@@ -1,0 +1,253 @@
+---
+// 理念。引用の文字が、画面に入ると1文字ずつ浮かび上がる（src/scripts/reveal.ts）。
+// - 読み上げは sr-only の全文で行い、1文字ずつの飾りは読み上げない
+// - 背景の街並みと山並みは SVG（建物は決まった乱数で並べるので、毎回同じ形になる）
+
+interface Props {
+  philosophy: { id: string; label: string; quote: string[][]; body: string[] };
+}
+
+const { philosophy } = Astro.props;
+
+// 街並み: 決まった種から作る疑似乱数で、ビルの幅と高さを並べる
+let seed = 7;
+const next = (): number => {
+  seed = (seed * 9301 + 49297) % 233280;
+  return seed / 233280;
+};
+const buildings: { x: number; w: number; h: number; windows: boolean }[] = [];
+for (let x = 0; x < 1440; ) {
+  const nearCenter = Math.abs(x - 720) < 380;
+  const w = 18 + Math.round(next() * 34);
+  const h = (nearCenter ? 30 : 46) + Math.round(next() * (nearCenter ? 50 : 120));
+  buildings.push({ x, w, h, windows: w > 30 && h > 90 });
+  x += w + 2 + Math.round(next() * 6);
+}
+---
+
+<section class="philosophy" id={philosophy.id} aria-labelledby="philosophy-title">
+  <svg class="philosophy__scene" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="ph-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="ph-sky-a"></stop>
+        <stop offset="1" class="ph-sky-b"></stop>
+      </linearGradient>
+      <linearGradient id="ph-city" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="ph-city-a"></stop>
+        <stop offset="1" class="ph-city-b"></stop>
+      </linearGradient>
+    </defs>
+    <path
+      class="ph-mountain"
+      fill="url(#ph-sky)"
+      d="M0 170 L120 120 L200 140 L300 80 L380 110 L470 60 L560 100 L640 86 L720 120 L820 90 L900 112 L990 64 L1080 100 L1160 72 L1250 108 L1340 82 L1440 110 L1440 260 L0 260 Z"
+    ></path>
+    <g class="ph-city" fill="url(#ph-city)">
+      {buildings.map((b) => <rect x={b.x} y={260 - b.h} width={b.w} height={b.h} />)}
+    </g>
+    <g class="ph-windows">
+      {
+        buildings
+          .filter((b) => b.windows)
+          .map((b) => <rect x={b.x + 6} y={260 - b.h + 10} width={b.w - 12} height={b.h - 20} class="ph-window" />)
+      }
+    </g>
+  </svg>
+
+  <div class="wrap philosophy__inner">
+    <h2 id="philosophy-title" class="philosophy__label" data-reveal>{philosophy.label}</h2>
+
+    <figure class="philosophy__quote" data-reveal data-split>
+      <blockquote class="philosophy__text serif">
+        <span class="sr-only">{philosophy.quote.flat().join('')}</span>
+        <span class="philosophy__mark philosophy__mark--open latin" aria-hidden="true">“</span>
+        <span aria-hidden="true">
+          {
+            philosophy.quote.map((line, li) => (
+              <span class="philosophy__line">
+                {line.map((part, pi) => (
+                  <span class="nb">
+                    {[...part].map((ch) => (
+                      <span class="q-ch">{ch}</span>
+                    ))}
+                    {li === philosophy.quote.length - 1 && pi === line.length - 1 && (
+                      <span class="philosophy__mark philosophy__mark--close latin">”</span>
+                    )}
+                  </span>
+                ))}
+              </span>
+            ))
+          }
+        </span>
+      </blockquote>
+    </figure>
+
+    <div class="philosophy__body" data-reveal>
+      {philosophy.body.map((line) => <p>{line}</p>)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .philosophy {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(2.75rem, 6vw, 4.5rem) 0 clamp(6rem, 12vw, 9rem);
+    background: linear-gradient(180deg, var(--color-mist) 0%, var(--color-mist-2) 100%);
+    overflow: clip;
+  }
+
+  .philosophy__scene {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: -1;
+    width: 100%;
+    height: clamp(9rem, 22vw, 16rem);
+  }
+
+  .ph-sky-a {
+    stop-color: var(--color-glow);
+    stop-opacity: 0.4;
+  }
+  .ph-sky-b {
+    stop-color: var(--color-mist-2);
+    stop-opacity: 0;
+  }
+  .ph-city-a {
+    stop-color: var(--color-brand-bright);
+    stop-opacity: 0.22;
+  }
+  .ph-city-b {
+    stop-color: var(--color-glow);
+    stop-opacity: 0.08;
+  }
+  .ph-window {
+    fill: none;
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1;
+    stroke-dasharray: 2 5;
+  }
+
+  .philosophy__inner {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .philosophy__label {
+    justify-self: start;
+    padding-bottom: 0.375rem;
+    border-bottom: 2px solid var(--color-brand);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .philosophy__quote {
+    margin: 0;
+  }
+
+  .philosophy__text {
+    position: relative;
+    padding-left: 2.25rem;
+    font-size: clamp(1.1875rem, 0.62rem + 2.5vw, 1.875rem);
+    line-height: 1.6;
+  }
+
+  .philosophy__line {
+    display: block;
+  }
+
+  .philosophy__mark {
+    position: absolute;
+    color: var(--color-brand-bright);
+    font-size: 3em;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+    opacity: 0.55;
+  }
+
+  .philosophy__mark--open {
+    left: -0.1em;
+    top: -0.15em;
+  }
+
+  .philosophy__mark--close {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 0.05em;
+    font-size: 1.4em;
+    line-height: 0.8;
+  }
+
+  .q-ch {
+    display: inline-block;
+  }
+
+  /* 文字が1つずつ現れる（reveal.ts が --i を付け、画面に入ると .is-shown） */
+  .philosophy__quote:global(.is-pending) {
+    opacity: 1;
+    translate: none;
+    filter: none;
+
+    .q-ch {
+      opacity: 0;
+      filter: blur(8px);
+      translate: 0 0.35em;
+    }
+  }
+
+  .philosophy__quote:global(.is-shown) .q-ch {
+    transition:
+      opacity 0.6s var(--ease-out),
+      filter 0.6s var(--ease-out),
+      translate 0.6s var(--ease-out),
+      color 1.2s var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 32ms);
+  }
+
+  .philosophy__body {
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    line-height: 1.95;
+  }
+
+  @media (min-width: 64rem) {
+    .philosophy__inner {
+      grid-template-columns: auto minmax(0, 1.35fr) minmax(0, 1fr);
+      align-items: center;
+      column-gap: clamp(1.5rem, 3vw, 3rem);
+    }
+
+    .philosophy__label {
+      align-self: start;
+      margin-top: 0.5rem;
+    }
+
+    .philosophy__text {
+      padding-left: 2.75rem;
+    }
+
+    .philosophy__body {
+      font-size: 0.875rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports ((animation-timeline: view()) and (animation-range: entry)) {
+      .ph-city {
+        animation: city-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 55%;
+      }
+    }
+  }
+
+  @keyframes city-rise {
+    from {
+      translate: 0 60px;
+      opacity: 0.3;
+    }
+  }
+</style>

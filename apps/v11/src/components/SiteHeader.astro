@@ -1,0 +1,354 @@
+---
+// 画面上部に固定するヘッダー。PC はメニューを横に並べ、スマホは「メニュー」ボタンで開く。
+// - スクロールすると白い背景と影が付く（src/scripts/header.ts）
+// - スマホのメニューは <dialog>。JavaScript 無効時はボタンを出さず、ページ下部のフッターから各所へ移動できる
+import Icon from './Icon.astro';
+
+interface Props {
+  nav: {
+    label: string;
+    items: { label: string; href: string }[];
+    cta: { label: string; href: string };
+    menuOpen: string;
+    menuClose: string;
+    menuTitle: string;
+  };
+}
+
+const { nav } = Astro.props;
+---
+
+<header class="header" data-header>
+  <div class="header__inner">
+    <a class="header__logo" href="#top" aria-label="株式会社ANOM ページの先頭へ">
+      <img src="/images/logo-horizontal.png" width="355" height="96" alt="" decoding="async" />
+    </a>
+
+    <nav class="header__nav" aria-label={nav.label}>
+      <ul class="header__list">
+        {
+          nav.items.map((item) => (
+            <li>
+              <a class="header__link" href={item.href} data-nav-link>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <a class="btn btn--primary header__cta" href={nav.cta.href} data-cta="header">
+      {nav.cta.label}
+      <Icon name="arrow-right" class="btn__arrow" />
+    </a>
+
+    <button class="header__menu" type="button" aria-haspopup="dialog" aria-controls="site-menu" data-menu-open hidden>
+      <Icon name="menu" />
+      <span class="sr-only">{nav.menuOpen}</span>
+    </button>
+  </div>
+</header>
+
+<dialog class="menu" id="site-menu" aria-labelledby="site-menu-title" closedby="any" data-menu>
+  <div class="menu__head">
+    <p class="menu__title" id="site-menu-title">{nav.menuTitle}</p>
+    <form method="dialog">
+      <button class="menu__close" type="submit" autofocus>
+        <Icon name="close" />
+        <span class="sr-only">{nav.menuClose}</span>
+      </button>
+    </form>
+  </div>
+  <nav aria-label={nav.label}>
+    <ul class="menu__list">
+      {
+        nav.items.map((item) => (
+          <li>
+            <a class="menu__link" href={item.href} data-menu-link>
+              {item.label}
+              <Icon name="chevron-right" class="menu__chevron" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+  <a class="btn btn--primary menu__cta" href={nav.cta.href} data-menu-link data-cta="menu">
+    {nav.cta.label}
+    <Icon name="arrow-right" class="btn__arrow" />
+  </a>
+</dialog>
+
+<style>
+  .header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    /* 画面上端の切り欠き（ノッチ）がある端末では、その分だけ下げて中身を見せる */
+    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    transition:
+      background-color var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      backdrop-filter var(--duration-base) var(--ease-out);
+  }
+
+  .header:global(.is-scrolled) {
+    background: rgb(255 255 255 / 0.86);
+    box-shadow: 0 1px 0 var(--color-line), 0 10px 30px -20px color-mix(in srgb, var(--color-ink) 25%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 100%;
+    width: min(100%, calc(var(--wrap) + 4rem));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* ロゴ（public/images/logo-horizontal.png。原本から tools/images/build-logos.py で書き出す） */
+  .header__logo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-right: auto;
+
+    img {
+      display: block;
+      width: auto;
+      height: 1.625rem;
+    }
+  }
+
+  .header__nav {
+    display: none;
+  }
+
+  .header__cta {
+    min-height: 2.5rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.8125rem;
+    gap: 0.5rem;
+    white-space: nowrap;
+
+    /* 幅 380px 未満は矢印を省いて、ボタンの文字を1行に収める */
+    :global(.btn__arrow) {
+      display: none;
+    }
+  }
+
+  .header__menu {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: 0.75rem;
+    background: transparent;
+    color: var(--color-ink);
+    cursor: pointer;
+
+    :global(svg) {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+  }
+
+  .header__menu[hidden] {
+    display: none;
+  }
+
+  @media (min-width: 23.75rem) {
+    .header__logo img {
+      height: 2rem;
+    }
+
+    .header__cta :global(.btn__arrow) {
+      display: block;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .header__logo img {
+      height: 2.5rem;
+    }
+
+    .header__nav {
+      display: block;
+    }
+
+    .header__list {
+      display: flex;
+      gap: 0.25rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .header__link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding-inline: 0.875rem;
+      color: var(--color-ink);
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-decoration: none;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0.875rem;
+        right: 0.875rem;
+        bottom: 0.45rem;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--color-brand);
+        scale: 0 1;
+        transform-origin: left;
+        transition: scale var(--duration-base) var(--ease-out);
+      }
+
+      &:hover::after,
+      &[aria-current='true']::after {
+        scale: 1 1;
+      }
+    }
+
+    .header__cta {
+      margin-left: 1rem;
+      min-height: 2.875rem;
+      padding: 0.5rem 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .header__menu {
+      display: none !important;
+    }
+  }
+
+  /* スマホのメニュー（右からすべり出るパネル） */
+  .menu {
+    margin: 0 0 0 auto;
+    width: min(88vw, 22rem);
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    padding: 1rem var(--gutter) 2rem;
+    border: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    box-shadow: -20px 0 60px -30px color-mix(in srgb, var(--color-ink) 50%, transparent);
+    translate: 100% 0;
+    transition:
+      translate 380ms var(--ease-out),
+      display 380ms allow-discrete,
+      overlay 380ms allow-discrete;
+  }
+
+  .menu[open] {
+    display: flex;
+    flex-direction: column;
+    translate: 0 0;
+
+    @starting-style {
+      translate: 100% 0;
+    }
+  }
+
+  .menu:modal {
+    overscroll-behavior: contain;
+  }
+
+  .menu::backdrop {
+    background: color-mix(in srgb, var(--color-night) 45%, transparent);
+    backdrop-filter: blur(3px);
+    overflow: hidden;
+    overscroll-behavior: contain;
+    opacity: 0;
+    transition:
+      opacity 380ms var(--ease-out),
+      display 380ms allow-discrete,
+      overlay 380ms allow-discrete;
+  }
+
+  .menu[open]::backdrop {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .menu,
+    .menu::backdrop {
+      transition: none;
+    }
+  }
+
+  .menu__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3rem;
+  }
+
+  .menu__title {
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .menu__close {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: 0.75rem;
+    background: var(--color-mist);
+    color: var(--color-ink);
+    cursor: pointer;
+
+    :global(svg) {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .menu__list {
+    margin-top: 1rem;
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .menu__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3.5rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-ink);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    :global(.menu__chevron) {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--color-brand);
+    }
+  }
+
+  .menu__cta {
+    margin-top: 1.75rem;
+    width: 100%;
+  }
+</style>

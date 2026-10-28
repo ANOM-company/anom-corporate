@@ -1,0 +1,360 @@
+---
+// 「その悩みを、実装できる解決策へ。」— 3つのステップ。
+// ステップの間を光の点が流れ、下には秋田の山並みをイメージした稜線を重ねる。
+import Icon from './Icon.astro';
+import type { IconName } from './Icon.astro';
+
+interface Props {
+  solution: {
+    id: string;
+    title: string;
+    accent: string;
+    lead: string;
+    steps: readonly { no: string; title: string; body: string; icon: string }[];
+  };
+}
+
+const { solution } = Astro.props;
+---
+
+<section class="solution" id={solution.id} aria-labelledby="solution-title">
+  <div class="wrap solution__inner">
+    <h2 id="solution-title" class="solution__title section-title" data-reveal>
+      <span class="nb">{solution.title}</span><span class="nb grad-text">{solution.accent}</span>
+    </h2>
+    <p class="solution__lead" data-reveal>{solution.lead}</p>
+
+    <ol class="steps" data-reveal-group>
+      {
+        solution.steps.map((step, i) => (
+          <li class="step" data-reveal>
+            <span class="step__icon">
+              <span class="step__ring" aria-hidden="true" />
+              <Icon name={step.icon as IconName} />
+            </span>
+            <div class="step__body">
+              <span class="step__no latin" aria-hidden="true">
+                {step.no}
+              </span>
+              <h3 class="step__title">
+                <span class="sr-only">ステップ{i + 1}：</span>
+                {step.title}
+              </h3>
+              <p class="step__text">{step.body}</p>
+            </div>
+            {i < solution.steps.length - 1 && (
+              <span class="step__arrow" aria-hidden="true">
+                <span class="step__arrow-line" />
+                <Icon name="arrow-right" />
+              </span>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <svg class="solution__mountains" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="mt-far" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="mt-far-a"></stop>
+        <stop offset="1" class="mt-far-b"></stop>
+      </linearGradient>
+      <linearGradient id="mt-near" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="mt-near-a"></stop>
+        <stop offset="1" class="mt-near-b"></stop>
+      </linearGradient>
+    </defs>
+    <path
+      class="mt mt--far"
+      fill="url(#mt-far)"
+      d="M0 150 L80 118 L140 132 L210 84 L262 104 L330 60 L392 96 L450 80 L520 112 L600 92 L680 120 L760 100 L830 70 L900 96 L980 58 L1050 92 L1120 76 L1190 104 L1260 66 L1330 98 L1400 84 L1440 96 L1440 220 L0 220 Z"
+    ></path>
+    <path
+      class="mt mt--near"
+      fill="url(#mt-near)"
+      d="M0 176 L70 160 L150 172 L230 138 L300 158 L380 128 L460 160 L540 148 L620 170 L720 150 L820 166 L900 140 L990 162 L1080 134 L1170 160 L1260 146 L1350 168 L1440 152 L1440 220 L0 220 Z"
+    ></path>
+  </svg>
+</section>
+
+<style>
+  .solution {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(3rem, 6vw, 5rem) 0 clamp(4.5rem, 9vw, 7.5rem);
+    background: linear-gradient(180deg, var(--color-mist) 0%, var(--color-paper) 55%, var(--color-mist-2) 100%);
+    overflow: clip;
+  }
+
+  .solution__inner {
+    text-align: center;
+  }
+
+  .solution__lead {
+    margin-top: 0.75rem;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+
+    @media (min-width: 48rem) {
+      font-size: 1rem;
+    }
+  }
+
+  .steps {
+    margin-top: clamp(1.75rem, 4vw, 2.75rem);
+    display: grid;
+    gap: 0.875rem;
+    list-style: none;
+    padding: 0;
+    text-align: left;
+  }
+
+  .step {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.125rem 1.25rem;
+    border-radius: var(--radius-card);
+    background: rgb(255 255 255 / 0.9);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(6px);
+  }
+
+  .step__icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, var(--color-brand-tint) 70%);
+    box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--color-brand) 50%, transparent), inset 0 0 0 1px var(--color-line);
+    color: var(--color-brand);
+
+    :global(svg) {
+      width: 1.875rem;
+      height: 1.875rem;
+    }
+  }
+
+  /* アイコンのまわりを回る点線の輪 */
+  .step__ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1.5px dashed color-mix(in srgb, var(--color-brand) 35%, transparent);
+  }
+
+  .step__body {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  .step__no {
+    grid-row: span 2;
+    align-self: start;
+    color: var(--color-brand);
+    font-size: 1.625rem;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.1;
+  }
+
+  .step__title {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .step__text {
+    grid-column: 2;
+    margin-top: 0.25rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    line-height: 1.75;
+  }
+
+  .step__arrow {
+    position: absolute;
+    left: calc(1.25rem + 2rem - 0.5rem);
+    bottom: -1.05rem;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 1rem;
+    height: 1.25rem;
+    color: var(--color-brand);
+    rotate: 90deg;
+
+    :global(svg) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .step__arrow-line {
+    display: none;
+  }
+
+  @media (min-width: 56rem) {
+    .steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(2.5rem, 5vw, 4.5rem);
+    }
+
+    .step {
+      padding: 1.25rem 1.25rem 1.25rem 1rem;
+      background: rgb(255 255 255 / 0.72);
+    }
+
+    .step__icon {
+      width: 5rem;
+      height: 5rem;
+
+      :global(svg) {
+        width: 2.25rem;
+        height: 2.25rem;
+      }
+    }
+
+    .step__title {
+      font-size: 1.1875rem;
+    }
+
+    .step__no {
+      font-size: 1.875rem;
+    }
+
+    /* ステップの間の矢印と、流れる光 */
+    .step__arrow {
+      left: auto;
+      right: calc(-1 * clamp(2.5rem, 5vw, 4.5rem));
+      bottom: auto;
+      top: 50%;
+      width: clamp(2.5rem, 5vw, 4.5rem);
+      height: 1.5rem;
+      translate: 0 -50%;
+      rotate: none;
+      justify-items: end;
+      padding-right: 0.35rem;
+
+      :global(svg) {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+
+    .step__arrow-line {
+      display: block;
+      position: absolute;
+      left: 0.6rem;
+      right: 0.6rem;
+      top: 50%;
+      height: 2px;
+      overflow: hidden;
+      border-radius: 2px;
+      background: color-mix(in srgb, var(--color-brand) 15%, transparent);
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 40%;
+        background: linear-gradient(90deg, transparent, var(--color-brand-bright), transparent);
+        translate: -100% 0;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .step__ring {
+      animation: ring-spin 18s linear infinite;
+    }
+
+    .step__arrow-line::after {
+      animation: flow 2.4s var(--ease-out) infinite;
+    }
+
+    .step:nth-child(2) .step__arrow-line::after {
+      animation-delay: 1.2s;
+    }
+  }
+
+  :global(.is-paused) .step__ring,
+  :global(.is-paused) .step__arrow-line::after {
+    animation-play-state: paused;
+  }
+
+  /* 山並み（スクロールに合わせてゆっくり持ち上がる。対応ブラウザーのみ） */
+  .solution__mountains {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    width: 100%;
+    height: clamp(7rem, 16vw, 13rem);
+  }
+
+  .mt-far-a {
+    stop-color: var(--color-glow);
+    stop-opacity: 0.45;
+  }
+  .mt-far-b {
+    stop-color: var(--color-mist-2);
+    stop-opacity: 0.2;
+  }
+  .mt-near-a {
+    stop-color: var(--color-brand-bright);
+    stop-opacity: 0.28;
+  }
+  .mt-near-b {
+    stop-color: var(--color-paper);
+    stop-opacity: 0.6;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports ((animation-timeline: view()) and (animation-range: entry)) {
+      .mt--far {
+        animation: mt-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 60%;
+      }
+      .mt--near {
+        animation: mt-rise-near linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 60%;
+      }
+    }
+  }
+
+  @keyframes ring-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  @keyframes flow {
+    to {
+      translate: 260% 0;
+    }
+  }
+
+  @keyframes mt-rise {
+    from {
+      translate: 0 40px;
+    }
+  }
+
+  @keyframes mt-rise-near {
+    from {
+      translate: 0 70px;
+    }
+  }
+</style>
