@@ -1,0 +1,67 @@
+---
+/**
+ * 下部バーから上へ開く展開メニュー（<dialog>。src/scripts/modal.ts の開閉・フォーカス制御を使う）。
+ * - 開くと見出し「サイトメニュー」へフォーカス（見出しは通常のTab順に入れない）
+ * - Esc・閉じる・背景（暗幕）で閉じるとメニューボタンへ戻る。メニュー内のリンクは閉じてから移動先へ
+ * - サイトの案内のため role="menu" は使わず、ダイアログ内の通常のナビゲーションリンクにする
+ * - 項目が収まらない短い画面では、項目の部分だけを縦にスクロールし、見出しと閉じる行は常に見える
+ * - ダイアログ内に同じ id を複製しない（リンク先の id はページ側だけにある）
+ */
+import type { MenuGroup } from '../site';
+
+type Props = {
+  id: string;
+  title: string;
+  close: string;
+  groups: MenuGroup[];
+  href: (anchor: string) => string;
+};
+
+const { id, title, close, groups, href } = Astro.props;
+const titleId = `${id}-title`;
+---
+
+<dialog
+  id={id}
+  aria-labelledby={titleId}
+  class="menu-panel inset-x-3 mx-auto mt-auto mb-(--bar-offset) w-auto max-w-(--container-menu) max-h-none overflow-hidden rounded-demo bg-brand p-0 text-on-brand shadow-xl"
+  data-modal
+>
+  <div class="flex max-h-[calc(100dvh-1rem-var(--bar-offset))] flex-col">
+    <h2 id={titleId} tabindex="-1" class="px-6 pt-6 pb-2 text-xl" data-modal-focus>
+      {title}
+    </h2>
+    <nav aria-labelledby={titleId} class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3" data-menu-list>
+      {
+        groups.map((group) => (
+          <div class="border-t border-shape-line px-3 py-3 first:border-t-0">
+            <p class="pb-1 text-sm font-bold text-on-brand-soft">{group.title}</p>
+            <ul class="grid">
+              {group.links.map((link) => (
+                <li>
+                  <a
+                    href={href(link.anchor)}
+                    class="flex min-h-11 items-center gap-2 rounded-control px-2 text-lg font-bold text-on-brand no-underline hover:bg-shape hover:text-on-brand"
+                  >
+                    {link.label}
+                    {link.status && <span class="text-sm font-bold text-on-brand-soft">［{link.status}］</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </nav>
+    <div class="flex justify-end border-t border-shape-line p-2">
+      <button
+        type="button"
+        class="inline-flex min-h-13 cursor-pointer items-center gap-2 rounded-full px-6 font-bold text-on-brand hover:bg-shape"
+        data-modal-close
+      >
+        {close}
+        <span aria-hidden="true" class="font-latin text-xl leading-none">×</span>
+      </button>
+    </div>
+  </div>
+</dialog>

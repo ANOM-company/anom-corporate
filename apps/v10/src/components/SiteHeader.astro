@@ -1,0 +1,18 @@
+---
+/**
+ * 画面上部の ANOM 表記（左上）。大きな固定メニューは置かず、移動は下部バーが担う。
+ * - 承認済みのロゴ素材がそろうまでは、ロゴを描き直さず文字で表示する
+ */
+type Props = {
+  siteName: string;
+  homeHref: string;
+};
+
+const { siteName, homeHref } = Astro.props;
+---
+
+<header class="container-content flex min-h-16 items-center py-3">
+  <a href={homeHref} class="inline-flex min-h-11 items-center font-latin text-2xl font-bold tracking-wide text-ink no-underline hover:text-brand">
+    {siteName}
+  </a>
+</header>

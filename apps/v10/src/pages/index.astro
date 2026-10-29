@@ -1,0 +1,88 @@
+---
+/**
+ * トップ（/）: ANOM V10 の確認版。原稿は src/data/home.ts から渡す。
+ * 読み順: 冒頭 → 主力2サービス → システム開発 → 支援のイメージ → 考え方 → 進め方 → 学びの計画 → 相談
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HomeHero from '../components/HomeHero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ServiceFeature from '../components/ServiceFeature.astro';
+import SystemFeature from '../components/SystemFeature.astro';
+import WorkflowExample from '../components/WorkflowExample.astro';
+import AboutSection from '../components/AboutSection.astro';
+import ProcessSection from '../components/ProcessSection.astro';
+import LearningSection from '../components/LearningSection.astro';
+import ContactSection from '../components/ContactSection.astro';
+import { hero, services, system, examples, about, process, learning, contact, consultFields } from '../data/home';
+
+const href = (anchor: string): string => `#${anchor}`;
+---
+
+<BaseLayout title="技術を、仕事の力に。" description="AI・DX支援、Web制作・運用保守、システム開発のご相談（確認用プレビュー）。">
+  <HomeHero
+    title={hero.title}
+    lead={hero.lead}
+    primary={{ label: hero.primary.label, href: href(hero.primary.anchor) }}
+    demo={hero.demo}
+    href={href}
+  />
+
+  <section id="services" class="pb-(--spacing-section)" aria-labelledby="services-title">
+    <div class="container-content grid gap-10">
+      <SectionHeading id="services-title" eyebrow={services.eyebrow} title={services.title} intro={services.intro} />
+      <div class="grid gap-6 md:grid-cols-2">
+        {
+          services.items.map((item) => (
+            <ServiceFeature
+              item={item}
+              audienceLabel={services.audienceLabel}
+              examplesLabel={services.examplesLabel}
+              examplesNote={services.examplesNote}
+              contactHref={href('contact')}
+            />
+          ))
+        }
+      </div>
+      <p>
+        <a href={href(services.systemLink.anchor)} class="inline-flex min-h-11 items-center gap-2 text-lg font-bold">
+          {services.systemLink.label}
+          <span aria-hidden="true">→</span>
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <SystemFeature
+    eyebrow={system.eyebrow}
+    title={system.title}
+    body={system.body}
+    stepsLabel={system.stepsLabel}
+    steps={system.steps}
+    examplesLabel={system.examplesLabel}
+    examplesNote={system.examplesNote}
+    examples={system.examples}
+    cta={system.cta}
+    contactHref={href('contact')}
+  />
+
+  <WorkflowExample {...examples} />
+  <AboutSection {...about} />
+  <ProcessSection {...process} />
+  <LearningSection {...learning} />
+
+  <ContactSection
+    eyebrow={contact.eyebrow}
+    title={contact.title}
+    body={contact.body}
+    previewNotice={contact.previewNotice}
+    requiredNote={contact.requiredNote}
+    legend={contact.legend}
+    fields={contact.fields}
+    fieldOptions={consultFields}
+    handoffMessage={contact.handoffMessage}
+    sendNote={contact.sendNote}
+    sendLabel={contact.sendLabel}
+    helperLinks={contact.helperLinks.map((link) => ({ label: link.label, href: href(link.anchor) }))}
+    privacy={contact.privacy}
+  />
+</BaseLayout>

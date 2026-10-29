@@ -1,0 +1,83 @@
+---
+/**
+ * 支援のイメージ（#examples）。説明用デモ1件を「Webで伝える→相談を受け取る→対応を整理する」の流れで示す。
+ * - 実績一覧ではない。画面の中は「サンプル案件A」などの明らかな見本名と説明用の状態ラベルだけ
+ * - 画面枠は装飾（読み上げ対象外・フォーカスしない）。同じ情報は各段階の本文で読める
+ * - 画面枠の中の行は折り返せるようにし、狭い画面で文字を大きくしても枠が画面の外へはみ出さないようにする
+ */
+import SectionHeading from './SectionHeading.astro';
+
+type Props = {
+  eyebrow: string;
+  title: string;
+  demoTitle: string;
+  badge: string;
+  stages: { title: string; body: string }[];
+  sampleName: string;
+  sampleButton: string;
+  sampleOther: string;
+  statuses: string[];
+  note: string;
+};
+
+const { eyebrow, title, demoTitle, badge, stages, sampleName, sampleButton, sampleOther, statuses, note } = Astro.props;
+---
+
+<section id="examples" class="py-(--spacing-section)" aria-labelledby="examples-title">
+  <div class="container-content grid gap-10">
+    <SectionHeading id="examples-title" eyebrow={eyebrow} title={title} />
+    <div class="grid gap-8 rounded-demo border border-line bg-surface p-6 sm:p-10">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span class="inline-flex items-center rounded-full border border-line-strong px-2.5 text-sm font-bold">{badge}</span>
+        <h3 class="text-subheading">{demoTitle}</h3>
+      </div>
+      <ol class="grid gap-6 lg:grid-cols-3">
+        {
+          stages.map((stage, index) => (
+            <li class="grid content-start gap-4">
+              <div aria-hidden="true" class="grid min-h-40 content-start gap-2 rounded-card bg-muted p-3 text-sm sm:p-4">
+                {index === 0 && (
+                  <>
+                    <div class="h-2 w-12 rounded-full bg-brand" />
+                    <div class="h-3 w-3/4 rounded-full bg-shape-line" />
+                    <div class="h-2 w-2/3 rounded-full bg-shape-soft" />
+                    <div class="h-2 w-1/2 rounded-full bg-shape-soft" />
+                    <div class="mt-2 w-fit rounded-full bg-brand px-3 py-1 font-bold text-on-brand">{sampleButton}</div>
+                  </>
+                )}
+                {index === 1 && (
+                  <>
+                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
+                      <span class="font-bold">{sampleName}</span>
+                      <span class="rounded-full border border-line-strong px-2">{statuses[0]}</span>
+                    </div>
+                    <div class="h-2 w-3/4 rounded-full bg-shape-soft" />
+                    <div class="h-2 w-1/2 rounded-full bg-shape-soft" />
+                  </>
+                )}
+                {index === 2 && (
+                  <>
+                    {statuses.map((status, row) => (
+                      <div class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
+                        <span class={row === 0 ? 'font-bold' : 'text-ink-soft'}>{row === 0 ? sampleName : sampleOther}</span>
+                        <span class="rounded-full border border-line-strong px-2">{status}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+              <div class="grid gap-1">
+                <p class="flex items-baseline gap-2 font-bold">
+                  <span class="font-latin text-sm font-semibold text-ink-soft">{String(index + 1).padStart(2, '0')}</span>
+                  {stage.title}
+                </p>
+                <p class="text-ink-soft">{stage.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="border-t border-line pt-4 text-sm text-ink-soft">{note}</p>
+    </div>
+  </div>
+</section>
