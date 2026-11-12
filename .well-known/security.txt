@@ -1,0 +1,6 @@
+# 脆弱性を見つけた方へ: 下記の連絡先までお知らせください。
+# （RFC 9116 形式。Expires は1年ごとに更新すること）
+Contact: mailto:info@anom-ai.com
+Expires: 2027-11-12T00:00:00.000Z
+Preferred-Languages: ja, en
+Canonical: https://anom-ai.com/.well-known/security.txt

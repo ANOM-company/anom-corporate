@@ -1,0 +1,16 @@
+# =========================================================
+#  公開サイトのセキュリティ用レスポンスヘッダー（_headers）
+#  ---------------------------------------------------------
+#  ・Cloudflare（Pages / Workers の静的アセット）がこのファイルを読んで、
+#    すべてのページに下のヘッダーを付ける。GitHub Pages では無視される（害はない）
+#  ・CSP本体は index.html などの <meta> にある。ここでは <meta> では効かない
+#    「他サイトへの埋め込み禁止（frame-ancestors）」だけを足している
+#  ・外部サービスを増やすときに触るのは <meta> のCSPの方。このファイルは原則そのまま
+# =========================================================
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
