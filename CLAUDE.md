@@ -20,7 +20,7 @@
 
 ## 1. リポジトリ概要
 
-- **GitHub:** https://github.com/tapiAI-coder/anom-corporate
+- **GitHub:** https://github.com/ANOM-company/anom-corporate
 - **公開:** GitHub Pages（main ブランチ / ルート配信）
 - **本番URL:** https://anom-ai.com/ （独自ドメイン。GitHub Pagesのカスタムドメイン機能で接続）
 - **ブランチ:** `main`=本番 ／ `archive/astro-v3`=旧Astro版アーカイブ（触らない・消さない）
@@ -110,6 +110,8 @@ anom-corporate/
 - referrer-policy: strict-origin-when-cross-origin
 - 外部リンクは `rel="noopener"`（target=_blank時）
 - `.env` はgitignore済み（現状シークレットなし）
+- `_headers`（Cloudflare用）: HSTS・nosniff・埋め込み禁止（X-Frame-Options / frame-ancestors）・Permissions-Policy を全ページに付ける。<meta>のCSPでは効かない項目だけを担当
+- `.well-known/security.txt`: 脆弱性の連絡窓口。**Expires を毎年更新**
 
 ## 8. 公開・ドメイン
 
