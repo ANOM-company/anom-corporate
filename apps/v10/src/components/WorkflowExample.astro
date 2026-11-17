@@ -1,83 +1,90 @@
 ---
 /**
- * 支援のイメージ（#examples）。説明用デモ1件を「Webで伝える→相談を受け取る→対応を整理する」の流れで示す。
- * - 実績一覧ではない。画面の中は「サンプル案件A」などの明らかな見本名と説明用の状態ラベルだけ
- * - 画面枠は装飾（読み上げ対象外・フォーカスしない）。同じ情報は各段階の本文で読める
- * - 画面枠の中の行は折り返せるようにし、狭い画面で文字を大きくしても枠が画面の外へはみ出さないようにする
+ * 支援のイメージ（#examples）。説明用の見本1件で、仕事が整理される「前」と「後」を並べて見せる。
+ * - 実績一覧ではない。画面の中は「サンプル案件A」などの明らかな見本名と、説明用の状態ラベルだけ
+ * - 画面の絵は装飾（読み上げ対象外・フォーカスしない）。同じ情報は各段階の本文で読める
+ * - PC（1024px以上）は 前 → 後 を左右に、狭い幅は縦に並べる。絵は画面に入ったとき1回だけ少し現れる（data-reveal）
+ * - 画面の絵の中の行は折り返せるようにし、狭い画面で文字を大きくしても枠の外へはみ出さないようにする
  */
 import SectionHeading from './SectionHeading.astro';
+
+type Stage = { label: string; title: string; body: string };
 
 type Props = {
   eyebrow: string;
   title: string;
   demoTitle: string;
   badge: string;
-  stages: { title: string; body: string }[];
+  before: Stage & { sources: string[] };
+  after: Stage;
   sampleName: string;
-  sampleButton: string;
   sampleOther: string;
   statuses: string[];
   note: string;
+  link: { label: string; href: string };
 };
 
-const { eyebrow, title, demoTitle, badge, stages, sampleName, sampleButton, sampleOther, statuses, note } = Astro.props;
+const { eyebrow, title, demoTitle, badge, before, after, sampleName, sampleOther, statuses, note, link } = Astro.props;
+const tilt = ['-rotate-3', 'rotate-2', '-rotate-1'];
 ---
 
 <section id="examples" class="py-(--spacing-section)" aria-labelledby="examples-title">
   <div class="container-content grid gap-10">
     <SectionHeading id="examples-title" eyebrow={eyebrow} title={title} />
-    <div class="grid gap-8 rounded-demo border border-line bg-surface p-6 sm:p-10">
+    <div class="grid gap-8 rounded-demo border border-line bg-surface p-5 sm:p-8 lg:p-10">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span class="inline-flex items-center rounded-full border border-line-strong px-2.5 text-sm font-bold">{badge}</span>
+        <span class="inline-flex items-center rounded-full border border-line-strong px-2.5 text-sm font-bold">※ {badge}</span>
         <h3 class="text-subheading">{demoTitle}</h3>
       </div>
-      <ol class="grid gap-6 lg:grid-cols-3">
-        {
-          stages.map((stage, index) => (
-            <li class="grid content-start gap-4">
-              <div aria-hidden="true" class="grid min-h-40 content-start gap-2 rounded-card bg-muted p-3 text-sm sm:p-4">
-                {index === 0 && (
-                  <>
-                    <div class="h-2 w-12 rounded-full bg-brand" />
-                    <div class="h-3 w-3/4 rounded-full bg-shape-line" />
-                    <div class="h-2 w-2/3 rounded-full bg-shape-soft" />
-                    <div class="h-2 w-1/2 rounded-full bg-shape-soft" />
-                    <div class="mt-2 w-fit rounded-full bg-brand px-3 py-1 font-bold text-on-brand">{sampleButton}</div>
-                  </>
-                )}
-                {index === 1 && (
-                  <>
-                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
-                      <span class="font-bold">{sampleName}</span>
-                      <span class="rounded-full border border-line-strong px-2">{statuses[0]}</span>
-                    </div>
-                    <div class="h-2 w-3/4 rounded-full bg-shape-soft" />
-                    <div class="h-2 w-1/2 rounded-full bg-shape-soft" />
-                  </>
-                )}
-                {index === 2 && (
-                  <>
-                    {statuses.map((status, row) => (
-                      <div class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2">
-                        <span class={row === 0 ? 'font-bold' : 'text-ink-soft'}>{row === 0 ? sampleName : sampleOther}</span>
-                        <span class="rounded-full border border-line-strong px-2">{status}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-              <div class="grid gap-1">
-                <p class="flex items-baseline gap-2 font-bold">
-                  <span class="font-latin text-sm font-semibold text-ink-soft">{String(index + 1).padStart(2, '0')}</span>
-                  {stage.title}
-                </p>
-                <p class="text-ink-soft">{stage.body}</p>
-              </div>
-            </li>
-          ))
-        }
+      <ol class="grid items-start gap-8 lg:grid-cols-2 lg:gap-12" data-reveal>
+        <li class="grid content-start gap-4">
+          <div aria-hidden="true" class="grid min-h-52 grid-cols-3 content-center items-center gap-2 rounded-card bg-muted p-4 sm:gap-4 sm:p-6" data-reveal-item>
+            {
+              before.sources.map((source, index) => (
+                <div class:list={['grid gap-1.5 rounded-screen border border-line bg-surface p-2 text-sm shadow-md shadow-ink/5 sm:p-3', tilt[index]]}>
+                  <span class="font-bold">{source}</span>
+                  <span class="h-1.5 w-full rounded-full bg-shape-soft" />
+                  <span class="h-1.5 w-2/3 rounded-full bg-shape-soft" />
+                  <span class="text-2xs text-ink-soft sm:text-xs">{sampleName}</span>
+                </div>
+              ))
+            }
+          </div>
+          <div class="grid gap-1">
+            <p class="flex items-baseline gap-2 font-bold">
+              <span class="shrink-0 font-latin text-sm font-semibold tracking-widest text-ink-soft uppercase">{before.label}</span>
+              {before.title}
+            </p>
+            <p class="text-ink-soft">{before.body}</p>
+          </div>
+        </li>
+        <li class="grid content-start gap-4">
+          <div aria-hidden="true" class="grid min-h-52 content-center gap-2 rounded-card bg-night p-4 text-sm sm:p-6" data-reveal-item>
+            {
+              statuses.map((status, row) => (
+                <div class="flex flex-wrap items-center justify-between gap-2 rounded-screen bg-surface px-3 py-2">
+                  <span class={row === 0 ? 'font-bold' : 'text-ink-soft'}>{row === 0 ? sampleName : sampleOther}</span>
+                  <span class:list={['rounded-full px-2 font-bold', row === 2 ? 'bg-brand text-on-brand' : 'border border-line-strong']}>{status}</span>
+                </div>
+              ))
+            }
+          </div>
+          <div class="grid gap-1">
+            <p class="flex items-baseline gap-2 font-bold">
+              <span class="shrink-0 font-latin text-sm font-semibold tracking-widest text-brand uppercase">{after.label}</span>
+              {after.title}
+            </p>
+            <p class="text-ink-soft">{after.body}</p>
+          </div>
+        </li>
       </ol>
-      <p class="border-t border-line pt-4 text-sm text-ink-soft">{note}</p>
+      <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line pt-4">
+        <p class="text-sm text-ink-soft">{note}</p>
+        <a href={link.href} class="inline-flex min-h-11 items-center gap-2 font-bold">
+          {link.label}
+          <span aria-hidden="true" class="arrow-nudge arrow-nudge-down">↓</span>
+        </a>
+      </div>
     </div>
   </div>
 </section>

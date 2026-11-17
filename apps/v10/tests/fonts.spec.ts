@@ -64,7 +64,7 @@ test.describe('書体の描画', () => {
       expectOnly(await renderedFonts(page, '#hero-title'), /^LINESeedJP-Bold$/, 'H1');
       expectOnly(await renderedFonts(page, '#services-title'), /^LINESeedJP-Bold$/, 'H2');
       expectOnly(await renderedFonts(page, '#service-ai h3'), /^LINESeedJP-Bold$/, 'H3');
-      expectOnly(await renderedFonts(page, '#top p'), /^LINESeedJP-Regular$/, '本文');
+      expectOnly(await renderedFonts(page, '#top h1 + p > span'), /^LINESeedJP-Regular$/, '本文');
       expectOnly(await renderedFonts(page, '#contact-name'), /^LINESeedJP-Regular$/, '入力値（異体字・欧文アクセント・丸数字）');
       expectOnly(await renderedFonts(page, '#contact-message'), /^LINESeedJP-Regular$/, '入力値（約物・全角半角）');
       expectOnly(await renderedFonts(page, '[data-bottom-nav] a'), /^LINESeedJP-Bold$/, '下部バーの文字');
@@ -139,7 +139,7 @@ test.describe('書体を読み込めないとき', () => {
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
 
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('技術を、仕事の力に。');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('仕事を、もっと自由に。');
     const h1Fonts = await renderedFonts(page, '#hero-title');
     expect(h1Fonts.length).toBeGreaterThan(0);
     for (const font of h1Fonts) expect(font.isCustomFont, '端末の書体で描画される').toBe(false);
@@ -342,17 +342,24 @@ test.describe('見出しの改行', () => {
           });
         return { fontSize: parseFloat(getComputedStyle(el).fontSize), wordBreak: getComputedStyle(el).wordBreak, phrases };
       });
-      expect(h1.phrases.map((phrase) => phrase.text)).toEqual(['技術を、', '仕事の力に。']);
+      expect(h1.phrases.map((phrase) => phrase.text)).toEqual(['仕事を、', 'もっと自由に。']);
       expect(h1.wordBreak).toBe('keep-all');
       for (const phrase of h1.phrases) {
         expect(phrase.lines, `「${phrase.text}」が1行に収まる`).toBe(1);
         expect(phrase.right, `「${phrase.text}」が見出しの幅に収まる`).toBeLessThanOrEqual(phrase.max + 1);
       }
       const h2 =await page.locator('main h2').evaluateAll((els) =>
-        els.map((el) => ({ wordBreak: getComputedStyle(el).wordBreak, overflow: el.scrollWidth - el.clientWidth })),
+        els.map((el) => ({
+          text: (el.textContent ?? '').trim().slice(0, 12),
+          wordBreak: getComputedStyle(el).wordBreak,
+          phraseMarks: el.querySelectorAll('wbr').length,
+          overflow: el.scrollWidth - el.clientWidth,
+        })),
       );
       for (const item of h2) {
-        expect(item.wordBreak).toBe('auto-phrase');
+        // 文節で折り返す: 自動の文節判定（auto-phrase）か、<wbr> で文節を示して文節の中では折り返さない（keep-all）
+        const byPhrase = item.wordBreak === 'auto-phrase' || (item.wordBreak === 'keep-all' && item.phraseMarks > 0);
+        expect(byPhrase, `「${item.text}」が文節で折り返す（${item.wordBreak}）`).toBe(true);
         expect(item.overflow, 'H2 が枠からはみ出さない').toBeLessThanOrEqual(0);
       }
       await testInfo.attach(`h1-${width}.json`, {

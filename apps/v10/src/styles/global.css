@@ -2,7 +2,7 @@
  * 共通スタイルと設計トークン（色・書体・余白・文字サイズ・動き）
  * ---------------------------------------------------------------
  * - 見た目の値はここに集約し、部品側では Tailwind のクラス名（bg-surface など）で参照する
- * - 現在の値は V10 確認版の開始値（設計書の提案値）。正式なブランド色の採取値ではない
+ * - 色・寸法・動きは 2026-11 の大幅改修の設計値（白に近い地＋深い青。オーナー選択）。正式なブランド色の採取値ではない
  * - 書体は自己配信の Outfit と LINE Seed JP だけを使う（定義は fonts.css。外部へは接続しない）
  */
 @import 'tailwindcss';
@@ -11,30 +11,39 @@
 /* JavaScript が無効のときだけ当てる指定（例: noscript:hidden） */
 @custom-variant noscript (@media (scripting: none));
 
+/* 日本語の文節で折り返す（短い説明文・ボタンの文言向け。未対応のブラウザーでは通常の折り返し） */
+@utility break-phrase {
+  word-break: auto-phrase;
+}
+
 @theme {
-  /* 色: 役割名で定義し、部品は役割名だけを使う */
-  --color-canvas: #f5f5f2; /* ページ全体の地 */
-  --color-surface: #ffffff; /* 入力欄などの面 */
-  --color-muted: #e9edee; /* 一段沈めた面 */
-  --color-ink: #17212a; /* 本文・見出しの文字 */
-  --color-ink-soft: #4b5963; /* 補足の文字（地の上でコントラスト比 6:1 以上） */
-  --color-line: #ced6da; /* 装飾の罫線（入力欄の境界には使わない） */
+  /* 色: 役割名で定義し、部品は役割名だけを使う（配分の目安: 明るい面70%・文字と濃色25%・青5%） */
+  --color-canvas: #f8f9f7; /* ページ全体の明るい地 */
+  --color-surface: #ffffff; /* カード・入力欄などの面 */
+  --color-muted: #eef2f7; /* 図版の下地・区切り（一段沈めた面） */
+  --color-ink: #151922; /* 見出し・本文の文字（地とのコントラスト比 16.6:1） */
+  --color-ink-soft: #515d6c; /* 補足の文字（地とのコントラスト比 6.3:1） */
+  --color-line: #d5dde6; /* 枠線・装飾の格子（本文や入力欄の境界には使わない） */
   --color-line-strong: #697781; /* 入力欄・操作部の境界（白い面とのコントラスト比 4.5:1 以上） */
-  --color-brand: #14344b; /* 深い青: 主要ボタン・画面デモ・下部バー・展開メニュー */
-  --color-brand-strong: #0d2638; /* 主要ボタンのホバー */
-  --color-on-brand: #ffffff; /* brand の上の文字 */
-  --color-on-brand-soft: #c9d8e3; /* brand の上の補足の文字（コントラスト比 8:1 以上） */
+  --color-brand: #173a8b; /* 深い青: 主要ボタン・リンク・選択状態（白い文字とのコントラスト比 10.4:1） */
+  --color-brand-strong: #102a66; /* 主要ボタンのホバー */
+  --color-brand-tint: #e7eefb; /* 青の淡い面（補助ボタンのホバー・選択していない切替） */
+  --color-on-brand: #ffffff; /* brand・night の上の文字 */
+  --color-on-brand-soft: #c9dfff; /* 濃い地の上の補足の文字・図形（night とのコントラスト比 12.5:1） */
+  --color-night: #101c35; /* 濃紺の面: システム開発の枠・お悩みの区画・下部バー・展開メニュー */
+  --color-night-raised: #1d2c4f; /* 濃紺の上のホバー・一段明るい面 */
+  --color-night-line: #3a4b70; /* 濃紺の上の罫線 */
   --color-danger: #a4161a; /* エラー表示 */
   --color-danger-soft: #fbeaea; /* エラーの背景 */
-  --color-focus: #1a5fd0; /* フォーカス表示の輪郭（白とのコントラスト比 5.8:1） */
+  --color-focus: #173a8b; /* フォーカス表示の輪郭（明るい地。暗い地では外側の白で見分ける） */
   --color-focus-halo: #ffffff; /* 輪郭の内外を縁取る白（暗い地とのコントラスト比 12:1 以上） */
 
   /* 図形（画面デモ・説明図の装飾）。意味は本文で伝え、色だけで状態を示さない */
-  --color-shape: #2a5675; /* 深い青の上の面 */
-  --color-shape-line: #4f7b9a; /* 深い青の上の線 */
-  --color-shape-accent: #8fc1e3; /* 強調の面 */
-  --color-shape-soft: #dbe7ee; /* 明るい地の上の面 */
-  --color-shape-paper: #f7fafb; /* 画面デモの中の白い画面 */
+  --color-shape: #2b4c9b; /* 深い青の上の一段明るい面 */
+  --color-shape-line: #9fb2d3; /* 線・文字の代わりの棒 */
+  --color-shape-accent: #c9dfff; /* 強調の面 */
+  --color-shape-soft: #dfe7f3; /* 明るい地の上の面 */
+  --color-shape-paper: #ffffff; /* 画面デモの中の白い画面 */
 
   /* 書体: 自己配信の2書体（fonts.css）→ 端末の標準書体の順 */
   --font-sans:
@@ -54,6 +63,11 @@
    * 画面幅（vw）や列幅（cqi）を混ぜないのは、ブラウザーの文字サイズ設定を上げたときに
    * 見出しも本文と同じ比率で大きくなるようにするため。拡大で入りきらない分は折り返しで吸収する。
    */
+  /* 図版の中の小さな英字ラベル（装飾。読み上げの対象外の場所だけに使う） */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.4;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
   --text-sm: 0.875rem;
   --text-sm--line-height: 1.7;
   --text-base: 1rem;
@@ -66,24 +80,27 @@
   --text-2xl--line-height: 1.4;
   --text-3xl: 2rem; /* 32px → 768px以上 40px → 1280px以上 48px */
   --text-3xl--line-height: 1.3;
-  /* H1: 36px → 640px以上 44px → 768px以上 52px → 1024px以上 56px → 1280px以上 72px */
+  /* H1: 36px → 480px以上 44px → 768px以上 52px → 1024px以上 44px（左右に並べる幅）→ 1280px以上 56px → 1440px以上 72px → 1600px以上 80px */
   --text-display: 2.25rem;
-  --text-display--line-height: 1.2;
-  /* H2: 28px → 768px以上 32px → 1024px以上 40px → 1280px以上 44px */
+  --text-display--line-height: 1.25;
+  /* H2: 28px → 768px以上 32px → 1024px以上 40px → 1280px以上 48px */
   --text-heading: 1.75rem;
-  --text-heading--line-height: 1.35;
+  --text-heading--line-height: 1.3;
+  /* 考え方の一文（大きな本文見出し）: 28px → 768px以上 36px → 1280px以上 48px */
+  --text-statement: 1.75rem;
+  --text-statement--line-height: 1.45;
   /* H3: 20px → 768px以上 24px → 1280px以上 28px */
   --text-subheading: 1.25rem;
   --text-subheading--line-height: 1.5;
 
   /* 余白の基準（Tailwind の p-4 などはこの値の倍数になる） */
   --spacing: 0.25rem;
-  /* セクション間: スマホ 64〜88px、PC 112〜144px */
-  --spacing-section: clamp(4rem, 2.6rem + 5.6vw, 8rem);
+  /* セクション間: スマホ 72〜96px、PC 112〜160px */
+  --spacing-section: clamp(4.5rem, 2.75rem + 6vw, 9.5rem);
   /* 押せる範囲の最小の高さ 44px（文字サイズに比例させない。下部バーを縦に並べたときの項目） */
   --spacing-tap: 44px;
-  /* 全体幅（左右の余白を含めて最大 1280px） */
-  --container-content: 80rem;
+  /* 全体幅（本文の最大幅 1280px ＋ 左右の余白 80px） */
+  --container-content: 90rem;
   /* 本文の行長（1行 約32〜40文字） */
   --container-prose: 36rem;
   --container-menu: 35rem; /* 展開メニューの最大幅 560px */
@@ -100,11 +117,13 @@
    */
   --container-page-bar-stack: 18.25rem;
   /*
-   * トップの H1「技術を、／仕事の力に。」の最大幅（見出し自身の文字サイズが基準）。
-   * 後半の文節（6文字 ≒ 6em）は入り、2つの文節を合わせた長さ（全角の書体で約10em、仮名・句読点を詰めた書体でも約8.7em）は入らない幅にして、
+   * トップの H1「仕事を、／もっと自由に。」の最大幅（見出し自身の文字サイズが基準）。
+   * 後半の文節（7文字 ≒ 7em）は入り、2つの文節を合わせた長さ（全角の書体で約11em、仮名・句読点を詰めた書体でも約9.5em）は入らない幅にして、
    * 書体の読み込み前後や端末の書体の違いで改行位置と高さが変わらないようにする（読み込み後の位置ずれを防ぐ）
    */
-  --container-hero-title: 6.5em;
+  --container-hero-title: 7.5em;
+  /* 冒頭の図版の最大幅（640px） */
+  --container-hero-visual: 40rem;
   /*
    * 12列のグリッドで左右に分ける区画（冒頭・考え方・相談欄・フッター）に必要な幅。
    * 区画（@container を付けたセクション）の幅で判定し、rem のため文字サイズに比例する。
@@ -113,10 +132,11 @@
    */
   --container-split: 56rem;
 
-  /* 角丸 */
-  --radius-control: 0.5rem; /* 通常の操作部 8px */
-  --radius-card: 0.875rem;
-  --radius-demo: 1.25rem; /* 画面デモ 20px */
+  /* 角丸（カード・画面はスマホで一段小さくする。値は下の :root で切り替える） */
+  --radius-control: 0.5rem; /* 入力欄など通常の操作部 8px */
+  --radius-screen: 0.625rem; /* カードの内側の画面 10px → 768px以上 12px */
+  --radius-card: 1rem; /* カード 16px → 768px以上 20px */
+  --radius-demo: 1rem; /* 画面デモ・大きな面 16px → 768px以上 20px */
   /*
    * 下部バーを縦に並べたときのバーの角。項目の丸み（項目の高さの半分 =（行の高さ 1.375rem＋上下の余白 0.5rem）÷2）に
    * 外側の余白 0.375rem を足し、角の近くの文字も濃い色の背景の内側に保つ
@@ -125,16 +145,21 @@
 
   /* 動き: 時間と緩急はここだけで決める（動き低減の設定では下の @media で 0 にする） */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-assemble: cubic-bezier(0.22, 1, 0.36, 1); /* 部品の組み立て・時間差表示（勢いよく出て静かに止まる） */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1); /* 切替のクロスフェード */
   --duration-fast: 120ms;
-  --duration-base: 180ms; /* ボタン・リンクの変化 */
-  --duration-build: 640ms; /* 冒頭の図形が組み上がる時間（遅延と合わせて 900ms 以内） */
-  --duration-stagger: 40ms; /* 図形ごとの開始のずれ（最大6段 = 240ms） */
-  --duration-switch: 320ms; /* デモ切替（360ms 以内） */
-  --duration-menu-open: 320ms;
+  --duration-base: 160ms; /* ボタン・リンク・矢印の小さな反応（120〜180ms） */
+  --duration-build: 640ms; /* 冒頭の部品が組み上がる時間（遅延と合わせて 900ms 以内） */
+  --duration-stagger: 40ms; /* 部品ごとの開始のずれ（最大6段 = 240ms） */
+  --duration-reveal: 220ms; /* 装飾の時間差表示（各 180〜240ms） */
+  --duration-switch: 260ms; /* デモ切替のクロスフェード（200〜300ms） */
+  --duration-accordion-open: 220ms;
+  --duration-accordion-close: 160ms;
+  --duration-menu-open: 300ms;
   --duration-menu-close: 200ms;
 
-  --animate-assemble: assemble var(--duration-build) var(--ease-standard) both;
-  --animate-panel-in: panel-in var(--duration-switch) var(--ease-standard) both;
+  --animate-assemble: assemble var(--duration-build) var(--ease-assemble) both;
+  --animate-panel-in: panel-in var(--duration-switch) var(--ease-out) both;
 
   /* 図形が散らばった位置（--from-x / --from-y / --from-r）から本来の位置へ整う */
   @keyframes assemble {
@@ -147,11 +172,11 @@
       transform: none;
     }
   }
-  /* デモ切替: 短い移動とフェード */
+  /* デモ切替: ごく短い移動とフェード（クロスフェード） */
   @keyframes panel-in {
     from {
       opacity: 0;
-      transform: translateY(0.5rem);
+      transform: translateY(0.25rem);
     }
     to {
       opacity: 1;
@@ -189,10 +214,11 @@
 }
 
 /*
- * 見出しの文字サイズの段階（設計書: H1 はスマホ 36〜48px・PC 64〜88px、H2 はスマホ 28〜32px・PC 36〜48px）。
- * 1024〜1279px の H1 は、文字5：画面デモ7 の列（約350px）に後半の文節が1行で入る 56px にとどめる。
+ * 見出しの文字サイズと角丸の段階（設計書: H1 はスマホ 36〜52px・PC 48〜80px、H2 はスマホ 28〜36px・PC 32〜52px）。
+ * 画面幅（vw）は使わず rem の段階にする（ブラウザーの文字サイズ設定で見出しも本文と同じ比率で大きくするため）。
+ * 1024〜1279px の H1 は、冒頭を左右に並べたときの文字の列（約340px）に後半の文節「もっと自由に。」が1行で入る 44px にとどめる。
  */
-@media (min-width: 40rem) {
+@media (min-width: 30rem) {
   :root {
     --text-display: 2.75rem;
   }
@@ -203,20 +229,35 @@
     --text-display: 3.25rem;
     --text-heading: 2rem;
     --text-subheading: 1.5rem;
+    --text-statement: 2.25rem;
+    --radius-screen: 0.75rem;
+    --radius-card: 1.25rem;
+    --radius-demo: 1.25rem;
   }
 }
 @media (min-width: 64rem) {
   :root {
-    --text-display: 3.5rem;
+    --text-display: 2.75rem;
     --text-heading: 2.5rem;
   }
 }
 @media (min-width: 80rem) {
   :root {
     --text-3xl: 3rem;
-    --text-display: 4.5rem;
-    --text-heading: 2.75rem;
+    --text-display: 3.5rem;
+    --text-heading: 3rem;
     --text-subheading: 1.75rem;
+    --text-statement: 3rem;
+  }
+}
+@media (min-width: 90rem) {
+  :root {
+    --text-display: 4.5rem;
+  }
+}
+@media (min-width: 100rem) {
+  :root {
+    --text-display: 5rem;
   }
 }
 
@@ -232,6 +273,9 @@
     --duration-build: 0ms;
     --duration-stagger: 0ms;
     --duration-switch: 0ms;
+    --duration-reveal: 0ms;
+    --duration-accordion-open: 0ms;
+    --duration-accordion-close: 0ms;
     --duration-menu-open: 0ms;
     --duration-menu-close: 0ms;
   }
@@ -316,10 +360,7 @@
     display: block !important;
     visibility: hidden;
   }
-  /* 利用者が切り替えたときだけ、選んだパネルを短く表示する（初回の組み上がりとは別） */
-  [data-demo-switched] [data-demo-panel]:not([hidden]) {
-    animation: var(--animate-panel-in);
-  }
+  /* 説明文（パネル）は動かさずにすぐ切り替える。短いクロスフェードは図だけに付ける（.demo-views） */
   /* JavaScript 無効時は切替ボタンを出さず、3つのパネルを縦に並べる */
   @media (scripting: none) {
     [data-demo-panels] > [data-demo-panel] {
@@ -332,7 +373,7 @@
 }
 
 @layer components {
-  /* 本文幅のコンテナ（左右の余白: 767px以下 20px、768〜1023px 32px、1024px以上 48px） */
+  /* 本文幅のコンテナ（左右の余白: 767px以下 20px、768〜1023px 32px、1024〜1279px 48px、1280〜1439px 64px、1440px以上 80px） */
   .container-content {
     margin-inline: auto;
     width: 100%;
@@ -347,6 +388,16 @@
   @media (min-width: 64rem) {
     .container-content {
       padding-inline: 3rem;
+    }
+  }
+  @media (min-width: 80rem) {
+    .container-content {
+      padding-inline: 4rem;
+    }
+  }
+  @media (min-width: 90rem) {
+    .container-content {
+      padding-inline: 5rem;
     }
   }
 
@@ -454,5 +505,208 @@
     .menu-panel[open]::backdrop {
       background-color: transparent;
     }
+  }
+}
+
+/*
+ * 2026-11 大幅改修で加えた部品の見た目と動き
+ * ---------------------------------------------------------------
+ * どの動きも「CSS の標準状態＝完成した状態」にしてあり、JavaScript 無効・読み込み失敗・動き低減でも内容が読める。
+ */
+@layer components {
+  /*
+   * 冒頭の図版の背景にだけ敷く細い格子（装飾）。本文の背景には敷かない。
+   * 端を透明にぼかし、図版の周りに静かに溶け込ませる
+   */
+  .hero-grid {
+    background-image:
+      linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+    background-size: 2.5rem 2.5rem;
+    background-position: center;
+    mask-image: radial-gradient(ellipse 70% 65% at 50% 45%, #000 40%, transparent 100%);
+    opacity: 0.7;
+  }
+
+  /*
+   * 冒頭の画面デモの3つの画面（AI・DX／Web／System）。同じ位置に重ね、最も高い画面の高さを確保する。
+   * 表示する画面は、部品の data-view（hero-tabs.ts が選択に合わせて書き換える）で決める。
+   * 初期値（HTML）は先頭の AI・DX。JavaScript 無効でも AI・DX の画面がそのまま見える
+   */
+  .demo-views {
+    display: grid;
+    /* 文字を大きくしても、図の中身の最小幅で列が広がって画面の外へはみ出さないようにする */
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .demo-views > [data-view-visual] {
+    grid-area: 1 / 1;
+    visibility: hidden;
+  }
+  [data-view='ai'] .demo-views > [data-view-visual='ai'],
+  [data-view='web'] .demo-views > [data-view-visual='web'],
+  [data-view='system'] .demo-views > [data-view-visual='system'] {
+    visibility: visible;
+  }
+  /* 利用者が切り替えたときだけ、選んだ画面を短くクロスフェードする（説明文は先に切り替わる） */
+  [data-demo-switched][data-view='ai'] .demo-views > [data-view-visual='ai'],
+  [data-demo-switched][data-view='web'] .demo-views > [data-view-visual='web'],
+  [data-demo-switched][data-view='system'] .demo-views > [data-view-visual='system'] {
+    animation: var(--animate-panel-in);
+  }
+  /* 2回目以降の表示（同じタブで再訪・再読み込み）では、冒頭の組み立てを再生しない（public/hero-gate.js） */
+  [data-hero-seen] .assemble {
+    animation: none;
+  }
+
+  /*
+   * 重なりによる奥行き（Depth Layering）: 冒頭の図版の浮いた小さな画面が、スクロールに合わせて最大 8px だけ上へずれる。
+   * スクロールに連動するアニメーションに対応したブラウザーで、動き低減の設定がない場合だけ。マウスには依存しない
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .depth-float {
+        animation: depth-float linear both;
+        animation-timeline: view();
+        animation-range: cover 50% exit 100%;
+      }
+      .depth-float-back {
+        animation: depth-float-back linear both;
+        animation-timeline: view();
+        animation-range: cover 50% exit 100%;
+      }
+    }
+  }
+  @keyframes depth-float {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 -8px;
+    }
+  }
+  @keyframes depth-float-back {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 4px;
+    }
+  }
+
+  /*
+   * スクロール連動の強調（考え方の一文）。文字の色は変えず、下に敷いた淡い青の線だけが左から伸びる。
+   * 標準状態は線が引き切られた完成形。対応ブラウザーで動き低減の設定がない場合だけ、スクロール量に合わせて伸ばす
+   */
+  .scroll-highlight {
+    background-image: linear-gradient(var(--color-shape-accent), var(--color-shape-accent));
+    background-repeat: no-repeat;
+    background-position: 0 92%;
+    background-size: 100% 0.32em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .scroll-highlight {
+        animation: highlight-grow linear both;
+        animation-timeline: view();
+        animation-range: entry 40% cover 45%;
+      }
+    }
+  }
+  @keyframes highlight-grow {
+    from {
+      background-size: 0% 0.32em;
+    }
+    to {
+      background-size: 100% 0.32em;
+    }
+  }
+
+  /*
+   * 時間差表示（Staggered Reveal）: 装飾の部品だけが、画面に入ったとき1回、順に少し現れる。本文は隠さない。
+   * src/scripts/reveal.ts が、読み込み時に画面の外にある [data-reveal] へ pending を付け、画面に入ると done にする。
+   * スクリプトが動かない場合・動き低減の設定では何も隠さない
+   */
+  [data-reveal='pending'] [data-reveal-item] {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
+  [data-reveal='done'] [data-reveal-item] {
+    transition:
+      opacity var(--duration-reveal) var(--ease-assemble),
+      translate var(--duration-reveal) var(--ease-assemble);
+  }
+  /* 順番は [data-reveal] の直下の何番目の項目にあるか（リストの各行の中の絵など）で決める */
+  [data-reveal] > :nth-child(2) > [data-reveal-item] {
+    transition-delay: calc(var(--duration-stagger) * 2);
+  }
+  [data-reveal] > :nth-child(3) > [data-reveal-item] {
+    transition-delay: calc(var(--duration-stagger) * 4);
+  }
+  [data-reveal] > :nth-child(n + 4) > [data-reveal-item] {
+    transition-delay: calc(var(--duration-stagger) * 6);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal='pending'] [data-reveal-item] {
+      opacity: 1;
+      translate: none;
+    }
+  }
+
+  /*
+   * お悩み別の開閉（src/scripts/accordion.ts）。標準状態は「すべて開いた」完成形で、JavaScript 無効でも全文が読める。
+   * 閉じたパネルは高さ 0 へ縮め、縮み終わったら中身を visibility: hidden にして、Tab 移動と読み上げの対象から外す
+   */
+  .accordion-panel {
+    display: grid;
+    grid-template-rows: 1fr;
+  }
+  .accordion-panel > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .accordion-panel[data-collapsed] {
+    grid-template-rows: 0fr;
+  }
+  .accordion-panel[data-collapsed] > * {
+    visibility: hidden;
+  }
+  /* 開閉の動き（初期の状態を決めた後だけ。src/scripts/accordion.ts が data-accordion-ready を付ける） */
+  [data-accordion-ready] .accordion-panel {
+    transition: grid-template-rows var(--duration-accordion-open) var(--ease-standard);
+  }
+  [data-accordion-ready] .accordion-panel[data-collapsed] {
+    transition-duration: var(--duration-accordion-close);
+  }
+  [data-accordion-ready] .accordion-panel[data-collapsed] > * {
+    transition: visibility 0s linear var(--duration-accordion-close);
+  }
+  /* 開閉の印（＋ → ×）。button の aria-expanded と同じ状態を示す。円の枠は回さず、中の印だけを回す（枠の外へはみ出さない） */
+  [data-accordion-ready] .accordion-icon {
+    transition: rotate var(--duration-accordion-open) var(--ease-standard);
+  }
+  [aria-expanded='true'] .accordion-icon {
+    rotate: 45deg;
+  }
+
+  /* 小さな操作反応（Micro-interaction）: リンク・ボタンの矢印が、ホバー・フォーカスで少し進む */
+  .arrow-nudge {
+    display: inline-block;
+    transition: translate var(--duration-base) var(--ease-standard);
+  }
+  a:hover > .arrow-nudge,
+  a:focus-visible > .arrow-nudge,
+  button:hover > .arrow-nudge,
+  button:focus-visible > .arrow-nudge {
+    translate: 0.2em -0.2em;
+  }
+  a:hover > .arrow-nudge-down,
+  a:focus-visible > .arrow-nudge-down {
+    translate: 0 0.2em;
+  }
+  a:hover > .arrow-nudge-right,
+  a:focus-visible > .arrow-nudge-right {
+    translate: 0.25em 0;
   }
 }

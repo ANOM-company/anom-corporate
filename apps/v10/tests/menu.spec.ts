@@ -233,9 +233,9 @@ test.describe('展開メニュー', () => {
     await page.waitForTimeout(200);
     expect((await menuState(page)).scrollY).toBe(before.scrollY);
 
-    // 9項目（提供中3・ANOMを知る3・これから1・共通2）と「閉じる」
+    // 10項目（提供中3・ANOMを知る4・これから1・共通2）と「閉じる」
     const links = dialog(page).getByRole('link');
-    await expect(links).toHaveCount(9);
+    await expect(links).toHaveCount(10);
     await expect(dialog(page).getByRole('link', { name: /学びの計画\s*［構想中］/ })).toBeVisible();
     await expect(dialog(page).locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
 
@@ -302,20 +302,21 @@ test.describe('展開メニュー', () => {
     await dialog(page).getByRole('link', { name: 'Web制作・運用保守' }).tap();
     await expect(dialog(page)).toBeHidden();
     await expect(page).toHaveURL(/#service-web$/);
-    await expect(page.getByRole('heading', { level: 3, name: '伝わるWebをつくり、育てていく。' })).toBeFocused();
+    await expect(page.getByRole('heading', { level: 3, name: '魅力を伝える。' })).toBeFocused();
     await context.close();
   });
 
   for (const [label, anchor, heading, level] of [
-    ['AI・DX支援', 'service-ai', '仕事の無駄を減らし、人が力を発揮できる現場へ。', 3],
-    ['Web制作・運用保守', 'service-web', '伝わるWebをつくり、育てていく。', 3],
-    ['システム開発', 'service-system', '自社の仕事に合う仕組みを、形に。', 2],
+    ['AI・DX支援', 'service-ai', '業務を整える。', 3],
+    ['Web制作・運用保守', 'service-web', '魅力を伝える。', 3],
+    ['システム開発', 'service-system', '仕事に合う仕組みをつくる。', 3],
+    ['よくあるお悩み', 'challenges', 'いま、こんなことに困っていませんか。', 2],
     ['支援のイメージ', 'examples', 'どんな変化をつくるのか。', 2],
-    ['ANOMの考え方', 'about', '無駄を減らし、人の力を活かす。', 2],
+    ['ANOMについて', 'about', '場所に関係なく、挑戦できる未来へ。', 2],
     ['相談からの進め方', 'process', '今の状況を聞くところから。', 2],
     ['学びの計画', 'learning', 'AIを、もっと身近な選択肢に。', 2],
-    ['トップへ', 'top', '技術を、仕事の力に。', 1],
-    ['相談する', 'contact', 'まずは、今のことを聞かせてください。', 2],
+    ['トップへ', 'top', '仕事を、もっと自由に。', 1],
+    ['相談する', 'contact', 'まずは、いまの悩みから。', 2],
   ] as const) {
     test(`メニューの「${label}」: 閉じてから #${anchor} へ移り、見出しへフォーカスする`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
@@ -340,7 +341,7 @@ test.describe('展開メニュー', () => {
     const link = dialog(page).getByRole('link', { name: '相談する' });
     await link.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading', { level: 2, name: 'まずは、今のことを聞かせてください。' })).toBeFocused();
+    await expect(page.getByRole('heading', { level: 2, name: 'まずは、いまの悩みから。' })).toBeFocused();
     await expect(page.getByLabel('ご相談の分野')).toHaveValue('web');
     // 見出しの次の Tab は、相談欄の中の要素へ進む（背面や先頭に戻らない）
     await page.keyboard.press('Tab');
@@ -351,7 +352,7 @@ test.describe('展開メニュー', () => {
   test('戻る／進む: メニューのリンクで移動した後に戻っても、メニューは再び開かない', async ({ page }) => {
     await page.goto('/');
     await menuButton(page).click();
-    await dialog(page).getByRole('link', { name: 'ANOMの考え方' }).click();
+    await dialog(page).getByRole('link', { name: 'ANOMについて' }).click();
     await expect(page).toHaveURL(/#about$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/$/);
@@ -453,7 +454,7 @@ test.describe('展開メニュー', () => {
     await menuButton(page).click();
     await dialog(page).getByRole('link', { name: 'システム開発' }).click();
     await expect(page).toHaveURL(/\/#service-system$/);
-    await expect(page.getByRole('heading', { level: 2, name: '自社の仕事に合う仕組みを、形に。' })).toBeInViewport();
+    await expect(page.getByRole('heading', { level: 3, name: '仕事に合う仕組みをつくる。' })).toBeInViewport();
     expect(await menuState(page)).toMatchObject({ open: 0, expanded: 'false', locked: false });
   });
 });

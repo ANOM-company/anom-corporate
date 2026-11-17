@@ -1,10 +1,14 @@
 ---
 /**
- * 冒頭の画面デモ（説明用）。図形が「AI・DX／Web／システム」の画面へ整う様子を、手動の切替で見せる。
- * - 図形は SVG の装飾（読み上げ対象外）。意味は各パネルの説明文（HTML）で伝える
- * - 切替は WAI のタブの設計パターン（src/scripts/hero-tabs.ts）。初期表示は先頭、自動では切り替えない
- * - JavaScript 無効時は切替ボタンを出さず、3つのパネルを縦に並べる（global.css の scripting: none）
- * - 3つのパネルは同じ位置に重ねて最も高いパネルの高さを確保し、切替で下の本文を動かさない
+ * 冒頭の画面デモ（説明用イメージ）。小さな部品が整い、「AI・DX／Web／System」の業務・Web画面になる様子を見せる。
+ * - 図（格子・奥の面・白い枠・濃紺の画面・浮いた小さな札）はすべて装飾（aria-hidden）。意味は下のパネルの説明文（HTML）で伝える
+ * - 切替は WAI のタブの設計パターン（src/scripts/hero-tabs.ts）。初期表示は先頭、自動では切り替えない。
+ *   選んだ画面は部品の data-view で切り替え、説明文を先に（すぐに）更新し、図だけを短くクロスフェードする
+ * - 読み込み時の「部品の組み立て」（.assemble）は1回だけ。同じタブでの再表示では再生しない（public/hero-gate.js）
+ * - JavaScript 無効時は切替ボタンを出さず、AI・DX の図と3つの説明文を縦に並べる（global.css の scripting: none）
+ * - 3つの図・3つのパネルはそれぞれ同じ位置に重ね、最も高いものの高さを確保して、切替で下の本文を動かさない。
+ *   各図は上端にそろえ、奥の面・浮いた札はその図自身の高さに合わせる（ほかの図の高さが書体の読み込みで変わっても、
+ *   表示中の図は動かない）
  */
 import type { DemoView } from '../data/home';
 
@@ -17,21 +21,153 @@ type Props = {
 };
 
 const { label, badge, views, href } = Astro.props;
+const first = views[0]?.id ?? 'ai';
+const statuses = ['未確認', '対応中', '完了'];
 ---
 
-<div class="grid gap-4 rounded-demo bg-brand p-3 text-on-brand sm:p-5" data-demo-tabs>
-  <div
-    class="grid grid-cols-3 gap-1 rounded-full bg-brand-strong p-1 noscript:hidden"
-    data-demo-tablist
-    data-label={label}
-  >
+<div class="grid grid-cols-1 gap-6" data-demo-tabs data-view={first}>
+  <div class="relative isolate" aria-hidden="true">
+    <div class="hero-grid absolute -inset-x-4 -inset-y-6 -z-10 sm:-inset-x-10 sm:-inset-y-10"></div>
+    <div class="demo-views">
+      {
+        views.map((view) => (
+          <div class="relative self-start px-3 pt-5 pb-10 sm:px-12 sm:pt-6 sm:pb-12" data-view-visual={view.id}>
+            {/* 奥の面（重なりによる奥行き） */}
+            <div class="depth-float-back absolute top-0 right-8 bottom-6 left-0 rounded-demo bg-muted sm:right-16 sm:left-6" />
+            {/* 白い枠と濃紺の画面 */}
+            <div class="relative rounded-demo border border-line bg-surface p-2.5 shadow-xl shadow-ink/5 sm:p-4">
+              <div class="grid gap-3 rounded-screen bg-night p-3 text-on-brand sm:gap-4 sm:p-5">
+                <div class="assemble flex items-center justify-between gap-3" data-scatter="5" data-step="0">
+                  <span class="font-latin text-xs font-semibold tracking-wider">{view.screenLabel}</span>
+                  <span class="flex gap-1">
+                    <span class="size-1.5 rounded-full bg-night-line" />
+                    <span class="size-1.5 rounded-full bg-night-line" />
+                    <span class="size-1.5 rounded-full bg-on-brand-soft" />
+                  </span>
+                </div>
+
+                {view.id === 'ai' && (
+                  <>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                      {view.parts.map((part, index) => (
+                        <div
+                          class="assemble grid content-start gap-1 rounded-control bg-surface p-2 text-ink sm:p-3"
+                          data-scatter={String(index + 1)}
+                          data-step={String(index + 1)}
+                        >
+                          <span class="font-latin text-2xs font-semibold tracking-wider text-brand">{part.label}</span>
+                          <span class="text-sm font-bold">{part.text}</span>
+                          <span class="mt-2 grid gap-1">
+                            <span class="h-1 w-4/5 rounded-full bg-shape-soft" />
+                            <span class="h-1 w-3/5 rounded-full bg-shape-soft" />
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div class="assemble flex items-center gap-2" data-scatter="4" data-step="4">
+                      <span class="size-2 rounded-full bg-on-brand-soft" />
+                      <span class="h-px flex-1 bg-shape-line" />
+                      <span class="size-2 rounded-full bg-on-brand-soft" />
+                      <span class="h-px flex-1 bg-shape-line" />
+                      <span class="size-2 rounded-full bg-surface" />
+                    </div>
+                  </>
+                )}
+
+                {view.id === 'web' && (
+                  <div class="grid gap-3 rounded-control bg-surface p-3 text-ink">
+                    <div class="assemble flex items-center justify-between gap-2" data-scatter="1" data-step="1">
+                      <span class="h-2.5 w-10 rounded-full bg-brand" />
+                      <span class="flex gap-1.5">
+                        <span class="h-1.5 w-6 rounded-full bg-shape-line" />
+                        <span class="h-1.5 w-6 rounded-full bg-shape-line" />
+                        <span class="h-1.5 w-8 rounded-full bg-brand" />
+                      </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="assemble grid content-start gap-1.5" data-scatter="3" data-step="2">
+                        <span class="font-latin text-2xs font-semibold tracking-wider text-brand">{view.parts[0]?.label}</span>
+                        <span class="h-2.5 w-full rounded-full bg-ink" />
+                        <span class="h-2.5 w-3/4 rounded-full bg-ink" />
+                        <span class="mt-1 h-1 w-full rounded-full bg-shape-soft" />
+                        <span class="h-1 w-4/5 rounded-full bg-shape-soft" />
+                        <span class="mt-1.5 w-fit rounded-full bg-brand px-2.5 py-0.5 font-latin text-2xs font-semibold text-on-brand">
+                          {view.parts[2]?.label}
+                        </span>
+                      </div>
+                      <div class="assemble relative grid min-h-20 place-items-end overflow-hidden rounded-control bg-shape-soft p-2" data-scatter="6" data-step="3">
+                        <span class="absolute top-2 left-2 font-latin text-2xs font-semibold tracking-wider text-brand">{view.parts[1]?.label}</span>
+                        <span class="absolute top-3 right-3 size-4 rounded-full bg-shape-accent" />
+                        <span class="h-1/2 w-full rounded-t-full bg-shape-line" />
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                      {[1, 2, 3].map((step) => (
+                        <span class="assemble h-6 rounded-control bg-muted" data-scatter={String(step + 2)} data-step={String(step + 3)} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {view.id === 'system' && (
+                  <div class="grid grid-cols-4 gap-2 sm:gap-3">
+                    <div class="assemble col-span-1 grid content-start gap-2 rounded-control bg-night-raised p-2" data-scatter="1" data-step="1">
+                      <span class="h-1.5 w-4/5 rounded-full bg-on-brand-soft" />
+                      <span class="h-1.5 w-3/5 rounded-full bg-night-line" />
+                      <span class="h-1.5 w-4/5 rounded-full bg-night-line" />
+                      <span class="h-1.5 w-1/2 rounded-full bg-night-line" />
+                    </div>
+                    <div class="col-span-3 grid gap-2 rounded-control bg-surface p-2.5 text-ink">
+                      <div class="assemble flex flex-wrap items-center gap-1.5" data-scatter="2" data-step="2">
+                        <span class="h-5 flex-1 rounded-control border border-line" />
+                        <span class="h-5 flex-1 rounded-control border border-line" />
+                        <span class="rounded-full bg-brand px-2 py-0.5 font-latin text-2xs font-semibold text-on-brand">{view.parts[0]?.label}</span>
+                      </div>
+                      {statuses.map((status, index) => (
+                        <div
+                          class="assemble flex items-center justify-between gap-2 rounded-control bg-muted px-2 py-1"
+                          data-scatter={String(index + 3)}
+                          data-step={String(index + 3)}
+                        >
+                          <span class="h-1.5 w-1/2 rounded-full bg-shape-line" />
+                          <span class:list={['rounded-full px-1.5 text-2xs font-bold', index === 2 ? 'bg-brand text-on-brand' : 'bg-surface text-ink']}>
+                            {status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* 浮いた小さな札（左＝整える前、右＝使える形） */}
+            <div class="depth-float absolute top-1/2 left-0 max-w-1/2">
+              <div class="assemble grid gap-0.5 rounded-card border border-line bg-surface px-3 py-2 shadow-lg shadow-ink/10 sm:px-4 sm:py-3" data-scatter="3" data-step="5">
+                <span class="text-2xs text-ink-soft sm:text-xs">{view.notes.from.label}</span>
+                <span class="text-xs font-bold text-ink sm:text-sm">{view.notes.from.text}</span>
+              </div>
+            </div>
+            <div class="depth-float absolute right-0 bottom-0 max-w-1/2">
+              <div class="assemble grid gap-0.5 rounded-card border border-line bg-surface px-3 py-2 shadow-lg shadow-ink/10 sm:px-4 sm:py-3" data-scatter="4" data-step="6">
+                <span class="text-2xs text-ink-soft sm:text-xs">{view.notes.to.label}</span>
+                <span class="text-xs font-bold text-brand sm:text-sm">{view.notes.to.text}</span>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-wrap justify-center gap-2 noscript:hidden" data-demo-tablist data-label={label}>
     {
       views.map((view, index) => (
         <button
           type="button"
           id={`demo-tab-${view.id}`}
-          class="min-h-11 rounded-full px-2 font-bold text-on-brand transition-colors duration-(--duration-base) ease-standard hover:bg-shape data-selected:bg-surface data-selected:text-brand"
+          class="min-h-11 min-w-24 cursor-pointer rounded-full bg-brand-tint px-5 font-bold text-brand transition-colors duration-(--duration-base) ease-standard hover:bg-shape-soft data-selected:bg-brand data-selected:text-on-brand"
           data-demo-tab={`demo-panel-${view.id}`}
+          data-demo-view={view.id}
           data-selected={index === 0 ? '' : undefined}
         >
           {view.tab}
@@ -43,114 +179,18 @@ const { label, badge, views, href } = Astro.props;
   <div data-demo-panels>
     {
       views.map((view, index) => (
-        <div
-          id={`demo-panel-${view.id}`}
-          class="grid content-start gap-4 rounded-control"
-          data-demo-panel
-          hidden={index !== 0}
-        >
+        <div id={`demo-panel-${view.id}`} class="grid content-start justify-items-center gap-2 text-center" data-demo-panel hidden={index !== 0}>
           <p class="hidden font-bold noscript:block">{view.title}</p>
-          <svg
-            viewBox="0 0 320 220"
-            class="block h-auto w-full rounded-control"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <rect width="320" height="220" rx="12" class="fill-shape-paper" />
-            <rect width="320" height="22" rx="12" class="fill-muted" />
-            <rect y="11" width="320" height="11" class="fill-muted" />
-            <circle cx="16" cy="11" r="3" class="fill-line-strong" />
-            <circle cx="28" cy="11" r="3" class="fill-line-strong" />
-            <circle cx="40" cy="11" r="3" class="fill-line-strong" />
-            {view.id === 'ai' && (
-              <g>
-                <rect x="20" y="48" width="70" height="22" rx="5" class="assemble fill-shape-soft" data-scatter="1" data-step="0" />
-                <rect x="20" y="78" width="70" height="22" rx="5" class="assemble fill-shape-soft" data-scatter="2" data-step="1" />
-                <rect x="20" y="108" width="70" height="22" rx="5" class="assemble fill-shape-soft" data-scatter="3" data-step="2" />
-                <rect x="28" y="56" width="40" height="6" rx="3" class="assemble fill-shape-line" data-scatter="1" data-step="0" />
-                <rect x="28" y="86" width="48" height="6" rx="3" class="assemble fill-shape-line" data-scatter="2" data-step="1" />
-                <rect x="28" y="116" width="32" height="6" rx="3" class="assemble fill-shape-line" data-scatter="3" data-step="2" />
-                <rect x="94" y="88" width="24" height="3" rx="1.5" class="assemble fill-shape-line" data-scatter="4" data-step="3" />
-                <rect x="122" y="44" width="76" height="92" rx="8" class="assemble fill-brand" data-scatter="5" data-step="2" />
-                <rect x="132" y="58" width="56" height="7" rx="3.5" class="assemble fill-shape-accent" data-scatter="6" data-step="3" />
-                <rect x="132" y="74" width="44" height="7" rx="3.5" class="assemble fill-shape-accent" data-scatter="1" data-step="4" />
-                <rect x="132" y="90" width="56" height="7" rx="3.5" class="assemble fill-shape-accent" data-scatter="4" data-step="4" />
-                <rect x="132" y="106" width="36" height="7" rx="3.5" class="assemble fill-shape-accent" data-scatter="2" data-step="5" />
-                <rect x="202" y="88" width="20" height="3" rx="1.5" class="assemble fill-shape-line" data-scatter="5" data-step="4" />
-                <rect x="226" y="50" width="14" height="14" rx="3" class="assemble fill-shape-accent" data-scatter="6" data-step="4" />
-                <rect x="246" y="53" width="54" height="8" rx="4" class="assemble fill-shape-soft" data-scatter="3" data-step="5" />
-                <rect x="226" y="78" width="14" height="14" rx="3" class="assemble fill-shape-accent" data-scatter="2" data-step="5" />
-                <rect x="246" y="81" width="44" height="8" rx="4" class="assemble fill-shape-soft" data-scatter="4" data-step="5" />
-                <rect x="226" y="106" width="14" height="14" rx="3" class="assemble fill-shape-soft" data-scatter="1" data-step="6" />
-                <rect x="246" y="109" width="50" height="8" rx="4" class="assemble fill-shape-soft" data-scatter="5" data-step="6" />
-                <rect x="20" y="164" width="280" height="14" rx="7" class="assemble fill-shape-soft" data-scatter="3" data-step="3" />
-                <rect x="20" y="164" width="188" height="14" rx="7" class="assemble fill-brand" data-scatter="6" data-step="6" />
-              </g>
-            )}
-            {view.id === 'web' && (
-              <g>
-                <rect x="20" y="34" width="36" height="10" rx="3" class="assemble fill-brand" data-scatter="1" data-step="0" />
-                <rect x="196" y="37" width="24" height="5" rx="2.5" class="assemble fill-shape-line" data-scatter="2" data-step="1" />
-                <rect x="228" y="37" width="24" height="5" rx="2.5" class="assemble fill-shape-line" data-scatter="4" data-step="1" />
-                <rect x="260" y="37" width="40" height="5" rx="2.5" class="assemble fill-shape-line" data-scatter="6" data-step="2" />
-                <rect x="20" y="64" width="124" height="14" rx="4" class="assemble fill-brand" data-scatter="3" data-step="1" />
-                <rect x="20" y="84" width="92" height="14" rx="4" class="assemble fill-brand" data-scatter="5" data-step="2" />
-                <rect x="20" y="110" width="124" height="6" rx="3" class="assemble fill-shape-line" data-scatter="1" data-step="3" />
-                <rect x="20" y="122" width="108" height="6" rx="3" class="assemble fill-shape-line" data-scatter="2" data-step="3" />
-                <rect x="20" y="140" width="64" height="18" rx="9" class="assemble fill-shape-accent" data-scatter="4" data-step="4" />
-                <rect x="168" y="60" width="132" height="98" rx="8" class="assemble fill-shape-soft" data-scatter="6" data-step="2" />
-                <circle cx="196" cy="86" r="10" class="assemble fill-shape-accent" data-scatter="3" data-step="4" />
-                <polygon points="176,150 222,104 250,132 266,118 292,150" class="assemble fill-shape-line" data-scatter="5" data-step="5" />
-                <rect x="20" y="174" width="84" height="30" rx="6" class="assemble fill-shape-soft" data-scatter="1" data-step="5" />
-                <rect x="118" y="174" width="84" height="30" rx="6" class="assemble fill-shape-soft" data-scatter="3" data-step="6" />
-                <rect x="216" y="174" width="84" height="30" rx="6" class="assemble fill-shape-soft" data-scatter="5" data-step="6" />
-              </g>
-            )}
-            {view.id === 'system' && (
-              <g>
-                <rect x="10" y="32" width="56" height="178" rx="8" class="assemble fill-brand" data-scatter="1" data-step="0" />
-                <rect x="20" y="48" width="36" height="6" rx="3" class="assemble fill-shape-accent" data-scatter="2" data-step="1" />
-                <rect x="20" y="64" width="30" height="6" rx="3" class="assemble fill-shape-line" data-scatter="3" data-step="1" />
-                <rect x="20" y="80" width="36" height="6" rx="3" class="assemble fill-shape-line" data-scatter="4" data-step="2" />
-                <rect x="20" y="96" width="26" height="6" rx="3" class="assemble fill-shape-line" data-scatter="5" data-step="2" />
-                <rect x="78" y="34" width="84" height="20" rx="5" class="assemble fill-surface stroke-line-strong" stroke-width="1" data-scatter="6" data-step="1" />
-                <rect x="170" y="34" width="84" height="20" rx="5" class="assemble fill-surface stroke-line-strong" stroke-width="1" data-scatter="2" data-step="2" />
-                <rect x="262" y="34" width="46" height="20" rx="5" class="assemble fill-brand" data-scatter="4" data-step="3" />
-                <rect x="78" y="66" width="230" height="22" rx="5" class="assemble fill-surface stroke-line" stroke-width="1" data-scatter="1" data-step="3" />
-                <rect x="78" y="94" width="230" height="22" rx="5" class="assemble fill-surface stroke-line" stroke-width="1" data-scatter="3" data-step="3" />
-                <rect x="78" y="122" width="230" height="22" rx="5" class="assemble fill-surface stroke-line" stroke-width="1" data-scatter="5" data-step="4" />
-                <rect x="78" y="150" width="230" height="22" rx="5" class="assemble fill-surface stroke-line" stroke-width="1" data-scatter="6" data-step="4" />
-                <rect x="88" y="74" width="96" height="6" rx="3" class="assemble fill-shape-line" data-scatter="1" data-step="4" />
-                <rect x="88" y="102" width="72" height="6" rx="3" class="assemble fill-shape-line" data-scatter="3" data-step="4" />
-                <rect x="88" y="130" width="88" height="6" rx="3" class="assemble fill-shape-line" data-scatter="5" data-step="5" />
-                <rect x="88" y="158" width="64" height="6" rx="3" class="assemble fill-shape-line" data-scatter="6" data-step="5" />
-                <rect x="262" y="72" width="36" height="10" rx="5" class="assemble fill-shape-accent" data-scatter="2" data-step="5" />
-                <rect x="262" y="100" width="36" height="10" rx="5" class="assemble fill-shape-soft" data-scatter="4" data-step="5" />
-                <rect x="262" y="128" width="36" height="10" rx="5" class="assemble fill-brand" data-scatter="1" data-step="6" />
-                <rect x="262" y="156" width="36" height="10" rx="5" class="assemble fill-shape-accent" data-scatter="3" data-step="6" />
-                <rect x="78" y="182" width="70" height="26" rx="6" class="assemble fill-shape-soft" data-scatter="2" data-step="6" />
-                <rect x="158" y="182" width="70" height="26" rx="6" class="assemble fill-shape-soft" data-scatter="4" data-step="6" />
-                <rect x="238" y="182" width="70" height="26" rx="6" class="assemble fill-shape-soft" data-scatter="6" data-step="6" />
-              </g>
-            )}
-          </svg>
-          <div class="grid gap-3 px-1 pb-1">
-            <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span class="inline-flex items-center rounded-full border border-on-brand-soft px-2.5 text-sm font-bold text-on-brand">
-                {badge}
-              </span>
-              <span class="text-on-brand-soft">{view.caption}</span>
-            </p>
-            <p>
-              <a
-                href={href(view.link.anchor)}
-                class="inline-flex min-h-11 items-center gap-2 rounded-control font-bold text-on-brand underline decoration-on-brand-soft underline-offset-4 hover:text-on-brand hover:decoration-on-brand"
-              >
-                {view.link.label}
-                <span aria-hidden="true">→</span>
-              </a>
-            </p>
-          </div>
+          <p class="text-ink-soft break-phrase">
+            <span class="mr-2 inline-flex items-center rounded-full border border-line-strong px-2.5 text-sm font-bold text-ink">※ {badge}</span>
+            {view.caption}
+          </p>
+          <p>
+            <a href={href(view.link.anchor)} class="inline-flex min-h-11 items-center gap-2 rounded-control font-bold">
+              {view.link.label}
+              <span aria-hidden="true" class="arrow-nudge arrow-nudge-down">↓</span>
+            </a>
+          </p>
         </div>
       ))
     }

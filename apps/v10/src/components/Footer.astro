@@ -2,7 +2,7 @@
 /**
  * フッター。ANOM 表記・サイト内の案内（#site-navigation）・個人情報の取り扱いへのリンク。
  * - サイト内の案内は <details open> の通常のリンク。JavaScript 無効時の「メニュー」の移動先を兼ねる
- * - 住所・法人格・設立年などの未確認の会社情報は載せない
+ * - 運営者名（株式会社ANOM）と公式ロゴを表示する。住所・設立年などの未確認の会社情報は載せない
  * - 末尾に下部バーの高さ分の余白を取り、最後の内容までバーに隠れないようにする。
  *   JavaScript 無効で文字を大きくして下部バーが縦に並ぶ幅（フッターの幅が --container-page-bar-stack 未満）では、
  *   横1段の初期値では足りない高さ（--bar-stack-extra）を足す
@@ -13,6 +13,7 @@ import type { MenuGroup } from '../site';
 
 type Props = {
   siteName: string;
+  companyName: string;
   title: string;
   groups: MenuGroup[];
   privacy: { label: string; href: string };
@@ -20,14 +21,17 @@ type Props = {
   href: (anchor: string) => string;
 };
 
-const { siteName, title, groups, privacy, note, href } = Astro.props;
+const { siteName, companyName, title, groups, privacy, note, href } = Astro.props;
 ---
 
 <footer class="@container border-t border-line bg-surface pt-12 pb-[calc(var(--bar-clearance)+1.5rem)]">
   <div class="container-content grid gap-10 @max-page-bar-stack:pb-(--bar-stack-extra) lg:@split:grid-cols-12 lg:@split:gap-12">
     <div class="grid content-start gap-3 lg:@split:col-span-4">
-      <p class="font-latin text-2xl font-bold tracking-wide">{siteName}</p>
+      <p>
+        <img src="/images/logo-horizontal.png" alt={siteName} width="355" height="96" class="block h-9 w-auto" />
+      </p>
       <p class="text-sm text-ink-soft">{note}</p>
+      <p class="text-sm text-ink-soft">© {companyName}</p>
     </div>
     <nav id="site-navigation" aria-labelledby="site-navigation-title" class="lg:@split:col-span-8">
       <details open class="group">

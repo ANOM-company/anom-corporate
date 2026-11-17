@@ -1,7 +1,7 @@
 ---
 /**
  * セクションの見出しまとまり（英字の補助ラベル＋H2＋導入文）。
- * - 英字の補助ラベルは Outfit。日本語の見出しが主役で、ラベルは小さく添える
+ * - 英字の補助ラベルは Outfit（明るい地は深い青、濃紺の地は淡い青）。日本語の見出しが主役で、ラベルは小さく添える
  */
 type Props = {
   id: string;
@@ -19,8 +19,8 @@ const { id, eyebrow, title, intro, tone = 'light' } = Astro.props;
     eyebrow && (
       <p
         class:list={[
-          'font-latin text-sm font-semibold tracking-wider uppercase',
-          tone === 'dark' ? 'text-on-brand-soft' : 'text-ink-soft',
+          'font-latin text-sm font-semibold tracking-widest uppercase',
+          tone === 'dark' ? 'text-on-brand-soft' : 'text-brand',
         ]}
       >
         {eyebrow}

@@ -7,13 +7,13 @@ test.describe('JavaScript無効', () => {
 
   test('トップ: 本文・主要リンク・3つの画面デモ・サイト案内がHTMLだけで使える', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('技術を、仕事の力に。');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('仕事を、もっと自由に。');
 
     // 切替ボタンは出さず、3つの画面デモの説明とリンクを縦に並べる
     await expect(page.locator('[data-demo-tablist]')).toBeHidden();
     for (const [title, link] of [
       ['AI・DXの画面イメージ', 'AI・DX支援を見る'],
-      ['Webの画面イメージ', 'Web制作を見る'],
+      ['Webの画面イメージ', 'Web制作・運用保守を見る'],
       ['システムの画面イメージ', 'システム開発を見る'],
     ] as const) {
       await expect(page.getByText(title)).toBeVisible();
@@ -29,8 +29,17 @@ test.describe('JavaScript無効', () => {
     expect(boxes[1]!.top).toBeGreaterThanOrEqual(boxes[0]!.bottom);
     expect(boxes[2]!.top).toBeGreaterThanOrEqual(boxes[1]!.bottom);
 
-    for (const heading of ['仕事を整える。価値を伝える。', '自社の仕事に合う仕組みを、形に。', 'まずは、今のことを聞かせてください。']) {
+    for (const heading of ['技術とデザインで、仕事の可能性を広げる。', 'いま、こんなことに困っていませんか。', 'まずは、いまの悩みから。']) {
       await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
+    }
+    await expect(page.getByRole('heading', { level: 3, name: '仕事に合う仕組みをつくる。' })).toBeVisible();
+
+    // お悩み別: 開閉ボタンは出さず、3つのお悩みの「できる支援」と関連サービスへのリンクをすべて開いたまま読める
+    const challenges = page.locator('#challenges');
+    await expect(challenges.getByRole('button')).toHaveCount(0);
+    await expect(challenges.getByRole('region')).toHaveCount(3);
+    for (const link of ['AI・DX支援を見る', 'Web制作・運用保守を見る', 'システム開発を見る']) {
+      await expect(challenges.getByRole('link', { name: link })).toBeVisible();
     }
 
     // 下部バー: サービス・相談するは通常のアンカー、メニューはフッターの案内へのリンク
@@ -46,7 +55,7 @@ test.describe('JavaScript無効', () => {
     await expect(siteNav.locator('details')).toHaveAttribute('open');
     await siteNav.getByRole('link', { name: 'システム開発' }).click();
     await expect(page).toHaveURL(/#service-system$/);
-    await expect(page.getByRole('heading', { level: 2, name: '自社の仕事に合う仕組みを、形に。' })).toBeInViewport();
+    await expect(page.getByRole('heading', { level: 3, name: '仕事に合う仕組みをつくる。' })).toBeInViewport();
   });
 
   test('トップの相談フォーム: 入力・Enter・送信ボタンのどれでも送信されない', async ({ page }) => {
@@ -179,12 +188,12 @@ test.describe('動き低減の設定', () => {
 
   test('通常時は動きがあり、低減設定では動きがなくなる', async ({ page }) => {
     const faqIcon = '[data-faq-item] summary [aria-hidden="true"]';
-    const shape = '#demo-panel-ai .assemble';
+    const shape = '[data-view-visual="ai"] .assemble';
     const menu = '#site-menu';
 
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/kitchen-sink/');
-    expect(await styleOf(page, faqIcon, 'transition-duration')).toBe('0.18s');
+    expect(await styleOf(page, faqIcon, 'transition-duration')).toBe('0.16s');
     await page.goto('/');
     expect(await styleOf(page, shape, 'animation-duration')).toBe('0.64s');
     expect(await styleOf(page, menu, 'transition-duration')).toContain('0.2s');

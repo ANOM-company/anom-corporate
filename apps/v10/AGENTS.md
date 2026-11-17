@@ -19,8 +19,8 @@
 ## 3. デザインの決め方
 
 - 色・書体・余白・文字サイズ・角丸・動きは `src/styles/global.css` の `@theme` に集約する。部品の中で色コードや任意の値を直書きしない。
-- 現在の値は仮テーマ。ANOM V10 の採用デザインとして扱わない・表示しない。
-- 動きは `--duration-*` と `--ease-standard` だけを使い、`prefers-reduced-motion: reduce` で止まることを保つ。
+- 現在の値は大幅改修案（白と深い青）の確認用。オーナーの承認前のため、公開用の確定デザインとして扱わない。
+- 動きは `--duration-*` と `--ease-*` だけを使い、`prefers-reduced-motion: reduce` で止まることを保つ。スクロールに連動する動き（`animation-timeline`）は `@supports` と `prefers-reduced-motion: no-preference` の中だけに書き、標準状態（動きなし）を完成形にする。
 
 ## 4. 部品（`src/components/`）
 

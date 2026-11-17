@@ -1,46 +1,69 @@
 ---
 /**
- * トップの冒頭（#top）。H1・説明・主リンクを初回表示から読めるようにし、演出を待たせない。
- * - PC（1024px以上）は文字5：画面デモ7。それより狭い幅は 見出し→説明→主リンク→デモ の縦順
+ * トップの冒頭（#top）。H1・説明・2つのボタンを初回表示から読めるようにし、演出の完了を待たせない。
+ * - PC（1024px以上）は 文字の列：図版（最大 640px）。それより狭い幅は 英字ラベル→見出し→説明→ボタン→図版 の縦順
  *   文字サイズの設定を大きくして、左右に分ける幅（--container-split）が足りないときも縦順にする
  * - 見出しは文節ごとに区切り（titleの配列）、語の途中で改行しない。
  *   区切りは <wbr> で示し、keep-all で文節の中では折り返さない（読み上げの文字列に空白を入れないため、
  *   文節を inline-block の要素で包む方式は使わない）
  * - 見出しの最大幅（--container-hero-title）で、どの画面幅・書体でも文節ごとの2行にする。
  *   端末の書体のほうが字幅が狭いと読み込み前だけ1行に収まり、読み込み後に2行へ変わって下の要素が動くため
+ * - 説明文は行を決めて書く（640〜1023px と 1280px以上は2行、640px未満と 1024〜1279px（文字の列が細い）は3行）。
+ *   読み込み前後で書体が変わっても改行位置が変わらず、
+ *   下のボタン・図が動かない
+ * - 2つのボタンは、横に並べると収まるかどうかが書体で変わる幅（640px未満と 1024〜1279px）では常に縦に積む
+ *   （読み込み中に横並び→縦積みへ変わって、下の図が押し下げられないように）
+ * - 英字ラベル「AI / DX × WEB × SYSTEM」は雰囲気を補う飾り。意味は日本語の説明文で伝える
  */
 import Button from './Button.astro';
 import HeroDemo from './HeroDemo.astro';
 import type { DemoView } from '../data/home';
 
 type Props = {
+  eyebrow: string[];
   title: string[];
-  lead: string[];
+  /** 外側の配列が広い幅の行、内側の配列が狭い幅の行 */
+  lead: string[][];
   primary: { label: string; href: string };
+  secondary: { label: string; href: string };
   demo: { label: string; badge: string; views: DemoView[] };
   href: (anchor: string) => string;
 };
 
-const { title, lead, primary, demo, href } = Astro.props;
+const { eyebrow, title, lead, primary, secondary, demo, href } = Astro.props;
 ---
 
-<section id="top" class="@container pt-6 pb-(--spacing-section) lg:pt-12" aria-labelledby="hero-title">
-  <div class="container-content grid gap-10 lg:@split:grid-cols-12 lg:@split:items-center lg:@split:gap-12">
-    <div class="grid content-start gap-6 lg:@split:col-span-5">
+<section id="top" class="@container overflow-x-clip border-b border-line pt-10 pb-(--spacing-section) lg:pt-16" aria-labelledby="hero-title">
+  <div class="container-content grid gap-14 lg:@split:grid-cols-[minmax(0,1fr)_min(58%,var(--container-hero-visual))] lg:@split:items-center lg:@split:gap-12">
+    <div class="grid content-start gap-6 lg:@split:gap-8">
+      <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-latin text-sm font-semibold tracking-widest text-brand">
+        {
+          eyebrow.map((item, index) => (
+            <>
+              {index > 0 && <span aria-hidden="true" class="text-ink-soft">×</span>}
+              <span>{item}</span>
+            </>
+          ))
+        }
+      </p>
       <h1 id="hero-title" class="max-w-(--container-hero-title) text-display tracking-normal break-keep">
         {title.map((phrase, index) => (index > 0 ? [<wbr />, phrase] : phrase))}
       </h1>
-      <p class="max-w-(--container-prose) text-lg text-ink-soft">
-        {lead.map((line) => <span class="block">{line}</span>)}
+      <p class="max-w-(--container-prose) text-lg text-ink-soft break-phrase">
+        {lead.map((line) => <span class="block">{line.map((chunk) => <span class="max-sm:block lg:max-xl:block">{chunk}</span>)}</span>)}
       </p>
-      <div>
+      <div class="flex flex-wrap gap-3 max-sm:grid max-sm:justify-items-start lg:max-xl:grid lg:max-xl:justify-items-start">
         <Button href={primary.href} size="lg">
           {primary.label}
-          <span aria-hidden="true">↓</span>
+          <span aria-hidden="true" class="arrow-nudge arrow-nudge-down">↓</span>
+        </Button>
+        <Button href={secondary.href} size="lg" variant="secondary">
+          {secondary.label}
+          <span aria-hidden="true" class="arrow-nudge arrow-nudge-right">→</span>
         </Button>
       </div>
     </div>
-    <div class="lg:@split:col-span-7">
+    <div class="min-w-0">
       <HeroDemo label={demo.label} badge={demo.badge} views={demo.views} href={href} />
     </div>
   </div>

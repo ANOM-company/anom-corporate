@@ -3,8 +3,11 @@
 
 export const siteName = 'ANOM';
 
+/** フッターに表示する運営者名（法人登記済みの表記） */
+export const companyName = '株式会社ANOM';
+
 /** 画面上部の案内（確認版であることを示す） */
-export const previewNotice = 'V10の確認用プレビューです。掲載内容は確認中で、相談フォームは送信されません。';
+export const previewNotice = '改修案の確認用プレビューです。掲載内容は確認中で、相談フォームは送信されません。';
 
 export const footerNote = 'このページは公開前の確認用プレビューです。';
 
@@ -30,8 +33,9 @@ export const siteMenu: MenuGroup[] = [
   {
     title: 'ANOMを知る',
     links: [
+      { label: 'よくあるお悩み', anchor: 'challenges' },
       { label: '支援のイメージ', anchor: 'examples' },
-      { label: 'ANOMの考え方', anchor: 'about' },
+      { label: 'ANOMについて', anchor: 'about' },
       { label: '相談からの進め方', anchor: 'process' },
     ],
   },
@@ -47,6 +51,16 @@ export const siteMenu: MenuGroup[] = [
     ],
   },
 ];
+
+/** 画面上部のナビゲーション（PC はすべて、スマホは「相談する」だけを表示） */
+export const headerNav = {
+  label: 'メインメニュー',
+  links: [
+    { label: 'サービス', anchor: 'services' },
+    { label: 'ANOMについて', anchor: 'about' },
+  ],
+  contact: { label: '相談する', anchor: 'contact' },
+};
 
 /** 下部バーの常設項目 */
 export const bottomNav = {

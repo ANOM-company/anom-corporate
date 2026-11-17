@@ -1,14 +1,16 @@
 ---
 /**
  * ボタン。href を渡すとリンク（<a>）、渡さないと <button> になる。
- * - variant: primary（主要） / secondary（補助） / ghost（控えめ）
- * - size: md / lg
+ * - variant: primary（主要・深い青の面） / secondary（補助・青の文字と枠線） / ghost（控えめ） / inverse（濃紺の地の上の主要）
+ * - size: md（高さ 48px 以上） / lg（高さ 52px 以上）。角は丸いピル型
+ * - 文言が長くて折り返すときは、文節の切れ目で折り返す（break-phrase）
+ * - 押せることは色だけでなく、面・枠線・下線・矢印で示す
  * - リンクの見た目でもキーボード操作・フォーカス表示は共通
  * - data-* などの追加の属性は、リンク・ボタンのどちらにも付く
  */
 import type { HTMLAttributes } from 'astro/types';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'inverse';
 type Size = 'md' | 'lg';
 
 type Props = {
@@ -21,15 +23,16 @@ type Props = {
 const { variant = 'primary', size = 'md', href, class: className, type = 'button', ...rest } = Astro.props;
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-control font-bold no-underline transition-colors duration-(--duration-base) ease-standard disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 rounded-full text-center font-bold leading-snug break-phrase no-underline transition-colors duration-(--duration-base) ease-standard active:duration-0 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50';
 const variants: Record<Variant, string> = {
-  primary: 'bg-brand text-on-brand hover:bg-brand-strong hover:text-on-brand',
-  secondary: 'border border-line-strong bg-surface text-ink hover:bg-muted hover:text-ink',
+  primary: 'bg-brand text-on-brand hover:bg-brand-strong hover:text-on-brand active:bg-ink',
+  secondary: 'border border-brand bg-transparent text-brand hover:bg-brand-tint hover:text-brand active:bg-shape-soft',
   ghost: 'text-brand underline hover:bg-muted',
+  inverse: 'bg-surface text-brand hover:bg-shape-accent hover:text-brand active:bg-shape-soft',
 };
 const sizes: Record<Size, string> = {
-  md: 'min-h-11 px-4 text-base',
-  lg: 'min-h-13 px-6 text-lg',
+  md: 'min-h-12 px-6 py-2 text-base',
+  lg: 'min-h-13 px-7 py-2.5 text-base',
 };
 const classes = [base, variants[variant], sizes[size], className].filter(Boolean).join(' ');
 ---

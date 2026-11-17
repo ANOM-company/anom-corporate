@@ -27,7 +27,7 @@ test.describe('ナビゲーション（ヘッダー型の部品見本）', () =>
     await menuButton.click();
     await mobileLink.click();
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { level: 1, name: '技術を、仕事の力に。' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: '仕事を、もっと自由に。' })).toBeVisible();
   });
 
   test('PC幅: リンクが常に表示され、現在のページが示される', async ({ page }) => {

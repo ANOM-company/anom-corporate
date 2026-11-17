@@ -1,6 +1,6 @@
 ---
 /**
- * 画面下中央に常に表示する下部バー（サービス／相談する／メニュー）。
+ * 画面下中央に常に表示する下部バー（サービス／相談する／メニュー）。濃紺の1本の横長のピル型で、文字は白。
  * - サービス・相談するは通常のページ内リンク（相談するは相談分野や入力内容を変えない）
  * - メニュー: JavaScript 無効時はフッターの案内（#site-navigation）へのリンク。
  *   有効時だけ、展開メニュー（<dialog>）を開くボタンに置き換える（src/scripts/bottom-nav.ts）。
@@ -24,7 +24,7 @@ const { label, services, contact, menu } = Astro.props;
 // 縦に並べたとき（@max-bar-stack）は、行の高さと上下の余白を詰める。押せる大きさは 44px 以上を保つ
 const item =
   'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold no-underline transition-colors duration-(--duration-base) ease-standard @max-bar-stack:min-h-tap @max-bar-stack:py-1 @max-bar-stack:leading-snug';
-const onBrand = `${item} text-on-brand hover:bg-shape hover:text-on-brand`;
+const onBrand = `${item} text-on-brand hover:bg-night-raised hover:text-on-brand`;
 ---
 
 <nav
@@ -33,13 +33,13 @@ const onBrand = `${item} text-on-brand hover:bg-shape hover:text-on-brand`;
   data-bottom-nav
 >
   <ul
-    class="grid min-h-16 grid-cols-3 items-stretch gap-1 rounded-full bg-brand p-1.5 shadow-lg shadow-ink/20 @max-bar-stack:grid-cols-1 @max-bar-stack:rounded-bar-stack"
+    class="grid min-h-16 grid-cols-3 items-stretch gap-1 rounded-full bg-night p-1.5 shadow-lg shadow-ink/25 @max-bar-stack:grid-cols-1 @max-bar-stack:rounded-bar-stack"
   >
     <li>
       <a href={services.href} class={onBrand}>{services.label}</a>
     </li>
     <li>
-      <a href={contact.href} class={`${item} bg-surface text-brand hover:bg-shape-soft hover:text-brand`}>
+      <a href={contact.href} class={`${item} bg-surface text-brand hover:bg-shape-accent hover:text-brand`}>
         {contact.label}
       </a>
     </li>

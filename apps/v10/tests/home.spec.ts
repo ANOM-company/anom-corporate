@@ -15,9 +15,9 @@ test.describe('初回表示', () => {
       await page.setViewportSize(viewport);
       await page.goto('/', { waitUntil: 'domcontentloaded' });
       const h1 = page.getByRole('heading', { level: 1 });
-      await expect(h1).toHaveText('技術を、仕事の力に。');
-      const lead = page.locator('#top p').filter({ hasText: 'AI・DX支援、Web制作、システム開発。' });
-      for (const target of [h1, lead, page.getByRole('link', { name: '提供サービスを見る' })]) {
+      await expect(h1).toHaveText('仕事を、もっと自由に。');
+      const lead = page.locator('#top p').filter({ hasText: 'AI・DX支援、Web制作、システム開発で、' });
+      for (const target of [h1, lead, page.locator('#top').getByRole('link', { name: 'サービスを見る' })]) {
         await expect(target).toBeInViewport();
       }
       // 本文・見出しには動き（フェード等）がなく、最初から不透明
@@ -31,11 +31,11 @@ test.describe('初回表示', () => {
       await expect(lead).toContainText('AI・DX支援');
       await expect(lead).toContainText('Web制作');
       await expect(lead).toContainText('システム開発');
-      for (const name of ['AI・DX', 'Web', 'システム']) {
+      for (const name of ['AI・DX', 'Web', 'System']) {
         await expect(page.getByRole('tab', { name, exact: true })).toBeVisible();
       }
-      // 説明用デモのラベルが常に見える
-      await expect(page.getByRole('tabpanel').getByText('説明用デモ')).toBeVisible();
+      // 説明用のイメージであることを示すラベルが常に見える
+      await expect(page.getByRole('tabpanel').getByText('説明用イメージ')).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath(`top-first-view-${viewport.width}.png`) });
     });
   }
@@ -52,13 +52,15 @@ test.describe('初回表示', () => {
     expect(timing.length).toBeGreaterThan(0);
     expect(Math.max(...timing.map((t) => t.end))).toBeLessThanOrEqual(900);
     expect(timing.every((t) => t.iterations === 1)).toBe(true);
-    // 切替（説明用デモ）の動きは 360ms 以内
+    // 切替の動きは図だけで 360ms 以内。説明文（パネル）は動かさずにすぐ切り替える
     await page.getByRole('tab', { name: 'Web' }).click();
-    const switchDuration = await page.evaluate(() =>
-      Number(document.querySelector('#demo-panel-web')?.getAnimations()[0]?.effect?.getComputedTiming().endTime ?? 0),
-    );
-    expect(switchDuration).toBeGreaterThan(0);
-    expect(switchDuration).toBeLessThanOrEqual(360);
+    const switchTiming = await page.evaluate(() => ({
+      visual: Number(document.querySelector('[data-view-visual="web"]')?.getAnimations()[0]?.effect?.getComputedTiming().endTime ?? 0),
+      panel: document.querySelector('#demo-panel-web')?.getAnimations().length ?? -1,
+    }));
+    expect(switchTiming.visual).toBeGreaterThan(0);
+    expect(switchTiming.visual).toBeLessThanOrEqual(360);
+    expect(switchTiming.panel).toBe(0);
   });
 });
 
@@ -91,10 +93,13 @@ test.describe('サービスの扱い', () => {
 
     await expect(page.getByRole('link', { name: 'AI・DX支援を相談する' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Web制作・運用保守を相談する' })).toBeVisible();
-    // システム開発への独立した入口（サービス欄のリンク・専用のセクション・相談ボタン）
-    await page.getByRole('link', { name: 'システム開発も相談できます' }).click();
+    // システム開発は主力2枠の下の独立した枠（専用の見出し・相談ボタン）。冒頭の画面デモからも移れる
+    const system = await profile('service-system');
+    expect(system.top, 'システム開発の枠は主力2枠の下').toBeGreaterThanOrEqual(ai.top + ai.height);
+    await page.getByRole('tab', { name: 'System', exact: true }).click();
+    await page.locator('#top').getByRole('link', { name: 'システム開発を見る' }).click();
     await expect(page).toHaveURL(/#service-system$/);
-    await expect(page.getByRole('heading', { level: 2, name: '自社の仕事に合う仕組みを、形に。' })).toBeInViewport();
+    await expect(page.getByRole('heading', { level: 3, name: '仕事に合う仕組みをつくる。' })).toBeInViewport();
     await expect(page.locator('#service-system').getByRole('link', { name: 'システム開発を相談する' })).toBeVisible();
     for (const step of ['入力する', '整理する', '確認する']) {
       await expect(page.locator('#service-system ol').getByText(step)).toBeVisible();
@@ -175,7 +180,7 @@ test.describe('サービスの扱い', () => {
     // 支援のイメージは見本であることを明記する
     await expect(page.locator('#examples')).toContainText('機能を説明するための画面イメージです。実案件や稼働中の製品ではありません。');
     await expect(page.locator('#examples')).toContainText('サンプル案件A');
-    await expect(page.locator('#examples').getByText('説明用デモ')).toBeVisible();
+    await expect(page.locator('#examples').getByText('説明用イメージ')).toBeVisible();
     // 支援のイメージの画面枠は装飾で、フォーカスできる操作を持たない
     const focusable = await page
       .locator('#examples [aria-hidden="true"]')
@@ -226,7 +231,7 @@ test.describe('アンカー', () => {
     await page.goto('/');
     await bar(page).getByRole('link', { name: 'サービス' }).click();
     await expect(page).toHaveURL(/#services$/);
-    await page.getByRole('link', { name: 'システム開発も相談できます' }).click();
+    await page.locator('#site-navigation').getByRole('link', { name: 'システム開発' }).click();
     await expect(page).toHaveURL(/#service-system$/);
     await bar(page).getByRole('link', { name: '相談する' }).click();
     await expect(page).toHaveURL(/#contact$/);
@@ -236,7 +241,7 @@ test.describe('アンカー', () => {
     await expect(page).toHaveURL(/#services$/);
     await page.goForward();
     await expect(page).toHaveURL(/#service-system$/);
-    await expect(page.getByRole('heading', { level: 2, name: '自社の仕事に合う仕組みを、形に。' })).toBeInViewport();
+    await expect(page.getByRole('heading', { level: 3, name: '仕事に合う仕組みをつくる。' })).toBeInViewport();
     await expect(page.getByRole('dialog')).toBeHidden();
   });
 });
@@ -257,14 +262,14 @@ test.describe('画面デモの切替（タブ）', () => {
     await expect(page.locator('#demo-panel-web')).toBeHidden();
     await expect(page.locator('#demo-panel-system')).toBeHidden();
     for (const id of ['web', 'system']) {
-      await expect(tab(page, id === 'web' ? 'Web' : 'システム')).toHaveAttribute('aria-controls', `demo-panel-${id}`);
+      await expect(tab(page, id === 'web' ? 'Web' : 'System')).toHaveAttribute('aria-controls', `demo-panel-${id}`);
     }
   });
 
   test('キーボード: 矢印で移動、Enter／Spaceで表示、Home／End、隠れたパネルには入れない', async ({ page }) => {
     await page.goto('/');
-    // Tab で選択中のタブへ入る
-    await page.getByRole('link', { name: '提供サービスを見る' }).focus();
+    // Tab で選択中のタブへ入る（冒頭の2つ目のボタンの次）
+    await page.locator('#top').getByRole('link', { name: '相談する' }).focus();
     await page.keyboard.press('Tab');
     await expect(tab(page, 'AI・DX')).toBeFocused();
 
@@ -279,27 +284,27 @@ test.describe('画面デモの切替（タブ）', () => {
     await expect(tab(page, 'Web')).toBeFocused();
 
     await page.keyboard.press('End');
-    await expect(tab(page, 'システム')).toBeFocused();
+    await expect(tab(page, 'System')).toBeFocused();
     await page.keyboard.press('Space');
-    await expect(tab(page, 'システム')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(page, 'System')).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('ArrowRight');
     await expect(tab(page, 'AI・DX')).toBeFocused();
     await page.keyboard.press('Home');
     await expect(tab(page, 'AI・DX')).toBeFocused();
     await page.keyboard.press('ArrowLeft');
-    await expect(tab(page, 'システム')).toBeFocused();
+    await expect(tab(page, 'System')).toBeFocused();
 
     // 選択中のタブから Tab: パネル → パネル内のリンク。隠れたパネルのリンクへは進まない
     await page.keyboard.press('Tab');
     await expect(page.locator('#demo-panel-system')).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('link', { name: 'システム開発を見る' })).toBeFocused();
+    await expect(page.locator('#top').getByRole('link', { name: 'システム開発を見る' })).toBeFocused();
     await page.keyboard.press('Tab');
     const next = await page.evaluate(() => document.activeElement?.closest('[data-demo-panel]')?.id ?? 'outside');
     expect(next).toBe('outside');
 
     // パネル内のリンクでサービス説明へ移る
-    await page.getByRole('link', { name: 'システム開発を見る' }).click();
+    await page.locator('#top').getByRole('link', { name: 'システム開発を見る' }).click();
     await expect(page).toHaveURL(/#service-system$/);
   });
 
@@ -309,7 +314,7 @@ test.describe('画面デモの切替（タブ）', () => {
     await page.waitForTimeout(1000); // 初回の組み上がりを終える
     const before = await page.locator('#services').evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
     const panelsBefore = await page.locator('[data-demo-panels]').boundingBox();
-    for (const name of ['Web', 'システム', 'AI・DX', 'Web', 'システム', 'Web']) {
+    for (const name of ['Web', 'System', 'AI・DX', 'Web', 'System', 'Web']) {
       await tab(page, name).click({ noWaitAfter: true });
     }
     await expect(tab(page, 'Web')).toHaveAttribute('aria-selected', 'true');
@@ -523,7 +528,7 @@ test.describe('下部バーとの重なり・文字拡大・短い画面', () =>
   }
 
   /** 主な見出しと本文の文字サイズ（px） */
-  const sizeTargets = ['#hero-title', '#services-title', '#service-ai h3', '#contact-title', '#top p'];
+  const sizeTargets = ['#hero-title', '#services-title', '#service-ai h3', '#contact-title', '#top h1 + p'];
   async function fontSizes(page: Page): Promise<number[]> {
     return page.evaluate((selectors) => selectors.map((s) => parseFloat(getComputedStyle(document.querySelector(s)!).fontSize)), sizeTargets);
   }
@@ -545,7 +550,7 @@ test.describe('下部バーとの重なり・文字拡大・短い画面', () =>
       const intersects = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
       for (const [a, b] of [
         ['#hero-title', '[data-demo-tabs]'],
-        ['#hero-title', '#top p'],
+        ['#hero-title', '#top h1 + p'],
         ['#contact-title', '#contact fieldset'],
         ['#services-title', '#service-ai'],
       ] as const) {
@@ -639,5 +644,147 @@ test.describe('下部バーとの重なり・文字拡大・短い画面', () =>
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
     await expect(bar(page)).toBeInViewport({ ratio: 1 });
+  });
+});
+
+test.describe('ヘッダー', () => {
+  test('公式ロゴ・主なリンク・相談するボタン。PC は全部、スマホ幅はロゴと相談するだけを出す', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    const header = page.locator('body > header');
+    await expect(header.getByRole('link', { name: 'ANOM', exact: true }).getByRole('img', { name: 'ANOM' })).toBeVisible();
+    const nav = header.getByRole('navigation', { name: 'メインメニュー' });
+    for (const [name, hash] of [
+      ['サービス', 'services'],
+      ['ANOMについて', 'about'],
+      ['相談する', 'contact'],
+    ] as const) {
+      await nav.getByRole('link', { name }).click();
+      await expect(page).toHaveURL(new RegExp(`#${hash}$`));
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(nav.getByRole('link', { name: 'サービス' })).toBeHidden();
+    await expect(nav.getByRole('link', { name: 'ANOMについて' })).toBeHidden();
+    await expect(nav.getByRole('link', { name: '相談する' })).toBeVisible();
+  });
+});
+
+test.describe('考え方', () => {
+  for (const width of [320, 390, 1440]) {
+    test(`@ ${width}px: 一文は「無駄を減らし、」で改行し、強調の線は文字の下にあり本文を隠さない`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/#philosophy');
+      const heading = page.locator('#philosophy-title');
+      await expect(heading).toContainText('無駄を減らし、人が力を発揮できる仕事へ。');
+      const lines = await heading.evaluate((el) => {
+        const before = el.firstElementChild!.getBoundingClientRect();
+        const emphasis = el.querySelector('.scroll-highlight')!;
+        const firstRect = emphasis.getClientRects()[0]!;
+        return { beforeBottom: before.bottom, emphasisTop: firstRect.top, color: getComputedStyle(emphasis).color, headingColor: getComputedStyle(el).color };
+      });
+      expect(lines.emphasisTop, '強調の部分は次の行から始まる').toBeGreaterThanOrEqual(lines.beforeBottom - 1);
+      // 強調は線（背景）だけで、文字の色は見出しと同じ
+      expect(lines.color).toBe(lines.headingColor);
+    });
+  }
+});
+
+test.describe('お悩み別（開閉）', () => {
+  const titles = ['同じ情報を、何度も書き写している。', '会社の魅力が、うまく伝わっていない。', '今のツールが、仕事に合っていない。'] as const;
+
+  test('WAI のアコーディオン: 見出しの中のボタンで開閉し、先頭だけ開く。閉じた中身へは Tab で入らない', async ({ page }) => {
+    await page.goto('/#challenges');
+    const section = page.locator('#challenges');
+    await expect(section.getByRole('button')).toHaveCount(3);
+    for (const [index, title] of titles.entries()) {
+      const button = section.getByRole('heading', { level: 3, name: title }).getByRole('button');
+      await expect(button).toHaveAccessibleName(title);
+      await expect(button).toHaveAttribute('aria-expanded', index === 0 ? 'true' : 'false');
+      const panel = page.locator(`#${await button.getAttribute('aria-controls')}`);
+      await expect(panel).toHaveAttribute('role', 'region');
+      if (index === 0) await expect(panel.getByRole('link')).toBeVisible();
+      else await expect(panel.getByRole('link')).toBeHidden();
+    }
+    await expect(section.getByRole('region', { name: titles[0] })).toContainText('できる支援');
+
+    // Tab: 開いたパネルのリンクには入り、閉じたパネルのリンクは飛ばす
+    const button = (index: 0 | 1 | 2) => section.getByRole('button', { name: titles[index] });
+    await button(0).focus();
+    await page.keyboard.press('Tab');
+    await expect(section.getByRole('link', { name: 'AI・DX支援を見る' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(button(1)).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(button(2)).toBeFocused();
+
+    // Enter で開き、Space で閉じる
+    await page.keyboard.press('Enter');
+    await expect(button(2)).toHaveAttribute('aria-expanded', 'true');
+    await expect(section.getByRole('link', { name: 'システム開発を見る' })).toBeVisible();
+    await page.keyboard.press('Space');
+    await expect(button(2)).toHaveAttribute('aria-expanded', 'false');
+    await expect(section.getByRole('link', { name: 'システム開発を見る' })).toBeHidden();
+
+    // 連打しても、最後の状態と aria-expanded・表示が一致する（5回で開いた状態）
+    for (let i = 0; i < 5; i += 1) await button(1).click({ noWaitAfter: true });
+    await expect(button(1)).toHaveAttribute('aria-expanded', 'true');
+    await expect(section.getByRole('link', { name: 'Web制作・運用保守を見る' })).toBeVisible();
+    // パネルのリンクで関連するサービスへ移る
+    await section.getByRole('link', { name: 'Web制作・運用保守を見る' }).click();
+    await expect(page).toHaveURL(/#service-web$/);
+  });
+
+  test('動き低減の設定: 開閉はすぐに完成した表示になる', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/#challenges');
+    const state = await page.evaluate(() => {
+      const trigger = document.querySelector<HTMLButtonElement>('#challenges [data-accordion-trigger]:not([aria-expanded="true"])')!;
+      trigger.click();
+      const panel = document.getElementById(trigger.getAttribute('aria-controls')!)!;
+      return { rows: getComputedStyle(panel).gridTemplateRows, visibility: getComputedStyle(panel.firstElementChild!).visibility, animations: document.getAnimations().length };
+    });
+    expect(state.visibility).toBe('visible');
+    expect(state.rows).not.toBe('0px');
+    expect(state.animations).toBe(0);
+  });
+});
+
+test.describe('装飾の動き', () => {
+  test('時間差表示は装飾の絵だけ。本文は隠さず、絵は画面に入ると表示される', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.waitForTimeout(1000); // 冒頭の組み立てを終える
+    // 透明になっているのは、読み上げ対象外の装飾だけ
+    const hiddenContent = await page.evaluate(() =>
+      [...document.querySelectorAll('main *')]
+        .filter((el) => getComputedStyle(el).opacity === '0' && !el.closest('[aria-hidden="true"]'))
+        .map((el) => el.outerHTML.slice(0, 80)),
+    );
+    expect(hiddenContent).toEqual([]);
+    const group = page.locator('#examples [data-reveal]');
+    await expect(group).toHaveAttribute('data-reveal', 'pending');
+    await expect(page.locator('#examples ol').getByText('情報が、あちこちに散らばっている')).toHaveCSS('opacity', '1');
+    await group.scrollIntoViewIfNeeded();
+    await expect(group).toHaveAttribute('data-reveal', 'done');
+    await expect(group.locator('[data-reveal-item]').last()).toHaveCSS('opacity', '1');
+  });
+
+  test('冒頭の組み立ては同じタブで1回だけ。再読み込みでは完成した図をすぐに表示する', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    // ほかのページを先に開いても、トップの初回は組み立てを再生する
+    await page.goto('/kitchen-sink/');
+    await page.goto('/');
+    const assembling = () =>
+      page.evaluate(() => ({
+        seen: document.documentElement.hasAttribute('data-hero-seen'),
+        animations: [...document.querySelectorAll('.assemble')].flatMap((el) => el.getAnimations()).length,
+      }));
+    const first = await assembling();
+    expect(first.seen).toBe(false);
+    expect(first.animations).toBeGreaterThan(0);
+    await page.reload();
+    expect(await assembling()).toEqual({ seen: true, animations: 0 });
   });
 });

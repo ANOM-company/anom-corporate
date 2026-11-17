@@ -1,6 +1,7 @@
 ---
 /**
  * 行動を促す帯（問い合わせ等への導線）。ボタンは actions スロットで渡す。
+ * - 濃紺の地のため、ボタンは濃い地の上で使う variant="inverse" を渡す
  */
 type Props = {
   title: string;
@@ -10,10 +11,10 @@ type Props = {
 const { title, body } = Astro.props;
 ---
 
-<section class="bg-ink py-(--spacing-section) text-canvas" aria-labelledby="cta-title">
+<section class="bg-night py-(--spacing-section) text-on-brand" aria-labelledby="cta-title">
   <div class="container-content grid gap-4">
     <h2 id="cta-title" class="text-2xl font-bold">{title}</h2>
-    {body && <p class="max-w-(--container-prose) text-canvas/85">{body}</p>}
+    {body && <p class="max-w-(--container-prose) text-on-brand-soft">{body}</p>}
     <div class="flex flex-wrap gap-3 pt-2">
       <slot name="actions" />
     </div>

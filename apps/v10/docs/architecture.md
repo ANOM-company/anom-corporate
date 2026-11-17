@@ -10,16 +10,20 @@ apps/v10/
 ├── public/
 │   ├── _headers          CSP などのレスポンスヘッダー（dist/ にコピーされる）
 │   ├── fonts/            自己配信の書体（WOFF2）・ライセンス全文・取得元の記録
-│   └── favicon.svg
+│   ├── images/           公式ロゴ（横組み）と出典の記録
+│   ├── hero-gate.js      同じタブでの再表示で、冒頭の組み立ての動きを再生しないための小さなスクリプト（トップの head で読み込む）
+│   └── favicon.png
 ├── src/
 │   ├── components/       共通部品（Button・Input・Select・Checkbox・Card・Navigation・Modal・FAQ・CTA など）と
-│   │                     トップの区画（HomeHero・HeroDemo・ServiceFeature・SystemFeature・WorkflowExample・
-│   │                     AboutSection・ProcessSection・LearningSection・ContactSection）、下部バー（BottomNav）、
+│   │                     トップの区画（HomeHero・HeroDemo・PhilosophySection・ServiceFeature・SystemFeature・
+│   │                     ChallengesSection・WorkflowExample・AboutSection・ProcessSection・LearningSection・
+│   │                     ContactSection）、下部バー（BottomNav）、
 │   │                     展開メニュー（MenuDialog）、ヘッダー・フッター
 │   ├── data/home.ts      トップの文言（部品には文言を持たせない）
 │   ├── layouts/          全ページ共通の骨組み（下部バー・展開メニュー・フッターを含む）
 │   ├── pages/            / ・ /kitchen-sink/ ・ 404
-│   ├── scripts/          補助スクリプト（モーダル・下部バー・画面デモの切替・相談フォーム・部品見本）
+│   ├── scripts/          補助スクリプト（モーダル・下部バー・画面デモの切替・お悩み別の開閉・装飾の時間差表示・
+│   │                     相談フォーム・部品見本）
 │   ├── styles/
 │   │   ├── global.css    設計トークンと基本スタイル
 │   │   └── fonts.css     @font-face（tools/fonts/build-fonts.py で生成）
@@ -34,11 +38,13 @@ apps/v10/
 
 | 区画 | id | 内容 |
 |---|---|---|
-| 冒頭 | `top` | 見出し・説明・「提供サービスを見る」と、3つの画面デモ（AI・DX／Web／システム）の切替 |
+| 冒頭 | `top` | 見出し・説明・「サービスを見る」「相談する」と、3つの画面デモ（AI・DX／Web／System）の切替 |
+| 考え方 | `philosophy` | 大きな一文と2行の説明。強調部分の下線がスクロールに合わせて伸びる（標準状態は引き切った形） |
 | 提供サービス | `services`・`service-ai`・`service-web` | AI・DX支援と Web制作・運用保守を同じ構成・同じ大きさで並べる |
-| システム開発 | `service-system` | 独立した区画と相談ボタン。スマホ幅は 本文→図→相談ボタン の縦順、PC は本文と図を左右に置き相談ボタンは本文の下（HTML の順も 本文→図→相談ボタン） |
+| システム開発 | `service-system` | 提供サービスの中の、主力2枠の下の濃紺の独立した枠と相談ボタン。スマホ幅は 本文→図→相談ボタン の縦順、PC は本文と図を左右に置き相談ボタンは本文の下（HTML の順も 本文→図→相談ボタン） |
+| お悩み別 | `challenges` | 3つのお悩みの開閉（後述）。各お悩みに「できる支援」と関連サービスへのリンク |
 | 支援のイメージ | `examples` | 説明用の例（実績ではないことを明示し、操作できる要素を置かない） |
-| ANOMの考え方 | `about` | |
+| ANOMについて | `about` | |
 | 相談からの進め方 | `process` | 4つの段階 |
 | 学びの計画 | `learning` | 2項目とも「構想中」。日程・料金・申込みは置かない |
 | 相談フォーム | `contact`・`contact-privacy` | 入力だけを確かめる確認版（後述） |
@@ -50,8 +56,21 @@ apps/v10/
 
 - WAI-ARIA のタブの構造（`tablist`・`tab`・`tabpanel`）で、矢印・Home・End でタブ間を移動し、Enter／Space で表示を切り替える（手動切替）
 - 3つのパネルを同じ格子のマスに重ね、選んでいないパネルは `hidden`（見た目は `visibility: hidden`）にする。高さが変わらないため、切り替えても下の本文が動かない
-- 図形は最初の表示で1回だけ組み上がる（900ms 以内）。切替時は選んだパネルだけが短く現れる（320ms）
+- 図形は最初の表示で1回だけ組み上がる（900ms 以内）。同じタブでの再表示（再読み込み・戻る）では再生せず、完成した図をすぐに出す（`public/hero-gate.js` が `html[data-hero-seen]` を付ける）
+- 図（装飾）と説明文（パネル）は別々に重ねる。切替時は説明文をすぐに切り替え、図だけを短くクロスフェードする（260ms）
 - JavaScript が無効のときはタブを出さず、3つの説明とリンクを縦に並べる（`@media (scripting: none)`）
+
+## お悩み別の開閉（`src/scripts/accordion.ts`）
+
+- WAI-ARIA のアコーディオンの構造。見出し（H3）の中の `button` が `aria-expanded` と `aria-controls` を持ち、パネルは見出しで名前を付けた `role="region"`
+- JavaScript が使えるときだけ見出しの文字を開閉ボタンに置き換え、先頭だけを開く。閉じたパネルは高さ 0 へ縮め、中身を `visibility: hidden` にして Tab 移動・読み上げから外す
+- JavaScript が無効のときは開閉ボタンを出さず、すべてを開いたまま表示する（標準状態＝完成形）
+
+## 装飾の動き
+
+- 時間差表示（`src/scripts/reveal.ts`）: 読み込み時に画面の外にある `[data-reveal]` の中の `[data-reveal-item]`（説明図・画面の絵だけ）を、画面に入ったとき1回、順に少し現れさせる。本文は隠さない
+- スクロール連動（CSS の `animation-timeline: view()`）: 冒頭の図の奥行き（`.depth-float`）と、考え方の一文の下線（`.scroll-highlight`）。対応ブラウザーかつ動き低減の設定がないときだけ動き、それ以外は完成した状態で止まっている
+- ボタン・リンクの矢印は、ホバー・フォーカスで少し進む（`.arrow-nudge`）
 
 ## 下部バーと展開メニュー
 
@@ -75,7 +94,7 @@ apps/v10/
 - 和文は LINE Seed JP（見出し・操作ラベルは Bold 700、本文・入力値は Regular 400）、英字の補助ラベルと欧文の見出しは Outfit（可変フォント）
 - `public/fonts/` から自己配信し、外部へは接続しない。先読み（preload）はしない。`font-display: swap` で、読み込み前や失敗時は端末の標準書体で表示する。`font-synthesis: none` で、太字・斜体の擬似的な合成をしない
 - LINE Seed JP は、よく使う文字の順に太さごとに8ファイルへ分割し、`unicode-range` で必要なファイルだけを読み込む。各ファイルの収録文字と `unicode-range` は一致させ、元のフォントの全8,341文字をどれかのファイルに入れている（テストで WOFF2 の収録文字表を読んで確認）
-- 見出しは文節の途中で改行しない（H1 は `<wbr>` と `word-break: keep-all`、H2・H3 は `word-break: auto-phrase`）
+- 見出しは文節の途中で改行しない（H1 と考え方の一文は `<wbr>` と `word-break: keep-all`、ほかの H2・H3 は `word-break: auto-phrase`）。ボタンの文言と冒頭の説明文も文節で折り返す（`break-phrase`）
 
 ## 設計トークン
 
@@ -86,12 +105,12 @@ apps/v10/
 | 色 | `--color-ink`, `--color-brand`, `--color-danger` | `text-ink`, `bg-brand`, `border-danger` |
 | 図形の色 | `--color-shape`, `--color-shape-line`, `--color-shape-accent` など | 画面デモ・サービスの図の SVG（`fill-shape` など） |
 | 書体 | `--font-sans`（LINE Seed JP）, `--font-heading`（Outfit → LINE Seed JP）, `--font-latin`（Outfit） | `font-sans`, `font-latin` |
-| 文字サイズ | `--text-base` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
-| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)` |
+| 文字サイズ | `--text-2xs` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-statement`（考え方の一文）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
+| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 7.5em）, `--container-hero-visual`（冒頭の画面デモの最大幅 40rem）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)` |
 | 余白 | `--spacing`（基準 0.25rem）, `--spacing-section`, `--spacing-tap`（押せる範囲の最小の高さ 44px） | `p-4`, `py-(--spacing-section)`, `min-h-tap` |
 | 幅 | `--container-content`, `--container-prose`, `--container-menu`, `--container-bar` | `.container-content`, `max-w-(--container-prose)` |
 | 角丸 | `--radius-control`, `--radius-card`, `--radius-demo`, `--radius-bar-stack`（縦に並べた下部バー） | `rounded-control`, `rounded-bar-stack` など |
-| 動き | `--duration-fast`, `--duration-base`, `--duration-build`, `--duration-switch`, `--duration-menu-open` / `-close`, `--ease-standard` | `duration-(--duration-base) ease-standard` |
+| 動き | `--duration-fast`, `--duration-base`, `--duration-build`, `--duration-switch`, `--duration-reveal`, `--duration-accordion-open` / `-close`, `--duration-menu-open` / `-close`, `--ease-standard`, `--ease-out`, `--ease-assemble` | `duration-(--duration-base) ease-standard` |
 | 下部バー | `--bar-height`（スクリプトが設定）, `--bar-height-row`・`--bar-height-stack`（初期値）, `--bar-offset`, `--bar-clearance`, `--bar-stack-extra`（`:root` の変数） | 固定位置・余白の計算 |
 | フォーカス表示 | `--color-focus`（輪郭）, `--color-focus-halo`（白の縁取り） | `:focus-visible` で自動適用（部品側の指定は不要） |
 
@@ -102,8 +121,8 @@ apps/v10/
 ### 文字サイズと文字の拡大
 
 - 文字サイズはすべて rem で指定し、見出し（`--text-display` / `--text-heading` / `--text-subheading` / `--text-3xl`）は画面幅の区切り（640 / 768 / 1024 / 1280px）ごとに段階で大きくします（値は `global.css` の `:root`）。画面幅（vw）や列幅（cqi）を混ぜないため、ブラウザーの文字サイズ設定を上げると見出しも本文と同じ比率で大きくなります。
-- 冒頭・ANOMの考え方・相談・フッターの12列の区画は、`@container` を付けたセクションの幅が `--container-split`（56rem）以上で、かつ画面幅 1024px 以上のときだけ左右に分けます。rem は文字サイズに比例するため、文字サイズ設定を大きくすると1列に戻り、大きな見出しを広い幅で折り返します（通常の文字サイズでは従来どおり 1024px 以上で左右）。
-- トップの H1「技術を、／仕事の力に。」は、最大幅（6.5em）で常に文節ごとの2行にします。後半の文節（約6em）は入り、2つの文節を合わせた長さ（字幅の狭い端末の書体でも約8.7em）は入らない幅のため、書体の読み込みの前後や端末の書体の違いで改行位置と高さが変わりません。
+- 冒頭・考え方・ANOMについて・相談・フッターの12列の区画は、`@container` を付けたセクションの幅が `--container-split`（56rem）以上で、かつ画面幅 1024px 以上のときだけ左右に分けます。rem は文字サイズに比例するため、文字サイズ設定を大きくすると1列に戻り、大きな見出しを広い幅で折り返します（通常の文字サイズでは従来どおり 1024px 以上で左右）。お悩み別は見出しの列が細くなりすぎないよう、同じ条件で画面幅 1280px 以上のときだけ左右に分けます。
+- トップの H1「仕事を、／もっと自由に。」は、最大幅（7.5em）で常に文節ごとの2行にします。後半の文節（約7em）は入り、2つの文節を合わせた長さ（約11em）は入らない幅のため、書体の読み込みの前後や端末の書体の違いで改行位置と高さが変わりません。冒頭の説明文も行を決めて書き（文字の列が広い幅は2行、狭い幅は3行）、書体が変わっても下のボタン・図を動かしません。
 
 ## セキュリティヘッダーと CSP
 
