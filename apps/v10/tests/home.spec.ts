@@ -690,6 +690,139 @@ test.describe('考え方', () => {
   }
 });
 
+test.describe('スクロールに連動する線', () => {
+  // 線の進み具合を読む（進め方のレールは伸び率、ANOMについての線は残りの長さ、考え方の強調は線の幅）
+  const progress = (page: Page) =>
+    page.evaluate(() => {
+      const css = (selector: string) => getComputedStyle(document.querySelector(selector)!);
+      return {
+        rail: css('.step-rail-fill').scale,
+        line: css('.draw-line').strokeDashoffset,
+        highlight: css('.scroll-highlight').backgroundSize,
+      };
+    });
+  // 対象の上端を、画面の高さに対する割合の位置へ合わせる（0 = 画面の上端、1 = 下端）
+  const scrollTopTo = (page: Page, selector: string, ratio: number) =>
+    page.evaluate(
+      ([target, at]) => {
+        const top = document.querySelector(target)!.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo(0, top - window.innerHeight * at);
+      },
+      [selector, ratio] as const,
+    );
+
+  for (const viewport of [
+    { width: 390, height: 844, axis: '縦' },
+    { width: 1440, height: 900, axis: '横' },
+  ]) {
+    test(`@ ${viewport.width}px: 進め方の${viewport.axis}の線・ANOMについての線・考え方の強調が、スクロールの量に合わせて進む`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+      // 動きが実際に付いている（ビルド時の圧縮で指定が無効になっていない）
+      const running = await page.evaluate(() =>
+        ['.step-rail-fill', '.draw-line', '.scroll-highlight', '.depth-float'].map(
+          (selector) => document.querySelector(selector)!.getAnimations().length,
+        ),
+      );
+      expect(running).toEqual([1, 1, 1, 1]);
+      // 画面に入る前は、線がまだ引かれていない
+      const before = await progress(page);
+      expect(before.rail).toBe(viewport.axis === '縦' ? '1 0' : '0 1');
+      expect(before.line).toBe('1px');
+
+      // 進め方: 区画が画面を通り過ぎると、線は最後まで引かれる
+      await scrollTopTo(page, '.step-rail', -0.6);
+      await expect.poll(async () => (await progress(page)).rail).toBe('1');
+      // ANOMについて: 図が画面の上の方まで来ると、線は最後まで引かれる
+      await scrollTopTo(page, '.draw-on-scroll', 0.05);
+      await expect.poll(async () => (await progress(page)).line).toBe('0px');
+      // 考え方: 一文が画面の上の方まで来ると、強調の線は幅いっぱいになる
+      await scrollTopTo(page, '.scroll-highlight', 0.1);
+      await expect.poll(async () => (await progress(page)).highlight).toMatch(/^100% /);
+    });
+
+    test(`@ ${viewport.width}px: 進め方の点は線の上に並び、線と点は読み上げの対象外。段階は番号つきの見出しで読める`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto('/#process');
+      const section = page.locator('#process');
+      await expect(section.getByRole('listitem')).toHaveCount(4);
+      for (const name of ['01 相談', '02 現状整理', '03 提案', '04 伴走']) {
+        await expect(section.getByRole('heading', { level: 3, name, exact: true })).toBeVisible();
+      }
+      const geometry = await section.evaluate((el) => {
+        const track = el.querySelector('.step-rail-track')!;
+        const box = track.getBoundingClientRect();
+        const nodes = [...el.querySelectorAll('.step-rail-node')];
+        return {
+          hidden: [track, ...nodes].every((part) => part.closest('[aria-hidden="true"]') !== null),
+          trackX: box.left + box.width / 2,
+          trackY: box.top + box.height / 2,
+          trackTop: box.top,
+          trackBottom: box.bottom,
+          nodes: nodes.map((node) => {
+            const rect = node.getBoundingClientRect();
+            return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+          }),
+        };
+      });
+      expect(geometry.hidden).toBe(true);
+      expect(geometry.nodes).toHaveLength(4);
+      for (const node of geometry.nodes) {
+        if (viewport.axis === '縦') {
+          expect(Math.abs(node.x - geometry.trackX), '点は縦の線の上').toBeLessThanOrEqual(1);
+          expect(node.y).toBeGreaterThanOrEqual(geometry.trackTop - 1);
+          expect(node.y).toBeLessThanOrEqual(geometry.trackBottom);
+        } else {
+          expect(Math.abs(node.y - geometry.trackY), '点は横の線の上').toBeLessThanOrEqual(1);
+        }
+      }
+    });
+  }
+
+  test('動き低減の設定では、線は最初から引き切られていて動かない', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    expect(await progress(page)).toEqual({ rail: 'none', line: '0px', highlight: expect.stringMatching(/^100% /) });
+    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  });
+
+  test('文字の大きさ 200%（1440px）: 進め方は1列と縦の線に戻り、「目指す流れ」の番号は途中で折れない', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/#process');
+    const layout = () =>
+      page.evaluate(() => {
+        const track = document.querySelector('.step-rail-track')!.getBoundingClientRect();
+        const steps = [...document.querySelectorAll('#process li')].map((li) => Math.round(li.getBoundingClientRect().left));
+        const nodes = [...document.querySelectorAll('.step-rail-node')].map((node) => {
+          const rect = node.getBoundingClientRect();
+          return rect.left + rect.width / 2;
+        });
+        const numbers = [...document.querySelectorAll('#about li > span')].map((span) => span.getClientRects().length);
+        return {
+          rail: track.height > track.width ? '縦' : '横',
+          columns: new Set(steps).size,
+          nodesOnTrack: nodes.every((x) => Math.abs(x - (track.left + track.width / 2)) <= 1),
+          numberLines: numbers,
+        };
+      });
+    expect(await layout()).toEqual({ rail: '横', columns: 4, nodesOnTrack: false, numberLines: [1, 1, 1] });
+    await page.evaluate(() => document.documentElement.style.setProperty('font-size', '200%'));
+    await expect.poll(layout).toEqual({ rail: '縦', columns: 1, nodesOnTrack: true, numberLines: [1, 1, 1] });
+  });
+
+  test('ANOMについての図は読み上げの対象外の装飾で、同じ内容を本文で読める', async ({ page }) => {
+    await page.goto('/#about');
+    const section = page.locator('#about');
+    const figure = section.locator('.draw-on-scroll');
+    await expect(figure).toHaveAttribute('aria-hidden', 'true');
+    await expect(figure).toContainText('秋田');
+    await expect(figure).toContainText('関東');
+    await expect(section.locator('p').filter({ hasText: '秋田と関東の機会の差を小さくしたい。' })).toBeVisible();
+    await expect(section.getByRole('listitem')).toHaveText(['01無駄を減らす', '02人や時間を活かす', '03売上の向上を目指す']);
+  });
+});
+
 test.describe('お悩み別（開閉）', () => {
   const titles = ['同じ情報を、何度も書き写している。', '会社の魅力が、うまく伝わっていない。', '今のツールが、仕事に合っていない。'] as const;
 

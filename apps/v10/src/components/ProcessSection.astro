@@ -1,7 +1,10 @@
 ---
 /**
- * 相談からの進め方（#process）。PCは4列、768〜1023pxは2列、スマホは1列。
+ * 相談からの進め方（#process）。PC（1024px以上）は4列、それより狭い幅は1列。
+ * 文字サイズの設定を大きくして、区画の幅が左右に分ける幅（--container-split）に足りないときも1列にする。
  * - 番号は順序を表すだけで、納期や固定プランではない
+ * - 4つの段階を1本の線でつなぐ（装飾。読み上げ対象外）。狭い幅は左の縦の線、PCは上の横の線。
+ *   標準状態は線が引き切られた完成形で、対応ブラウザーではスクロールに合わせて線が進む（global.css の .step-rail）
  */
 import SectionHeading from './SectionHeading.astro';
 
@@ -15,23 +18,27 @@ type Props = {
 const { eyebrow, title, steps, note } = Astro.props;
 ---
 
-<section id="process" class="py-(--spacing-section)" aria-labelledby="process-title">
-  <div class="container-content grid gap-10">
+<section id="process" class="@container py-(--spacing-section)" aria-labelledby="process-title">
+  <div class="container-content grid grid-cols-1 gap-10 lg:gap-14">
     <SectionHeading id="process-title" eyebrow={eyebrow} title={title} />
-    <ol class="grid gap-x-6 gap-y-8 md:grid-cols-2 lg:grid-cols-4">
-      {
-        steps.map((step) => (
-          <li class="grid content-start gap-3 border-t-2 border-brand pt-4">
-            <p class="font-latin text-2xl font-semibold text-brand" aria-hidden="true">{step.number}</p>
-            <h3 class="text-xl">
-              <span class="sr-only">{step.number} </span>
-              {step.title}
-            </h3>
-            <p class="text-ink-soft">{step.body}</p>
-          </li>
-        ))
-      }
-    </ol>
+    <div class="step-rail">
+      <span class="step-rail-track" aria-hidden="true"><span class="step-rail-fill"></span></span>
+      <ol class="grid grid-cols-1 gap-y-10 lg:@split:grid-cols-4 lg:@split:gap-x-8">
+        {
+          steps.map((step) => (
+            <li class="step-rail-item grid content-start gap-2 lg:@split:gap-3">
+              <span class="step-rail-node" aria-hidden="true" />
+              <p class="font-latin text-2xl font-semibold text-brand lg:@split:text-3xl" aria-hidden="true">{step.number}</p>
+              <h3 class="text-xl">
+                <span class="sr-only">{step.number} </span>
+                {step.title}
+              </h3>
+              <p class="max-w-(--container-prose) text-ink-soft">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
     <p class="text-sm text-ink-soft">{note}</p>
   </div>
 </section>

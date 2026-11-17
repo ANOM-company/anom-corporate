@@ -1,9 +1,10 @@
 ---
 /**
  * 主力サービスの1枠（AI・DX支援／Web制作・運用保守）。2枠は同じ幅・同じ見出しの階層・同じ情報量で並べる。
- * - 読み順: 番号と分野名 → 見出し → 短い説明 → 小さな説明図 → 対象 → 相談例 → 相談ボタン
+ * - 読み順: 番号と分野名 → 見出し → 短い説明 → 説明図 → 対象 → 相談例 → 相談ボタン
  * - 相談ボタンは #contact への通常のリンク。JavaScript 有効時だけ相談分野を引き継ぐ（data-consult-field）
- * - 図は本文と同じ意味を繰り返す装飾（読み上げ対象外）。画面に入ったとき1回だけ少し現れる（data-reveal）
+ * - 図は本文と同じ意味を繰り返す装飾（読み上げ対象外）。枠の幅いっぱいに置き、面の重なりで奥行きを出す。
+ *   画面に入ったとき1回だけ、層の順に少し現れる（data-reveal）
  */
 import Button from './Button.astro';
 import type { ServiceContent } from '../data/home';
@@ -31,35 +32,90 @@ const titleId = `${item.id}-title`;
     <p class="text-ink-soft">{item.body}</p>
   </div>
   <div data-reveal>
-    <svg viewBox="0 0 240 96" class="block h-auto w-full max-w-96" aria-hidden="true" focusable="false" data-reveal-item>
-      <rect width="240" height="96" rx="12" class="fill-muted" />
+    <svg viewBox="0 0 480 220" class="block h-auto w-full" aria-hidden="true" focusable="false">
+      <rect width="480" height="220" rx="16" class="fill-muted" />
       {
         item.figure === 'ai' ? (
-          <g>
-            <rect x="18" y="18" width="40" height="14" rx="4" class="fill-shape-soft" transform="rotate(-8 38 25)" />
-            <rect x="30" y="42" width="34" height="14" rx="4" class="fill-shape-soft" transform="rotate(6 47 49)" />
-            <rect x="14" y="64" width="44" height="14" rx="4" class="fill-shape-soft" transform="rotate(-4 36 71)" />
-            <rect x="80" y="47" width="22" height="2" rx="1" class="fill-shape-line" />
-            <rect x="112" y="20" width="56" height="56" rx="8" class="fill-night" />
-            <rect x="122" y="32" width="36" height="5" rx="2.5" class="fill-shape-accent" />
-            <rect x="122" y="45" width="28" height="5" rx="2.5" class="fill-shape-accent" />
-            <rect x="122" y="58" width="36" height="5" rx="2.5" class="fill-shape-accent" />
-            <rect x="176" y="47" width="14" height="2" rx="1" class="fill-shape-line" />
-            <rect x="196" y="24" width="28" height="12" rx="4" class="fill-brand" />
-            <rect x="196" y="42" width="28" height="12" rx="4" class="fill-brand" />
-            <rect x="196" y="60" width="28" height="12" rx="4" class="fill-shape-soft" />
-          </g>
+          <>
+            {/* 散らばった情報 */}
+            <g data-reveal-item>
+              <g transform="rotate(-8 74 51)">
+                <rect x="28" y="36" width="92" height="30" rx="8" class="fill-surface stroke-line" />
+                <rect x="40" y="48" width="48" height="6" rx="3" class="fill-shape-line" />
+              </g>
+              <g transform="rotate(6 94 99)">
+                <rect x="52" y="84" width="84" height="30" rx="8" class="fill-surface stroke-line" />
+                <rect x="64" y="96" width="40" height="6" rx="3" class="fill-shape-line" />
+              </g>
+              <g transform="rotate(-4 74 147)">
+                <rect x="24" y="132" width="100" height="30" rx="8" class="fill-surface stroke-line" />
+                <rect x="36" y="144" width="56" height="6" rx="3" class="fill-shape-line" />
+              </g>
+              <rect x="92" y="172" width="56" height="20" rx="7" class="fill-shape-soft" transform="rotate(9 120 182)" />
+            </g>
+            {/* 整理する画面（奥の面と重ねて奥行きを出す） */}
+            <g data-reveal-item>
+              <rect x="152" y="109" width="26" height="2" rx="1" class="fill-shape-line" />
+              <circle cx="183" cy="110" r="4" class="fill-brand" />
+              <rect x="204" y="24" width="140" height="160" rx="14" class="fill-shape-soft" />
+              <rect x="192" y="36" width="140" height="160" rx="14" class="fill-night" />
+              <circle cx="210" cy="54" r="3" class="fill-night-line" />
+              <circle cx="220" cy="54" r="3" class="fill-night-line" />
+              <circle cx="230" cy="54" r="3" class="fill-shape-accent" />
+              <rect x="208" y="72" width="16" height="16" rx="5" class="fill-shape-accent" />
+              <rect x="234" y="77" width="82" height="6" rx="3" class="fill-shape-line" />
+              <rect x="208" y="100" width="16" height="16" rx="5" class="fill-shape-accent" />
+              <rect x="234" y="105" width="64" height="6" rx="3" class="fill-shape-line" />
+              <rect x="208" y="128" width="16" height="16" rx="5" class="fill-shape-accent" />
+              <rect x="234" y="133" width="76" height="6" rx="3" class="fill-shape-line" />
+              <rect x="208" y="156" width="16" height="16" rx="5" class="fill-shape" />
+              <rect x="234" y="161" width="52" height="6" rx="3" class="fill-shape" />
+            </g>
+            {/* 仕事に使える形 */}
+            <g data-reveal-item>
+              <rect x="350" y="109" width="16" height="2" rx="1" class="fill-shape-line" />
+              <rect x="372" y="50" width="84" height="32" rx="9" class="fill-brand" />
+              <rect x="384" y="63" width="44" height="6" rx="3" class="fill-shape-accent" />
+              <rect x="372" y="94" width="84" height="32" rx="9" class="fill-brand" />
+              <rect x="384" y="107" width="52" height="6" rx="3" class="fill-shape-accent" />
+              <rect x="372" y="138" width="84" height="32" rx="9" class="fill-surface stroke-line" />
+              <rect x="384" y="151" width="36" height="6" rx="3" class="fill-shape-line" />
+            </g>
+          </>
         ) : (
-          <g>
-            <rect x="16" y="14" width="208" height="68" rx="8" class="fill-surface stroke-line" stroke-width="1" />
-            <rect x="16" y="14" width="208" height="12" rx="6" class="fill-shape-soft" />
-            <rect x="28" y="36" width="72" height="9" rx="3" class="fill-ink" />
-            <rect x="28" y="51" width="88" height="4" rx="2" class="fill-shape-line" />
-            <rect x="28" y="60" width="64" height="4" rx="2" class="fill-shape-line" />
-            <rect x="28" y="69" width="34" height="8" rx="4" class="fill-brand" />
-            <rect x="132" y="34" width="80" height="40" rx="6" class="fill-shape-soft" />
-            <circle cx="150" cy="47" r="6" class="fill-shape-accent" />
-            <polygon points="138,70 164,48 180,62 188,56 206,70" class="fill-shape-line" />
+          <g transform="translate(6 2)">
+            {/* 奥のページ（重なりによる奥行き） */}
+            <g data-reveal-item>
+              <rect x="92" y="20" width="312" height="150" rx="12" class="fill-shape-soft" />
+            </g>
+            {/* パソコンの画面: 見出し・文章・導線・画像 */}
+            <g data-reveal-item>
+              <rect x="32" y="38" width="316" height="164" rx="12" class="fill-surface" />
+              <rect x="32" y="38" width="316" height="24" rx="12" class="fill-shape-soft" />
+              <rect x="32" y="50" width="316" height="12" class="fill-shape-soft" />
+              <circle cx="48" cy="50" r="3" class="fill-shape-line" />
+              <circle cx="59" cy="50" r="3" class="fill-shape-line" />
+              <circle cx="70" cy="50" r="3" class="fill-shape-line" />
+              <rect x="52" y="82" width="120" height="14" rx="4" class="fill-ink" />
+              <rect x="52" y="104" width="88" height="14" rx="4" class="fill-ink" />
+              <rect x="52" y="132" width="124" height="6" rx="3" class="fill-shape-line" />
+              <rect x="52" y="146" width="100" height="6" rx="3" class="fill-shape-line" />
+              <rect x="52" y="166" width="64" height="20" rx="10" class="fill-brand" />
+              <rect x="200" y="80" width="130" height="104" rx="10" class="fill-shape-soft" />
+              <circle cx="228" cy="106" r="10" class="fill-shape-accent" />
+              <polygon points="210,174 252,132 280,158 294,146 320,174" class="fill-shape-line" />
+              <rect x="32" y="38" width="316" height="164" rx="12" class="fill-none stroke-line" />
+            </g>
+            {/* スマホの画面（同じ内容が小さな画面にも届く） */}
+            <g data-reveal-item>
+              <rect x="340" y="62" width="96" height="146" rx="16" class="fill-night" />
+              <rect x="347" y="74" width="82" height="122" rx="10" class="fill-surface" />
+              <rect x="356" y="86" width="48" height="8" rx="3" class="fill-ink" />
+              <rect x="356" y="102" width="64" height="44" rx="6" class="fill-shape-soft" />
+              <rect x="356" y="154" width="58" height="5" rx="2.5" class="fill-shape-line" />
+              <rect x="356" y="164" width="44" height="5" rx="2.5" class="fill-shape-line" />
+              <rect x="356" y="176" width="40" height="12" rx="6" class="fill-brand" />
+            </g>
           </g>
         )
       }

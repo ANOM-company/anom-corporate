@@ -99,6 +99,11 @@
   --spacing-section: clamp(4.5rem, 2.75rem + 6vw, 9.5rem);
   /* 押せる範囲の最小の高さ 44px（文字サイズに比例させない。下部バーを縦に並べたときの項目） */
   --spacing-tap: 44px;
+  /* 進め方のレール: 線と文章の間（点の幅を含む）／縦の線での番号の高さの中央（番号 1.75rem×行間 1.4 の半分）／点の大きさ／線の太さ */
+  --spacing-rail: 2.25rem;
+  --spacing-rail-node: 1.225rem;
+  --size-rail-node: 0.875rem;
+  --size-rail-line: 2px;
   /* 全体幅（本文の最大幅 1280px ＋ 左右の余白 80px） */
   --container-content: 90rem;
   /* 本文の行長（1行 約32〜40文字） */
@@ -515,10 +520,10 @@
  */
 @layer components {
   /*
-   * 冒頭の図版の背景にだけ敷く細い格子（装飾）。本文の背景には敷かない。
+   * 図版の背景にだけ敷く細い格子（装飾。冒頭の図版と「ANOMについて」の図）。本文の背景には敷かない。
    * 端を透明にぼかし、図版の周りに静かに溶け込ませる
    */
-  .hero-grid {
+  .deco-grid {
     background-image:
       linear-gradient(to right, var(--color-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
@@ -559,18 +564,29 @@
   }
 
   /*
+   * スクロールに連動する動きの書き方（この下の4か所で共通）:
+   * animation の一括指定は使わず、animation-name などの個別の指定だけで書く。
+   * 一括指定と animation-timeline を並べると、ビルド時の圧縮で1つの一括指定にまとめられ、
+   * ブラウザーがその指定全体を無効として扱う（動きが付かず、完成形のまま止まる）ため。
+   * 動いていることは tests/home.spec.ts の「スクロールに連動する線」で確かめる
+   */
+  /*
    * 重なりによる奥行き（Depth Layering）: 冒頭の図版の浮いた小さな画面が、スクロールに合わせて最大 8px だけ上へずれる。
    * スクロールに連動するアニメーションに対応したブラウザーで、動き低減の設定がない場合だけ。マウスには依存しない
    */
   @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: view()) {
       .depth-float {
-        animation: depth-float linear both;
+        animation-name: depth-float;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
         animation-timeline: view();
         animation-range: cover 50% exit 100%;
       }
       .depth-float-back {
-        animation: depth-float-back linear both;
+        animation-name: depth-float-back;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
         animation-timeline: view();
         animation-range: cover 50% exit 100%;
       }
@@ -608,7 +624,9 @@
   @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: view()) {
       .scroll-highlight {
-        animation: highlight-grow linear both;
+        animation-name: highlight-grow;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
         animation-timeline: view();
         animation-range: entry 40% cover 45%;
       }
@@ -647,10 +665,154 @@
   [data-reveal] > :nth-child(n + 4) > [data-reveal-item] {
     transition-delay: calc(var(--duration-stagger) * 6);
   }
+  /* 1枚の図（SVG）の中を層に分けたときは、層の順（奥 → 手前）に現れる */
+  [data-reveal] svg > [data-reveal-item]:nth-of-type(2) {
+    transition-delay: calc(var(--duration-stagger) * 2);
+  }
+  [data-reveal] svg > [data-reveal-item]:nth-of-type(3) {
+    transition-delay: calc(var(--duration-stagger) * 4);
+  }
+  [data-reveal] svg > [data-reveal-item]:nth-of-type(n + 4) {
+    transition-delay: calc(var(--duration-stagger) * 6);
+  }
   @media (prefers-reduced-motion: reduce) {
     [data-reveal='pending'] [data-reveal-item] {
       opacity: 1;
       translate: none;
+    }
+  }
+
+  /*
+   * スクロール連動の線（「ANOMについて」の図で、2つの場所をつなぐ線）。標準状態は引き切られた完成形。
+   * 対応ブラウザーで動き低減の設定がない場合だけ、図（.draw-on-scroll）が画面を通る量に合わせて線が伸びる。
+   * 線の要素には pathLength="1" を付け、長さを 1 として扱う
+   */
+  .draw-line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .draw-on-scroll {
+        view-timeline-name: --draw-on-scroll;
+      }
+      .draw-on-scroll .draw-line {
+        animation-name: line-draw;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: --draw-on-scroll;
+        animation-range: entry 50% cover 50%;
+      }
+    }
+  }
+  @keyframes line-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /*
+   * 進め方のレール（#process）。4つの段階を1本の線でつなぐ装飾。順序と内容は番号と文章で伝える。
+   * - 狭い幅は左に縦の線、PC（1024px以上）は上に横の線。線の終わりは淡く消し、伴走が続くことを示す
+   * - 標準状態は線が深い青で引き切られた完成形。対応ブラウザーで動き低減の設定がない場合だけ、
+   *   スクロール量に合わせて線が進む（縦の線は画面の中ほどの高さを先端が通る。横の線は区画が画面の中央に来るまでに引き切る）
+   */
+  .step-rail {
+    position: relative;
+    padding-inline-start: var(--spacing-rail);
+  }
+  .step-rail-track {
+    position: absolute;
+    inset-block: var(--spacing-rail-node) 0;
+    inset-inline-start: calc((var(--size-rail-node) - var(--size-rail-line)) / 2);
+    width: var(--size-rail-line);
+    background-color: var(--color-line);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 4rem), transparent);
+  }
+  .step-rail-fill {
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-brand);
+    transform-origin: top;
+  }
+  .step-rail-item {
+    position: relative;
+  }
+  /* 段階の位置を示す点（番号の高さの中央に置く） */
+  .step-rail-node {
+    position: absolute;
+    inset-block-start: var(--spacing-rail-node);
+    inset-inline-start: calc(var(--spacing-rail) * -1);
+    translate: 0 -50%;
+    width: var(--size-rail-node);
+    height: var(--size-rail-node);
+    border: var(--size-rail-line) solid var(--color-brand);
+    border-radius: 50%;
+    background-color: var(--color-canvas);
+  }
+  /* 横の線にする条件は、段階を4列に並べる条件（lg:@split）と同じ。56rem は --container-split の値 */
+  @media (min-width: 64rem) {
+    @container (min-width: 56rem) {
+      .step-rail {
+        padding-inline-start: 0;
+        padding-block-start: var(--spacing-rail);
+      }
+      .step-rail-track {
+        inset-block: calc((var(--size-rail-node) - var(--size-rail-line)) / 2) auto;
+        inset-inline: 0;
+        width: auto;
+        height: var(--size-rail-line);
+        mask-image: linear-gradient(to right, #000 calc(100% - 6rem), transparent);
+      }
+      .step-rail-fill {
+        transform-origin: left;
+      }
+      .step-rail-node {
+        inset-block-start: calc(var(--spacing-rail) * -1);
+        inset-inline-start: 0;
+        translate: none;
+      }
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .step-rail {
+        view-timeline-name: --step-rail;
+      }
+      .step-rail-fill {
+        animation-name: rail-grow-down;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: --step-rail;
+        animation-range: cover 40vh cover calc(100% - 60vh);
+      }
+      @media (min-width: 64rem) {
+        @container (min-width: 56rem) {
+          .step-rail-fill {
+            animation-name: rail-grow-right;
+            animation-range: entry 50% cover 50%;
+          }
+        }
+      }
+    }
+  }
+  @keyframes rail-grow-down {
+    from {
+      scale: 1 0;
+    }
+    to {
+      scale: 1 1;
+    }
+  }
+  @keyframes rail-grow-right {
+    from {
+      scale: 0 1;
+    }
+    to {
+      scale: 1 1;
     }
   }
 
