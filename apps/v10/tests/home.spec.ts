@@ -647,6 +647,177 @@ test.describe('下部バーとの重なり・文字拡大・短い画面', () =>
   });
 });
 
+test.describe('見出しの大きさ・本文の行間・折り返し・図の中の重なり', () => {
+  test('どの画面幅でも、見出しは H1 ＞ H2 ＞ H3 の順に大きい（サービスの見出しが区画の見出しを上回らない）', async ({ page }) => {
+    for (const width of [320, 390, 768, 1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const sizes = await page.evaluate(() => {
+        // 展開メニュー（閉じている <dialog>）の中の見出しは、ページの見出しの並びとは別に扱う
+        const of = (selector: string) =>
+          [...document.querySelectorAll<HTMLElement>(selector)]
+            .filter((el) => !el.closest('dialog'))
+            .map((el) => ({ text: (el.textContent ?? '').trim().slice(0, 16), px: parseFloat(getComputedStyle(el).fontSize) }));
+        return { h1: of('h1'), h2: of('h2'), h3: of('h3') };
+      });
+      expect(sizes.h1.length, `${width}px`).toBe(1);
+      expect(sizes.h2.length, `${width}px`).toBeGreaterThan(0);
+      expect(sizes.h3.length, `${width}px`).toBeGreaterThan(0);
+      const smallestH2 = Math.min(...sizes.h2.map((item) => item.px));
+      const largestH2 = Math.max(...sizes.h2.map((item) => item.px));
+      expect(largestH2, `${width}px: H2 は H1 より小さい`).toBeLessThan(sizes.h1[0]!.px);
+      for (const h3 of sizes.h3) {
+        expect(h3.px, `${width}px: H3「${h3.text}」は H2（${smallestH2}px）より小さい`).toBeLessThan(smallestH2);
+      }
+    }
+  });
+
+  for (const width of [390, 1440]) {
+    test(`@ ${width}px: 本文の段落の行間は 1.8（文字サイズを指定していない段落も同じ）`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const paragraphs = await page.evaluate(() => {
+        const japanese = /[\p{sc=Hiragana}\p{sc=Katakana}\p{sc=Han}]/u;
+        return [...document.querySelectorAll<HTMLElement>('main p, main li, main dd, footer p')]
+          .filter((el) => [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && japanese.test(node.textContent ?? '')))
+          .filter((el) => (el.textContent ?? '').trim().length > 30)
+          .map((el) => {
+            const style = getComputedStyle(el);
+            const px = parseFloat(style.fontSize);
+            return { text: (el.textContent ?? '').trim().slice(0, 14), px, ratio: Math.round((parseFloat(style.lineHeight) / px) * 100) / 100 };
+          });
+      });
+      expect(paragraphs.length).toBeGreaterThanOrEqual(10);
+      for (const paragraph of paragraphs) {
+        // 本文（16px・18px）は 1.8、小さな注記（14px）は 1.7
+        const expected = paragraph.px >= 16 ? 1.8 : 1.7;
+        expect(paragraph.ratio, `「${paragraph.text}」（${paragraph.px}px）`).toBe(expected);
+      }
+    });
+
+    test(`@ ${width}px: 画面デモの浮いた札は、3つの画面のどれでも図の中の文字（MESSAGE・ACTION など）に重ならない`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      for (const [name, id] of [
+        ['AI・DX', 'ai'],
+        ['Web', 'web'],
+        ['System', 'system'],
+      ] as const) {
+        await page.getByRole('tab', { name, exact: true }).click();
+        await expect(page.locator('[data-demo-tabs]')).toHaveAttribute('data-view', id);
+        // 切替のクロスフェードと冒頭の組み立てが終わってから測る
+        await page.waitForFunction(
+          (view) => document.querySelector(`[data-view-visual="${view}"]`)!.getAnimations({ subtree: true }).every((animation) => animation.playState !== 'running' || animation.timeline !== document.timeline),
+          id,
+        );
+        const covered = await page.evaluate((view) => {
+          const figure = document.querySelector(`[data-view-visual="${view}"]`)!;
+          const notes = [...figure.querySelectorAll('.depth-float')].map((note) => note.firstElementChild!.getBoundingClientRect());
+          // 札はスクロールに合わせて最大 8px 上へ動く（global.css の depth-float）。動いた先でも重ならないこと
+          const drift = 8;
+          const hits: string[] = [];
+          const walker = document.createTreeWalker(figure, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const text = (node.textContent ?? '').trim();
+            if (!text || node.parentElement?.closest('.depth-float')) continue;
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            for (const rect of range.getClientRects()) {
+              if (notes.some((note) => rect.right > note.left && rect.left < note.right && rect.bottom > note.top - drift && rect.top < note.bottom)) {
+                hits.push(text);
+              }
+            }
+          }
+          return { notes: notes.length, hits };
+        }, id);
+        expect(covered.notes, `${name}: 札は2枚`).toBe(2);
+        expect(covered.hits, `${name}: 札の下に隠れる文字`).toEqual([]);
+      }
+    });
+  }
+
+  test.describe('スマホと同じ条件（スクロールバーが幅を取らない）', () => {
+    test.use({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });
+
+    test('320×568 の最初の画面: 最初のボタン「サービスを見る」が下部バーの上に全部見える', async ({ page }) => {
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      const button = await page.locator('#top').getByRole('link', { name: 'サービスを見る' }).boundingBox();
+      const nav = await bar(page).boundingBox();
+      if (!button || !nav) throw new Error('ボタンまたは下部バーが見つかりません');
+      expect(await page.evaluate(() => window.scrollY)).toBe(0);
+      expect(button.y + button.height, 'ボタンの下端が、下部バーの上端より 8px 以上 上にある').toBeLessThanOrEqual(nav.y - 8);
+      // 下部バーの3項目は1段で、「メニュー」は1行
+      const menu = await bar(page).getByRole('button', { name: 'メニュー' }).boundingBox();
+      expect(menu?.height).toBeLessThanOrEqual(52);
+      // 余白を詰めるのは高さの低いスマホだけ。390×844 では通常の余白のまま
+      const tight = await page.locator('#top').evaluate((section) => getComputedStyle(section).paddingTop);
+      await page.setViewportSize({ width: 390, height: 844 });
+      const normal = await page.locator('#top').evaluate((section) => getComputedStyle(section).paddingTop);
+      expect(tight).toBe('24px');
+      expect(normal).toBe('40px');
+    });
+  });
+
+  test('フッターの案内: 項目は語の途中で折り返さず、案内の幅が足りないとき（1024px）は2列、広いときは4列', async ({ page }) => {
+    for (const { width, columns } of [
+      { width: 768, columns: 2 },
+      { width: 1024, columns: 2 },
+      { width: 1280, columns: 4 },
+      { width: 1440, columns: 4 },
+    ]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      const result = await page.evaluate(() => {
+        const nav = document.querySelector('#site-navigation')!;
+        const groups = [...nav.querySelectorAll('ul')].map((list) => Math.round(list.getBoundingClientRect().left));
+        // 各リンクの文言（状態の表示を含む）が何行になっているか
+        const wrapped = [...nav.querySelectorAll('a')].flatMap((link) => {
+          // 文字の上下の中央で行を数える（状態の表示［構想中］は文字が小さく、同じ行でも上端の位置が違うため）
+          const centers: number[] = [];
+          const walker = document.createTreeWalker(link, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const text = node.textContent ?? '';
+            for (let i = 0; i < text.length; i++) {
+              if (!text[i]!.trim()) continue;
+              const range = document.createRange();
+              range.setStart(node, i);
+              range.setEnd(node, i + 1);
+              const rect = range.getBoundingClientRect();
+              centers.push((rect.top + rect.bottom) / 2);
+            }
+          }
+          const lines = Math.max(...centers) - Math.min(...centers) > 8 ? 2 : 1;
+          return lines > 1 ? [(link.textContent ?? '').trim().replace(/\s+/g, ' ')] : [];
+        });
+        return { columns: new Set(groups).size, wrapped };
+      });
+      expect(result.wrapped, `${width}px: 折り返した項目`).toEqual([]);
+      expect(result.columns, `${width}px: 案内の列数`).toBe(columns);
+    }
+  });
+
+  test('相談欄の「個人情報の取り扱い（確認用案）を読む」は、押せる高さ 44px 以上', async ({ page }) => {
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
+      const link = page.locator('#contact').getByRole('link', { name: '個人情報の取り扱い（確認用案）を読む' });
+      const box = await link.boundingBox();
+      if (!box) throw new Error('リンクが見つかりません');
+      expect(box.height, `${width}px`).toBeGreaterThanOrEqual(44);
+      await expect(link).toHaveAttribute('href', '#contact-privacy');
+    }
+  });
+});
+
 test.describe('ヘッダー', () => {
   test('公式ロゴ・主なリンク・相談するボタン。PC は全部、スマホ幅はロゴと相談するだけを出す', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

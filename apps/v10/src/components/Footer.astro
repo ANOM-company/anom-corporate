@@ -6,6 +6,8 @@
  * - 末尾に下部バーの高さ分の余白を取り、最後の内容までバーに隠れないようにする。
  *   JavaScript 無効で文字を大きくして下部バーが縦に並ぶ幅（フッターの幅が --container-page-bar-stack 未満）では、
  *   横1段の初期値では足りない高さ（--bar-stack-extra）を足す
+ * - 案内の4つのまとまりは、案内の幅が --container-footer-groups 以上のとき横4列、それより狭いときは2列（640px未満は1列）。
+ *   項目が折り返すときは文節の切れ目で折り返し、［構想中］などの状態の表示は途中で折らない
  * - PC（1024px以上）は ANOM 表記4：案内8。文字サイズの設定を大きくして、左右に分ける幅（--container-split）が
  *   足りないときは1列にする
  */
@@ -33,7 +35,7 @@ const { siteName, companyName, title, groups, privacy, note, href } = Astro.prop
       <p class="text-sm text-ink-soft">{note}</p>
       <p class="text-sm text-ink-soft">© {companyName}</p>
     </div>
-    <nav id="site-navigation" aria-labelledby="site-navigation-title" class="lg:@split:col-span-8">
+    <nav id="site-navigation" aria-labelledby="site-navigation-title" class="@container lg:@split:col-span-8">
       <details open class="group">
         <summary
           class="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 font-bold [&::-webkit-details-marker]:hidden"
@@ -41,7 +43,7 @@ const { siteName, companyName, title, groups, privacy, note, href } = Astro.prop
           <span id="site-navigation-title">{title}</span>
           <span aria-hidden="true" class="text-ink-soft transition-transform duration-(--duration-base) group-open:rotate-45">+</span>
         </summary>
-        <div class="grid gap-6 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-6 pt-4 sm:grid-cols-2 @footer-groups:grid-cols-4">
           {
             groups.map((group) => (
               <div class="grid content-start gap-1">
@@ -49,9 +51,9 @@ const { siteName, companyName, title, groups, privacy, note, href } = Astro.prop
                 <ul class="grid">
                   {group.links.map((link) => (
                     <li>
-                      <a href={href(link.anchor)} class="inline-flex min-h-11 items-center gap-2">
+                      <a href={href(link.anchor)} class="inline-flex min-h-11 flex-wrap items-center gap-x-2 break-phrase">
                         {link.label}
-                        {link.status && <span class="text-sm text-ink-soft">［{link.status}］</span>}
+                        {link.status && <span class="text-sm whitespace-nowrap text-ink-soft">［{link.status}］</span>}
                       </a>
                     </li>
                   ))}

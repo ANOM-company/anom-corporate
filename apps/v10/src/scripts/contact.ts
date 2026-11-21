@@ -4,7 +4,9 @@
 // 2. スマホ幅でフォームの文字入力欄・選択欄にフォーカスしている間は、下部バーを一時的に隠す
 //    （visibility で隠すため、Tab移動・読み上げの対象からも外れる。フォーカスが外れたら戻す）
 // 3. 下部バーを表示したままの幅（タブレット・PC）で複数行の入力欄にフォーカスしたときは、欄の全体が
-//    下部バーより上に見える位置へ移す（ブラウザーはカーソルの行だけを画面内に出すため、欄の下側がバーに隠れる）
+//    下部バーより上に見える位置へ移す（ブラウザーはカーソルの行だけを画面内に出すため、欄の下側がバーに隠れる）。
+//    下部バーを隠す幅（スマホ幅）でも、Tab キーで移ってきたときは同じように欄の全体を画面内に出す
+//    （欄の下側が画面の外に残らないように）。指で触れて入力を始めるときは、ブラウザーの動きに任せる
 const select = document.querySelector<HTMLSelectElement>('select[data-consult-select]');
 const status = document.querySelector<HTMLElement>('[data-contact-status]');
 
@@ -26,10 +28,19 @@ const isTypingField = (target: EventTarget | null): boolean =>
   Boolean(form?.contains(target)) &&
   target.matches('input:not([type="checkbox"]):not([type="radio"]), select, textarea');
 
+// 直前の操作が Tab キーだったか（Tab でフォーカスを移したかどうかの判定に使う）
+let movedByTab = false;
+document.addEventListener('keydown', (event) => {
+  movedByTab = event.key === 'Tab';
+});
+document.addEventListener('pointerdown', () => {
+  movedByTab = false;
+});
+
 if (form && bar) {
   form.addEventListener('focusin', (event) => {
     if (isTypingField(event.target)) bar.setAttribute('data-input-active', '');
-    if (event.target instanceof HTMLTextAreaElement && getComputedStyle(bar).visibility !== 'hidden') {
+    if (event.target instanceof HTMLTextAreaElement && (movedByTab || getComputedStyle(bar).visibility !== 'hidden')) {
       // html の scroll-padding-bottom（下部バーの高さ＋余白）を差し引いた位置に収める
       event.target.scrollIntoView({ block: 'nearest' });
     }

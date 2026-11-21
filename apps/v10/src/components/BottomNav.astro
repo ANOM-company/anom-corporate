@@ -10,6 +10,10 @@
  *   横のままだとラベルが1文字ずつ折り返し、背の高くなったバーの丸い角の外へ文字が出て明るい地に重なるため。
  *   縦に並べたときは各ラベルを1行に収め、バーの角の丸みを項目の丸みに合わせて文字を背景の内側に保つ（--radius-bar-stack）。
  *   バーの幅で判定するため、<nav> を container とし、色・丸み・影は中の <ul> に付ける
+ * - バーの内側の縁に細い明るい線を引く（--color-night-edge）。同じ濃紺の区画（お悩み・システム開発の枠）の上に
+ *   重なっても、バーの形が見分けられるようにするため。内側に引くので、バーの大きさは変わらない
+ * - 横1段のときはラベルを折り返さない（whitespace-nowrap）。画面幅 320px などバーが狭いとき（--container-bar-mark 未満）は、
+ *   「メニュー」の右の印（＋。装飾）を出さず、4文字のラベルを1行に収める
  * - 縦に並べたときの寸法（行の高さ・上下の余白・項目の間・外側の余白）を変えたら、global.css の
  *   --bar-height-stack（JavaScript 無効時に使う縦3段の高さ）と --radius-bar-stack も合わせる
  */
@@ -23,7 +27,7 @@ type Props = {
 const { label, services, contact, menu } = Astro.props;
 // 縦に並べたとき（@max-bar-stack）は、行の高さと上下の余白を詰める。押せる大きさは 44px 以上を保つ
 const item =
-  'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold no-underline transition-colors duration-(--duration-base) ease-standard @max-bar-stack:min-h-tap @max-bar-stack:py-1 @max-bar-stack:leading-snug';
+  'flex h-full min-h-13 items-center justify-center gap-1.5 rounded-full px-2 text-center font-bold whitespace-nowrap no-underline transition-colors duration-(--duration-base) ease-standard @max-bar-stack:min-h-tap @max-bar-stack:py-1 @max-bar-stack:leading-snug';
 const onBrand = `${item} text-on-brand hover:bg-night-raised hover:text-on-brand`;
 ---
 
@@ -33,7 +37,7 @@ const onBrand = `${item} text-on-brand hover:bg-night-raised hover:text-on-brand
   data-bottom-nav
 >
   <ul
-    class="grid min-h-16 grid-cols-3 items-stretch gap-1 rounded-full bg-night p-1.5 shadow-lg shadow-ink/25 @max-bar-stack:grid-cols-1 @max-bar-stack:rounded-bar-stack"
+    class="grid min-h-16 grid-cols-3 items-stretch gap-1 rounded-full bg-night p-1.5 shadow-lg ring-1 shadow-ink/25 ring-night-edge ring-inset @max-bar-stack:grid-cols-1 @max-bar-stack:rounded-bar-stack"
   >
     <li>
       <a href={services.href} class={onBrand}>{services.label}</a>
@@ -46,7 +50,7 @@ const onBrand = `${item} text-on-brand hover:bg-night-raised hover:text-on-brand
     <li>
       <a href="#site-navigation" class={onBrand} data-menu-fallback>
         {menu.label}
-        <span aria-hidden="true" class="font-latin text-lg leading-none">+</span>
+        <span aria-hidden="true" class="font-latin text-lg leading-none @bar-stack:@max-bar-mark:hidden">+</span>
       </a>
       <button
         type="button"
@@ -58,7 +62,7 @@ const onBrand = `${item} text-on-brand hover:bg-night-raised hover:text-on-brand
         data-menu-button
       >
         {menu.label}
-        <span aria-hidden="true" class="font-latin text-lg leading-none">+</span>
+        <span aria-hidden="true" class="font-latin text-lg leading-none @bar-stack:@max-bar-mark:hidden">+</span>
       </button>
     </li>
   </ul>

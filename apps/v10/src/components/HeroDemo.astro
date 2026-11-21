@@ -84,8 +84,14 @@ const statuses = ['未確認', '対応中', '完了'];
                         <span class="h-1.5 w-8 rounded-full bg-brand" />
                       </span>
                     </div>
+                    {/* 写真の面を左、文章とボタンを右に置く。左の中ほどに浮く札が、文字（MESSAGE・ACTION）に重ならないようにするため */}
                     <div class="grid grid-cols-2 gap-3">
-                      <div class="assemble grid content-start gap-1.5" data-scatter="3" data-step="2">
+                      <div class="assemble relative grid min-h-20 place-items-end overflow-hidden rounded-control bg-shape-soft p-2" data-scatter="3" data-step="2">
+                        <span class="absolute top-2 left-2 font-latin text-2xs font-semibold tracking-wider text-brand">{view.parts[1]?.label}</span>
+                        <span class="absolute top-3 right-3 size-4 rounded-full bg-shape-accent" />
+                        <span class="h-1/2 w-full rounded-t-full bg-shape-line" />
+                      </div>
+                      <div class="assemble grid content-start gap-1.5" data-scatter="6" data-step="3">
                         <span class="font-latin text-2xs font-semibold tracking-wider text-brand">{view.parts[0]?.label}</span>
                         <span class="h-2.5 w-full rounded-full bg-ink" />
                         <span class="h-2.5 w-3/4 rounded-full bg-ink" />
@@ -94,11 +100,6 @@ const statuses = ['未確認', '対応中', '完了'];
                         <span class="mt-1.5 w-fit rounded-full bg-brand px-2.5 py-0.5 font-latin text-2xs font-semibold text-on-brand">
                           {view.parts[2]?.label}
                         </span>
-                      </div>
-                      <div class="assemble relative grid min-h-20 place-items-end overflow-hidden rounded-control bg-shape-soft p-2" data-scatter="6" data-step="3">
-                        <span class="absolute top-2 left-2 font-latin text-2xs font-semibold tracking-wider text-brand">{view.parts[1]?.label}</span>
-                        <span class="absolute top-3 right-3 size-4 rounded-full bg-shape-accent" />
-                        <span class="h-1/2 w-full rounded-t-full bg-shape-line" />
                       </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
@@ -140,8 +141,8 @@ const statuses = ['未確認', '対応中', '完了'];
                 )}
               </div>
             </div>
-            {/* 浮いた小さな札（左＝整える前、右＝使える形） */}
-            <div class="depth-float absolute top-1/2 left-0 max-w-1/2">
+            {/* 浮いた小さな札（左＝整える前、右＝使える形）。左の札は、スクロールで少し上へ動いても画面の中の文字に重ならない高さに置く */}
+            <div class="depth-float absolute top-3/5 left-0 max-w-1/2">
               <div class="assemble grid gap-0.5 rounded-card border border-line bg-surface px-3 py-2 shadow-lg shadow-ink/10 sm:px-4 sm:py-3" data-scatter="3" data-step="5">
                 <span class="text-2xs text-ink-soft sm:text-xs">{view.notes.from.label}</span>
                 <span class="text-xs font-bold text-ink sm:text-sm">{view.notes.from.text}</span>

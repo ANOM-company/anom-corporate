@@ -75,6 +75,8 @@ apps/v10/
 ## 下部バーと展開メニュー
 
 - 下部バー（`BottomNav`）は「サービス／相談する／メニュー」。画面下中央に固定し、PC は最大 440px
+- バーは濃紺（`--color-night`）。同じ濃紺の区画（お悩み・システム開発の枠）の上に重なっても形が分かるよう、内側の縁に細い明るい線を引く（`--color-night-edge`。濃紺とのコントラスト比 3:1 以上。内側に引くためバーの大きさは変わらない）
+- 横1段のときはラベルを折り返さない。画面幅 320px などバーの幅が `--container-bar-mark`（20rem）を下回るときは、「メニュー」の右の印（＋。装飾）を出さず、4文字のラベルを1行に収める
 - 「メニュー」は `<dialog>` を下から上へ開くボタン（`aria-expanded`・`aria-controls`）。JavaScript が無効のときは、フッターのサイト案内へのリンクになる
 - 展開メニュー（`MenuDialog`）は下記「モーダルとフォーカス」の仕組みを使う。開くと見出しへフォーカスし、背面のスクロールを止める（`html[data-scroll-locked]`）。項目が収まらない短い画面では項目の部分だけを縦にスクロールし、見出しと「閉じる」は常に見える
 - サイトの案内のため `role="menu"` は使わず、通常のナビゲーションのリンクにする
@@ -86,7 +88,7 @@ apps/v10/
 
 - `<form>` 要素を置かず、入力欄を `<fieldset>` でまとめる。送信ボタンは無効（`disabled`）で、理由を `aria-describedby` で読み上げる。JavaScript の有無にかかわらず、Enter やクリックで送信・ページ移動・通信が起きない（CSP も `form-action 'none'`）
 - サービス欄の相談ボタンは、通常の `#contact` へのリンクとして移動しつつ、相談分野だけを設定する。ほかの入力は変えず、変えたことを見出し直後の状態文（`role="status"`）で伝える
-- スマホ幅では、文字入力・選択欄にフォーカスしている間だけ下部バーを隠す（`visibility: hidden` のため Tab 順・読み上げからも外れる）。PC・タブレットでは表示したままにし、複数行の入力欄にフォーカスしたときは欄の全体がバーより上に見える位置へ移す
+- スマホ幅では、文字入力・選択欄にフォーカスしている間だけ下部バーを隠す（`visibility: hidden` のため Tab 順・読み上げからも外れる）。PC・タブレットでは表示したままにし、複数行の入力欄にフォーカスしたときは欄の全体がバーより上に見える位置へ移す。スマホ幅でも、Tab キーで複数行の入力欄へ移ったときは欄の全体を画面内に出す
 - 送信中・受付完了・送信失敗・入力不備の各状態は、部品の確認画面（`/kitchen-sink/#ks-form-states`）に「表示見本」として並べる。実際の送信結果としては表示しない
 
 ## 書体
@@ -105,8 +107,8 @@ apps/v10/
 | 色 | `--color-ink`, `--color-brand`, `--color-danger` | `text-ink`, `bg-brand`, `border-danger` |
 | 図形の色 | `--color-shape`, `--color-shape-line`, `--color-shape-accent` など | 画面デモ・サービスの図の SVG（`fill-shape` など） |
 | 書体 | `--font-sans`（LINE Seed JP）, `--font-heading`（Outfit → LINE Seed JP）, `--font-latin`（Outfit） | `font-sans`, `font-latin` |
-| 文字サイズ | `--text-2xs` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-statement`（考え方の一文）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
-| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 7.5em）, `--container-hero-visual`（冒頭の画面デモの最大幅 40rem）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)` |
+| 文字サイズ | `--text-2xs` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-statement`（考え方の一文）, `--text-subheading`（H3）, `--text-feature`（サービスの枠の見出し。行間付き） | `text-xl`, `text-display`, `text-feature` など |
+| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 7.5em）, `--container-hero-visual`（冒頭の画面デモの最大幅 40rem）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem）, `--container-bar-mark`（「メニュー」の印まで横1段に収まるバーの幅 20rem）, `--container-footer-groups`（フッターの案内を4列に並べる幅 46rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)`, `@footer-groups:grid-cols-4` |
 | 余白 | `--spacing`（基準 0.25rem）, `--spacing-section`, `--spacing-tap`（押せる範囲の最小の高さ 44px） | `p-4`, `py-(--spacing-section)`, `min-h-tap` |
 | 幅 | `--container-content`, `--container-prose`, `--container-menu`, `--container-bar` | `.container-content`, `max-w-(--container-prose)` |
 | 角丸 | `--radius-control`, `--radius-card`, `--radius-demo`, `--radius-bar-stack`（縦に並べた下部バー） | `rounded-control`, `rounded-bar-stack` など |
@@ -120,8 +122,11 @@ apps/v10/
 
 ### 文字サイズと文字の拡大
 
-- 文字サイズはすべて rem で指定し、見出し（`--text-display` / `--text-heading` / `--text-subheading` / `--text-3xl`）は画面幅の区切り（640 / 768 / 1024 / 1280px）ごとに段階で大きくします（値は `global.css` の `:root`）。画面幅（vw）や列幅（cqi）を混ぜないため、ブラウザーの文字サイズ設定を上げると見出しも本文と同じ比率で大きくなります。
+- 文字サイズはすべて rem で指定し、見出し（`--text-display` / `--text-heading` / `--text-subheading` / `--text-feature` / `--text-3xl`）は画面幅の区切り（640 / 768 / 1024 / 1280px）ごとに段階で大きくします（値は `global.css` の `:root`）。どの画面幅でも H1 ＞ H2 ＞ H3 の順に大きくし、サービスの枠の見出し（H3。`--text-feature`: 24 → 28 → 32 → 40px）は区画の H2（`--text-heading`: 28 → 32 → 40 → 48px）より一段小さくします。画面幅（vw）や列幅（cqi）を混ぜないため、ブラウザーの文字サイズ設定を上げると見出しも本文と同じ比率で大きくなります。
 - 冒頭・考え方・ANOMについて・学びの計画・相談・フッターの12列の区画は、`@container` を付けたセクションの幅が `--container-split`（56rem）以上で、かつ画面幅 1024px 以上のときだけ左右に分けます。rem は文字サイズに比例するため、文字サイズ設定を大きくすると1列に戻り、大きな見出しを広い幅で折り返します（通常の文字サイズでは従来どおり 1024px 以上で左右）。お悩み別は見出しの列が細くなりすぎないよう、同じ条件で画面幅 1280px 以上のときだけ左右に分けます。
+- 本文の行間は 1.8 です（`html` に指定。`text-*` で文字サイズを指定しない段落・ラベルも同じ行間になります）。小さな注記（`text-sm`）は 1.7、見出しは各トークンの行間です。
+- 高さの低いスマホ（画面の高さ 600px 以下。320×568 など）では、冒頭の上の余白と行の間を詰め（`max-sm:short:`）、最初のボタンが下部バーの裏に隠れず最初の画面に入るようにします。
+- フッターの案内（4つのまとまり）は、案内の幅が `--container-footer-groups` 以上で4列、それより狭いとき（1024px 前後）は2列にし、項目が語の途中で折り返さないようにします。
 - トップの H1「仕事を、／もっと自由に。」は、最大幅（7.5em）で常に文節ごとの2行にします。後半の文節（約7em）は入り、2つの文節を合わせた長さ（約11em）は入らない幅のため、書体の読み込みの前後や端末の書体の違いで改行位置と高さが変わりません。冒頭の説明文も行を決めて書き（文字の列が広い幅は2行、狭い幅は3行）、書体が変わっても下のボタン・図を動かしません。
 
 ## セキュリティヘッダーと CSP
@@ -148,8 +153,8 @@ apps/v10/
 | HTTPステータス・ヘッダー・404・`_headers` 非公開、生成HTMLにインライン要素がない | `tests/pages.spec.ts` |
 | 320 / 360 / 390 / 768 / 1440px の横はみ出し（スクリーンショット保存） | `tests/pages.spec.ts` |
 | リンク・CSS・JS・画像の読み込み、表示中の通信がすべて同一オリジン | `tests/pages.spec.ts` |
-| トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、システム開発の並び順（スマホ: 本文→図→相談ボタン、PC: 左右）、下部バーとの重なり（Tab 全巡回・文字 200%: 見出しの実寸が2倍・はみ出し・重なり・区画の1列化・短い画面） | `tests/home.spec.ts` |
-| 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更、文字 200% の下部バー: ラベルが1行・文字が背景の丸い形の内側・縦並び・操作） | `tests/menu.spec.ts` |
+| トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、システム開発の並び順（スマホ: 本文→図→相談ボタン、PC: 左右）、下部バーとの重なり（Tab 全巡回・文字 200%: 見出しの実寸が2倍・はみ出し・重なり・区画の1列化・短い画面）、見出しの大小（H1 ＞ H2 ＞ H3）・本文の行間 1.8・画面デモの札と図の中の文字の重なり・320×568 の最初の画面・フッターの案内の折り返しと列数 | `tests/home.spec.ts` |
+| 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更、文字 200% の下部バー: ラベルが1行・文字が背景の丸い形の内側・縦並び・操作、通常の文字サイズでもラベルが1行・狭い幅では「＋」を出さない・縁の線のコントラスト） | `tests/menu.spec.ts` |
 | 書体（実際に描画された書体・外部通信なし・読み込み量・読み込めないときの表示・ライセンス・分割ファイルの収録文字・見出しの改行） | `tests/fonts.spec.ts` |
 | 表示のずれ（初回表示・デモ切替・メニュー）と操作の応答。通常と通信制限＋CPU 4倍遅延の両方で計測し、数値を添付。字幅の狭い端末の書体（Windows: Yu Gothic UI／Meiryo UI、Linux: IPA Pゴシック）で先に表示し、自己配信の書体に切り替わっても H1 の改行と高さが変わらないこと | `tests/loading.spec.ts` |
 | 部品見本: ナビ、モーダル（Tab・Shift+Tab で背景へ移らない・Esc とフォーカス復帰・内部のページ内リンク）、FAQ、フォームのラベルとエラー、Tab移動・本文へ移動 | `tests/interactions.spec.ts` |

@@ -51,6 +51,8 @@ async function barText(page: Page) {
           range.setStart(node, i);
           range.setEnd(node, i + 1);
           const rect = range.getBoundingClientRect();
+          // 表示していない文字（狭いバーで出さない「+」の飾り）は位置を持たないため、収まりの対象にしない
+          if (rect.width === 0 && rect.height === 0) continue;
           const corners: Array<[number, number]> = [
             [rect.left, rect.top],
             [rect.right, rect.top],
@@ -208,6 +210,88 @@ test.describe('下部バー', () => {
       const result = await barText(page);
       expect(result.outside, `${width}px・文字 ${scale}`).toEqual([]);
       expect(result.rows, `${width}px・文字 ${scale}: 3項目を1段に並べる`).toBe(1);
+      // 横に並べたときも、各ラベルは1行（「メ／ニュー」のように語の途中で折り返さない）
+      expect(result.labels, `${width}px・文字 ${scale}: 各ラベルの行数`).toEqual([
+        { name: 'サービス', lines: 1 },
+        { name: '相談する', lines: 1 },
+        { name: 'メニュー', lines: 1 },
+      ]);
+    }
+  });
+
+  test('「メニュー」の印（＋）は、ラベルと一緒に1行に収まる幅のときだけ出す（320px では出さない）', async ({ page }) => {
+    for (const { width, shown } of [
+      { width: 320, shown: false },
+      // この検査のブラウザーはスクロールバーが幅を取る（約 15px）。スマホの 360px の幅に当たるのは 375px
+      { width: 375, shown: true },
+      { width: 390, shown: true },
+      { width: 1440, shown: true },
+    ]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      const mark = menuButton(page).locator('[aria-hidden="true"]');
+      await expect(mark, `${width}px`).toBeVisible({ visible: shown });
+      // 印は飾り。出さないときも、ボタンの名前と働きは同じ
+      await expect(menuButton(page)).toHaveAccessibleName('メニュー');
+      const fits = await menuButton(page).evaluate((button) => button.scrollWidth <= button.clientWidth);
+      expect(fits, `${width}px: 中身がボタンの幅に収まる`).toBe(true);
+    }
+    // 文字を大きくして縦に並べたときは、幅に余裕があるので印を出す
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('/');
+    await page.evaluate(() => document.documentElement.style.setProperty('font-size', '200%'));
+    await expect(menuButton(page).locator('[aria-hidden="true"]')).toBeVisible();
+  });
+
+  test('バーの縁に明るい線があり、同じ濃紺の区画（お悩み・システム開発の枠）の上でも形を見分けられる', async ({ page }) => {
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
+      const colors = await page.evaluate(() => {
+        // 色の文字列（oklab など）を、ブラウザーの描画で RGB の数値にする
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d', { willReadFrequently: true })!;
+        const rgb = (color: string) => {
+          context.clearRect(0, 0, 1, 1);
+          context.fillStyle = color;
+          context.fillRect(0, 0, 1, 1);
+          return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+        };
+        const list = document.querySelector('[data-bottom-nav] ul')!;
+        const style = getComputedStyle(list);
+        // 内側の縁の線（広がり 1px の inset の影）。大きさを変えないよう、枠線ではなく影で描いている
+        const edge = style.boxShadow.split(/,(?![^(]*\))/).find((part) => /inset/.test(part) && /0px 0px 0px 1px/.test(part));
+        const edgeColor = edge?.match(/^\s*((?:rgb|rgba|oklab|oklch|color)\([^)]*\)|#[0-9a-f]+)/i)?.[1];
+        return {
+          bar: rgb(style.backgroundColor),
+          edge: edgeColor ? rgb(edgeColor) : null,
+          challenges: rgb(getComputedStyle(document.querySelector('#challenges')!).backgroundColor),
+          system: rgb(getComputedStyle(document.querySelector('#service-system')!).backgroundColor),
+          height: list.getBoundingClientRect().height,
+        };
+      });
+      const luminance = (color: number[]) => {
+        const [r, g, b] = color.map((value) => {
+          const channel = value / 255;
+          return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        }) as [number, number, number];
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const contrast = (a: number[], b: number[]) => {
+        const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+        return (high + 0.05) / (low + 0.05);
+      };
+      // 前提: バーは設計どおり濃紺で、濃紺の区画と同じ色（だから縁の線で見分ける）
+      expect(colors.bar, `${width}px`).toEqual(colors.challenges);
+      expect(colors.bar, `${width}px`).toEqual(colors.system);
+      expect(colors.edge, `${width}px: 縁の線があること`).not.toBeNull();
+      expect(contrast(colors.edge!, colors.bar), `${width}px: 縁の線とバー・濃紺の区画のコントラスト比`).toBeGreaterThanOrEqual(3);
+      // 縁の線は内側に描くため、バーの高さは変わらない
+      expect(colors.height, `${width}px`).toBe(64);
     }
   });
 });

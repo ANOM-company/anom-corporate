@@ -14,6 +14,8 @@
  * - 2つのボタンは、横に並べると収まるかどうかが書体で変わる幅（640px未満と 1024〜1279px）では常に縦に積む
  *   （読み込み中に横並び→縦積みへ変わって、下の図が押し下げられないように）
  * - 英字ラベル「AI / DX × WEB × SYSTEM」は雰囲気を補う飾り。意味は日本語の説明文で伝える
+ * - 高さの低いスマホ（画面の高さ 600px 以下。320×568 など）では、上の余白と行の間を詰め、
+ *   最初のボタンが下部バーの裏に隠れず最初の画面に入るようにする（max-sm:short:）
  */
 import Button from './Button.astro';
 import HeroDemo from './HeroDemo.astro';
@@ -33,9 +35,9 @@ type Props = {
 const { eyebrow, title, lead, primary, secondary, demo, href } = Astro.props;
 ---
 
-<section id="top" class="@container overflow-x-clip border-b border-line pt-10 pb-(--spacing-section) lg:pt-16" aria-labelledby="hero-title">
+<section id="top" class="@container overflow-x-clip border-b border-line pt-10 pb-(--spacing-section) max-sm:short:pt-6 lg:pt-16" aria-labelledby="hero-title">
   <div class="container-content grid gap-14 lg:@split:grid-cols-[minmax(0,1fr)_min(58%,var(--container-hero-visual))] lg:@split:items-center lg:@split:gap-12">
-    <div class="grid content-start gap-6 lg:@split:gap-8">
+    <div class="grid content-start gap-6 max-sm:short:gap-4 lg:@split:gap-8">
       <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-latin text-sm font-semibold tracking-widest text-brand">
         {
           eyebrow.map((item, index) => (
