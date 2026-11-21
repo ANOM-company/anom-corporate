@@ -17,10 +17,12 @@ export const widths = [320, 360, 390, 768, 1440] as const;
 /** トップページに必ず存在するアンカー（設計のアンカー台帳） */
 export const anchors = [
   'top',
+  'philosophy',
   'services',
   'service-ai',
   'service-web',
   'service-system',
+  'challenges',
   'examples',
   'about',
   'process',

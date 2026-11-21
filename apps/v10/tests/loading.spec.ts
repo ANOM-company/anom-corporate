@@ -140,12 +140,14 @@ for (const condition of ['通常', '低速4G+CPU4倍'] as const) {
 
       // デモ切替: 入力の直後を含め、ずれが一切起きない
       const before = loaded.shifts.length;
-      const bodyTop = await page.locator('#services').evaluate((el) => el.getBoundingClientRect().top);
-      for (const name of ['Web', 'システム', 'AI・DX']) {
+      // 下の本文の位置はページの先頭からの距離で比べる（スマホ幅では切替ボタンが最初の画面の下にあり、押すときに画面が動くため）
+      const pageTop = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
+      const bodyTop = await page.locator('#services').evaluate(pageTop);
+      for (const name of ['Web', 'System', 'AI・DX']) {
         await page.getByRole('tab', { name }).click();
         await page.waitForTimeout(450);
       }
-      expect(await page.locator('#services').evaluate((el) => el.getBoundingClientRect().top)).toBe(bodyTop);
+      expect(await page.locator('#services').evaluate(pageTop)).toBe(bodyTop);
 
       // メニューの開閉でも、背面の本文はずれない
       await page.getByRole('navigation', { name: '下部メニュー' }).getByRole('button', { name: /メニュー/ }).click();

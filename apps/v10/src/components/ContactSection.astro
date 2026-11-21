@@ -114,9 +114,9 @@ const {
         />
         <Checkbox id="contact-privacy-agree" label={fields.privacy.label} required>
           <Fragment slot="hint">
+            <p>{fields.privacy.hint}</p>
             <p>
-              {fields.privacy.hint}
-              <a href="#contact-privacy" class="font-bold">{fields.privacy.link}</a>
+              <a href="#contact-privacy" class="inline-flex min-h-11 items-center font-bold break-phrase">{fields.privacy.link}</a>
             </p>
           </Fragment>
         </Checkbox>

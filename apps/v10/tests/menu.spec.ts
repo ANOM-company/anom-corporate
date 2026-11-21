@@ -51,6 +51,8 @@ async function barText(page: Page) {
           range.setStart(node, i);
           range.setEnd(node, i + 1);
           const rect = range.getBoundingClientRect();
+          // 表示していない文字（狭いバーで出さない「+」の飾り）は位置を持たないため、収まりの対象にしない
+          if (rect.width === 0 && rect.height === 0) continue;
           const corners: Array<[number, number]> = [
             [rect.left, rect.top],
             [rect.right, rect.top],
@@ -208,6 +210,88 @@ test.describe('下部バー', () => {
       const result = await barText(page);
       expect(result.outside, `${width}px・文字 ${scale}`).toEqual([]);
       expect(result.rows, `${width}px・文字 ${scale}: 3項目を1段に並べる`).toBe(1);
+      // 横に並べたときも、各ラベルは1行（「メ／ニュー」のように語の途中で折り返さない）
+      expect(result.labels, `${width}px・文字 ${scale}: 各ラベルの行数`).toEqual([
+        { name: 'サービス', lines: 1 },
+        { name: '相談する', lines: 1 },
+        { name: 'メニュー', lines: 1 },
+      ]);
+    }
+  });
+
+  test('「メニュー」の印（＋）は、ラベルと一緒に1行に収まる幅のときだけ出す（320px では出さない）', async ({ page }) => {
+    for (const { width, shown } of [
+      { width: 320, shown: false },
+      // この検査のブラウザーはスクロールバーが幅を取る（約 15px）。スマホの 360px の幅に当たるのは 375px
+      { width: 375, shown: true },
+      { width: 390, shown: true },
+      { width: 1440, shown: true },
+    ]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      const mark = menuButton(page).locator('[aria-hidden="true"]');
+      await expect(mark, `${width}px`).toBeVisible({ visible: shown });
+      // 印は飾り。出さないときも、ボタンの名前と働きは同じ
+      await expect(menuButton(page)).toHaveAccessibleName('メニュー');
+      const fits = await menuButton(page).evaluate((button) => button.scrollWidth <= button.clientWidth);
+      expect(fits, `${width}px: 中身がボタンの幅に収まる`).toBe(true);
+    }
+    // 文字を大きくして縦に並べたときは、幅に余裕があるので印を出す
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('/');
+    await page.evaluate(() => document.documentElement.style.setProperty('font-size', '200%'));
+    await expect(menuButton(page).locator('[aria-hidden="true"]')).toBeVisible();
+  });
+
+  test('バーの縁に明るい線があり、同じ濃紺の区画（お悩み・システム開発の枠）の上でも形を見分けられる', async ({ page }) => {
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
+      const colors = await page.evaluate(() => {
+        // 色の文字列（oklab など）を、ブラウザーの描画で RGB の数値にする
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d', { willReadFrequently: true })!;
+        const rgb = (color: string) => {
+          context.clearRect(0, 0, 1, 1);
+          context.fillStyle = color;
+          context.fillRect(0, 0, 1, 1);
+          return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+        };
+        const list = document.querySelector('[data-bottom-nav] ul')!;
+        const style = getComputedStyle(list);
+        // 内側の縁の線（広がり 1px の inset の影）。大きさを変えないよう、枠線ではなく影で描いている
+        const edge = style.boxShadow.split(/,(?![^(]*\))/).find((part) => /inset/.test(part) && /0px 0px 0px 1px/.test(part));
+        const edgeColor = edge?.match(/^\s*((?:rgb|rgba|oklab|oklch|color)\([^)]*\)|#[0-9a-f]+)/i)?.[1];
+        return {
+          bar: rgb(style.backgroundColor),
+          edge: edgeColor ? rgb(edgeColor) : null,
+          challenges: rgb(getComputedStyle(document.querySelector('#challenges')!).backgroundColor),
+          system: rgb(getComputedStyle(document.querySelector('#service-system')!).backgroundColor),
+          height: list.getBoundingClientRect().height,
+        };
+      });
+      const luminance = (color: number[]) => {
+        const [r, g, b] = color.map((value) => {
+          const channel = value / 255;
+          return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        }) as [number, number, number];
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const contrast = (a: number[], b: number[]) => {
+        const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+        return (high + 0.05) / (low + 0.05);
+      };
+      // 前提: バーは設計どおり濃紺で、濃紺の区画と同じ色（だから縁の線で見分ける）
+      expect(colors.bar, `${width}px`).toEqual(colors.challenges);
+      expect(colors.bar, `${width}px`).toEqual(colors.system);
+      expect(colors.edge, `${width}px: 縁の線があること`).not.toBeNull();
+      expect(contrast(colors.edge!, colors.bar), `${width}px: 縁の線とバー・濃紺の区画のコントラスト比`).toBeGreaterThanOrEqual(3);
+      // 縁の線は内側に描くため、バーの高さは変わらない
+      expect(colors.height, `${width}px`).toBe(64);
     }
   });
 });
@@ -233,9 +317,9 @@ test.describe('展開メニュー', () => {
     await page.waitForTimeout(200);
     expect((await menuState(page)).scrollY).toBe(before.scrollY);
 
-    // 9項目（提供中3・ANOMを知る3・これから1・共通2）と「閉じる」
+    // 10項目（提供中3・ANOMを知る4・これから1・共通2）と「閉じる」
     const links = dialog(page).getByRole('link');
-    await expect(links).toHaveCount(9);
+    await expect(links).toHaveCount(10);
     await expect(dialog(page).getByRole('link', { name: /学びの計画\s*［構想中］/ })).toBeVisible();
     await expect(dialog(page).locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
 
@@ -302,20 +386,21 @@ test.describe('展開メニュー', () => {
     await dialog(page).getByRole('link', { name: 'Web制作・運用保守' }).tap();
     await expect(dialog(page)).toBeHidden();
     await expect(page).toHaveURL(/#service-web$/);
-    await expect(page.getByRole('heading', { level: 3, name: '伝わるWebをつくり、育てていく。' })).toBeFocused();
+    await expect(page.getByRole('heading', { level: 3, name: '魅力を伝える。' })).toBeFocused();
     await context.close();
   });
 
   for (const [label, anchor, heading, level] of [
-    ['AI・DX支援', 'service-ai', '仕事の無駄を減らし、人が力を発揮できる現場へ。', 3],
-    ['Web制作・運用保守', 'service-web', '伝わるWebをつくり、育てていく。', 3],
-    ['システム開発', 'service-system', '自社の仕事に合う仕組みを、形に。', 2],
+    ['AI・DX支援', 'service-ai', '業務を整える。', 3],
+    ['Web制作・運用保守', 'service-web', '魅力を伝える。', 3],
+    ['システム開発', 'service-system', '仕事に合う仕組みをつくる。', 3],
+    ['よくあるお悩み', 'challenges', 'いま、こんなことに困っていませんか。', 2],
     ['支援のイメージ', 'examples', 'どんな変化をつくるのか。', 2],
-    ['ANOMの考え方', 'about', '無駄を減らし、人の力を活かす。', 2],
+    ['ANOMについて', 'about', '場所に関係なく、挑戦できる未来へ。', 2],
     ['相談からの進め方', 'process', '今の状況を聞くところから。', 2],
     ['学びの計画', 'learning', 'AIを、もっと身近な選択肢に。', 2],
-    ['トップへ', 'top', '技術を、仕事の力に。', 1],
-    ['相談する', 'contact', 'まずは、今のことを聞かせてください。', 2],
+    ['トップへ', 'top', '仕事を、もっと自由に。', 1],
+    ['相談する', 'contact', 'まずは、いまの悩みから。', 2],
   ] as const) {
     test(`メニューの「${label}」: 閉じてから #${anchor} へ移り、見出しへフォーカスする`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
@@ -340,7 +425,7 @@ test.describe('展開メニュー', () => {
     const link = dialog(page).getByRole('link', { name: '相談する' });
     await link.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading', { level: 2, name: 'まずは、今のことを聞かせてください。' })).toBeFocused();
+    await expect(page.getByRole('heading', { level: 2, name: 'まずは、いまの悩みから。' })).toBeFocused();
     await expect(page.getByLabel('ご相談の分野')).toHaveValue('web');
     // 見出しの次の Tab は、相談欄の中の要素へ進む（背面や先頭に戻らない）
     await page.keyboard.press('Tab');
@@ -351,7 +436,7 @@ test.describe('展開メニュー', () => {
   test('戻る／進む: メニューのリンクで移動した後に戻っても、メニューは再び開かない', async ({ page }) => {
     await page.goto('/');
     await menuButton(page).click();
-    await dialog(page).getByRole('link', { name: 'ANOMの考え方' }).click();
+    await dialog(page).getByRole('link', { name: 'ANOMについて' }).click();
     await expect(page).toHaveURL(/#about$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/$/);
@@ -453,7 +538,7 @@ test.describe('展開メニュー', () => {
     await menuButton(page).click();
     await dialog(page).getByRole('link', { name: 'システム開発' }).click();
     await expect(page).toHaveURL(/\/#service-system$/);
-    await expect(page.getByRole('heading', { level: 2, name: '自社の仕事に合う仕組みを、形に。' })).toBeInViewport();
+    await expect(page.getByRole('heading', { level: 3, name: '仕事に合う仕組みをつくる。' })).toBeInViewport();
     expect(await menuState(page)).toMatchObject({ open: 0, expanded: 'false', locked: false });
   });
 });

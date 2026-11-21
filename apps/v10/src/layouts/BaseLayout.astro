@@ -3,6 +3,9 @@
  * 全ページ共通の骨組み（head・スキップリンク・確認版の案内・ANOM表記・フッター・下部バー・展開メニュー）。
  * - 確認用のため常に noindex（_headers の X-Robots-Tag と二重に指定）
  * - 外部のフォント・スクリプトは読み込まない（書体は public/fonts/ の自己配信）
+ * - public/hero-gate.js は、同じタブでの2回目以降の表示で冒頭の組み立ての動きを再生しないための小さな同期スクリプト
+ *   （描画の前に印を付ける必要があるため、head で同期的に読み込む。外部ファイルのため CSP の script-src 'self' のまま動く）。
+ *   冒頭の図があるトップだけで読み込む（ほかのページを先に開いても、トップの初回の組み立ては再生される）
  * - トップ以外のページでは、下部バー・メニュー・フッターのリンクはトップの該当位置（/#...）へ移動する
  */
 import '../styles/global.css';
@@ -10,7 +13,7 @@ import SiteHeader from '../components/SiteHeader.astro';
 import Footer from '../components/Footer.astro';
 import BottomNav from '../components/BottomNav.astro';
 import MenuDialog from '../components/MenuDialog.astro';
-import { siteName, previewNotice, footerNote, siteMenu, bottomNav, privacyLink, anchorHref } from '../site';
+import { siteName, companyName, previewNotice, footerNote, siteMenu, headerNav, bottomNav, privacyLink, anchorHref } from '../site';
 
 type Props = {
   title: string;
@@ -31,8 +34,9 @@ const menuId = 'site-menu';
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="description" content={description} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
     <title>{fullTitle}</title>
+    {isHome && <script is:inline src="/hero-gate.js" />}
   </head>
   <body class="flex min-h-screen flex-col">
     <a
@@ -41,15 +45,24 @@ const menuId = 'site-menu';
     >
       本文へ移動
     </a>
-    <aside aria-label="このサイトについて" class="bg-ink px-4 py-1.5 text-center text-sm text-canvas">
+    <aside aria-label="このサイトについて" class="bg-night px-4 py-1.5 text-center text-sm text-on-brand break-phrase">
       <p>{previewNotice}</p>
     </aside>
-    <SiteHeader siteName={siteName} homeHref="/" />
+    <SiteHeader
+      siteName={siteName}
+      homeHref="/"
+      nav={{
+        label: headerNav.label,
+        links: headerNav.links.map((link) => ({ label: link.label, href: href(link.anchor) })),
+        contact: { label: headerNav.contact.label, href: href(headerNav.contact.anchor) },
+      }}
+    />
     <main id="main" tabindex="-1" class="flex-1 focus:shadow-none focus:outline-none">
       <slot />
     </main>
     <Footer
       siteName={siteName}
+      companyName={companyName}
       title="サイト案内"
       groups={siteMenu}
       privacy={{ label: privacyLink.label, href: href(privacyLink.anchor) }}
@@ -65,6 +78,7 @@ const menuId = 'site-menu';
     <MenuDialog id={menuId} title={bottomNav.menu.title} close={bottomNav.menu.close} groups={siteMenu} href={href} />
     <script>
       import '../scripts/modal';
+      import '../scripts/reveal';
     </script>
   </body>
 </html>

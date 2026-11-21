@@ -1,9 +1,12 @@
 ---
 /**
- * ANOMの考え方（#about）。動きを抑え、文字と余白で読む場面。
+ * ANOMの考え方（#about）。文字と余白で読む場面に、2つの場所をつなぐ図を1つ添える。
  * - 「売上の向上を目指す」は目指す方向であり、効果の保証としない
- * - PC（1024px以上）は本文7：流れ5。文字サイズの設定を大きくして、左右に分ける幅（--container-split）が
- *   足りないときは1列にする（列の間の余白も文字サイズに比例して広がり、横にはみ出すため）
+ * - 図は本文（秋田と関東の機会の差を小さくしたい）と同じ意味を繰り返す装飾（読み上げ対象外）。
+ *   2つの場所に同じ画面を置き、技術とデザインの線でつなぐ。地図や数値は表さない。
+ *   線は標準状態で引き切られていて、対応ブラウザーではスクロールに合わせて伸びる（global.css の .draw-line）
+ * - PC（1024px以上）は本文7：図5。文字サイズの設定を大きくして、左右に分ける幅（--container-split）が
+ *   足りないときは1列にする。「目指す流れ」は 768px 以上で横に3つ並べる
  */
 import SectionHeading from './SectionHeading.astro';
 
@@ -11,31 +14,72 @@ type Props = {
   eyebrow: string;
   title: string;
   body: string[];
+  figure: { from: string; to: string; bridge: string };
   flowLabel: string;
   flow: string[];
 };
 
-const { eyebrow, title, body, flowLabel, flow } = Astro.props;
+const { eyebrow, title, body, figure, flowLabel, flow } = Astro.props;
 ---
 
 <section id="about" class="@container border-y border-line py-(--spacing-section)" aria-labelledby="about-title">
-  <div class="container-content grid gap-10 lg:@split:grid-cols-12 lg:@split:gap-12">
-    <div class="grid content-start gap-6 lg:@split:col-span-7">
-      <SectionHeading id="about-title" eyebrow={eyebrow} title={title} />
-      <p class="max-w-(--container-prose) text-lg">
-        {body.map((sentence) => <span class="block">{sentence}</span>)}
-      </p>
+  <div class="container-content grid grid-cols-1 gap-10 lg:gap-16">
+    <div class="grid grid-cols-1 items-center gap-10 lg:@split:grid-cols-12 lg:@split:gap-12">
+      <div class="grid content-start gap-6 lg:@split:col-span-7">
+        <SectionHeading id="about-title" eyebrow={eyebrow} title={title} />
+        <p class="max-w-(--container-prose) text-lg break-phrase">
+          {body.map((sentence) => <span class="block">{sentence}</span>)}
+        </p>
+      </div>
+      <div
+        class="draw-on-scroll relative isolate overflow-hidden rounded-card border border-line bg-surface lg:@split:col-span-5"
+        aria-hidden="true"
+        data-reveal
+      >
+        <div class="deco-grid absolute inset-0 -z-10"></div>
+        <svg viewBox="0 0 400 240" class="block h-auto w-full" focusable="false">
+          {/* 2つの場所をつなぐ線 */}
+          <path
+            d="M132 66 C 200 66, 200 174, 268 174"
+            pathLength="1"
+            class="draw-line fill-none stroke-brand"
+            stroke-width="2"
+            stroke-linecap="round"
+          ></path>
+          {/* 1つ目の場所と、そこで使う画面 */}
+          <g data-reveal-item>
+            <rect x="20" y="24" width="112" height="84" rx="12" class="fill-surface stroke-shape-line" />
+            <text x="34" y="52" font-size="15" class="fill-ink font-bold">{figure.from}</text>
+            <rect x="34" y="64" width="70" height="6" rx="3" class="fill-shape-soft" />
+            <rect x="34" y="77" width="50" height="6" rx="3" class="fill-shape-soft" />
+            <rect x="34" y="90" width="36" height="10" rx="5" class="fill-brand" />
+            <circle cx="132" cy="66" r="5" class="fill-brand" />
+          </g>
+          {/* つなぐもの */}
+          <g data-reveal-item>
+            <rect x="138" y="104" width="124" height="32" rx="16" class="fill-night" />
+            <text x="200" y="125" text-anchor="middle" font-size="13" class="fill-on-brand font-bold">{figure.bridge}</text>
+          </g>
+          {/* 2つ目の場所と、同じ画面 */}
+          <g data-reveal-item>
+            <rect x="268" y="132" width="112" height="84" rx="12" class="fill-surface stroke-shape-line" />
+            <text x="282" y="160" font-size="15" class="fill-ink font-bold">{figure.to}</text>
+            <rect x="282" y="172" width="70" height="6" rx="3" class="fill-shape-soft" />
+            <rect x="282" y="185" width="50" height="6" rx="3" class="fill-shape-soft" />
+            <rect x="282" y="198" width="36" height="10" rx="5" class="fill-brand" />
+            <circle cx="268" cy="174" r="5" class="fill-brand" />
+          </g>
+        </svg>
+      </div>
     </div>
-    <div class="grid content-start gap-3 lg:@split:col-span-5 lg:@split:pt-10">
+    <div class="grid grid-cols-1 gap-3">
       <p class="text-sm font-bold text-ink-soft">{flowLabel}</p>
-      <ol class="grid gap-0">
+      <ol class="grid grid-cols-1 md:grid-cols-3 md:gap-x-6 lg:gap-x-8">
         {
           flow.map((item, index) => (
-            <li class="grid gap-0">
-              <p class="flex items-center gap-4 border-t border-line py-4 text-lg font-bold">
-                <span class="font-latin text-sm font-semibold text-ink-soft">{String(index + 1).padStart(2, '0')}</span>
-                {item}
-              </p>
+            <li class="flex items-center gap-4 border-t border-line py-4 text-lg font-bold break-phrase">
+              <span class="shrink-0 font-latin text-sm font-semibold text-ink-soft">{String(index + 1).padStart(2, '0')}</span>
+              {item}
             </li>
           ))
         }

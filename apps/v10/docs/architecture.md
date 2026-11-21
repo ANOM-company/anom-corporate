@@ -10,16 +10,20 @@ apps/v10/
 ├── public/
 │   ├── _headers          CSP などのレスポンスヘッダー（dist/ にコピーされる）
 │   ├── fonts/            自己配信の書体（WOFF2）・ライセンス全文・取得元の記録
-│   └── favicon.svg
+│   ├── images/           公式ロゴ（横組み）と出典の記録
+│   ├── hero-gate.js      同じタブでの再表示で、冒頭の組み立ての動きを再生しないための小さなスクリプト（トップの head で読み込む）
+│   └── favicon.png
 ├── src/
 │   ├── components/       共通部品（Button・Input・Select・Checkbox・Card・Navigation・Modal・FAQ・CTA など）と
-│   │                     トップの区画（HomeHero・HeroDemo・ServiceFeature・SystemFeature・WorkflowExample・
-│   │                     AboutSection・ProcessSection・LearningSection・ContactSection）、下部バー（BottomNav）、
+│   │                     トップの区画（HomeHero・HeroDemo・PhilosophySection・ServiceFeature・SystemFeature・
+│   │                     ChallengesSection・WorkflowExample・AboutSection・ProcessSection・LearningSection・
+│   │                     ContactSection）、下部バー（BottomNav）、
 │   │                     展開メニュー（MenuDialog）、ヘッダー・フッター
 │   ├── data/home.ts      トップの文言（部品には文言を持たせない）
 │   ├── layouts/          全ページ共通の骨組み（下部バー・展開メニュー・フッターを含む）
 │   ├── pages/            / ・ /kitchen-sink/ ・ 404
-│   ├── scripts/          補助スクリプト（モーダル・下部バー・画面デモの切替・相談フォーム・部品見本）
+│   ├── scripts/          補助スクリプト（モーダル・下部バー・画面デモの切替・お悩み別の開閉・装飾の時間差表示・
+│   │                     相談フォーム・部品見本）
 │   ├── styles/
 │   │   ├── global.css    設計トークンと基本スタイル
 │   │   └── fonts.css     @font-face（tools/fonts/build-fonts.py で生成）
@@ -34,13 +38,15 @@ apps/v10/
 
 | 区画 | id | 内容 |
 |---|---|---|
-| 冒頭 | `top` | 見出し・説明・「提供サービスを見る」と、3つの画面デモ（AI・DX／Web／システム）の切替 |
+| 冒頭 | `top` | 見出し・説明・「サービスを見る」「相談する」と、3つの画面デモ（AI・DX／Web／System）の切替 |
+| 考え方 | `philosophy` | 大きな一文と2行の説明。強調部分の下線がスクロールに合わせて伸びる（標準状態は引き切った形） |
 | 提供サービス | `services`・`service-ai`・`service-web` | AI・DX支援と Web制作・運用保守を同じ構成・同じ大きさで並べる |
-| システム開発 | `service-system` | 独立した区画と相談ボタン。スマホ幅は 本文→図→相談ボタン の縦順、PC は本文と図を左右に置き相談ボタンは本文の下（HTML の順も 本文→図→相談ボタン） |
+| システム開発 | `service-system` | 提供サービスの中の、主力2枠の下の濃紺の独立した枠と相談ボタン。スマホ幅は 本文→図→相談ボタン の縦順、PC は本文と図を左右に置き相談ボタンは本文の下（HTML の順も 本文→図→相談ボタン） |
+| お悩み別 | `challenges` | 3つのお悩みの開閉（後述）。各お悩みに「できる支援」と関連サービスへのリンク |
 | 支援のイメージ | `examples` | 説明用の例（実績ではないことを明示し、操作できる要素を置かない） |
-| ANOMの考え方 | `about` | |
-| 相談からの進め方 | `process` | 4つの段階 |
-| 学びの計画 | `learning` | 2項目とも「構想中」。日程・料金・申込みは置かない |
+| ANOMについて | `about` | 本文と、2つの場所（秋田・関東）に同じ画面を置いて線でつなぐ図（装飾。地図や数値は表さない）。「目指す流れ」は 768px 以上で横に3つ |
+| 相談からの進め方 | `process` | 4つの段階を1本の線でつなぐ（狭い幅は左の縦の線、1024px 以上は上の横の線。線は装飾） |
+| 学びの計画 | `learning` | 2項目とも「構想中」。日程・料金・申込みは置かない。1024px 以上は 見出し5：内容7 |
 | 相談フォーム | `contact`・`contact-privacy` | 入力だけを確かめる確認版（後述） |
 | サイト案内（フッター） | `site-navigation` | 展開メニューと同じ項目。JavaScript が無効のときのメニューの代わり |
 
@@ -50,12 +56,27 @@ apps/v10/
 
 - WAI-ARIA のタブの構造（`tablist`・`tab`・`tabpanel`）で、矢印・Home・End でタブ間を移動し、Enter／Space で表示を切り替える（手動切替）
 - 3つのパネルを同じ格子のマスに重ね、選んでいないパネルは `hidden`（見た目は `visibility: hidden`）にする。高さが変わらないため、切り替えても下の本文が動かない
-- 図形は最初の表示で1回だけ組み上がる（900ms 以内）。切替時は選んだパネルだけが短く現れる（320ms）
+- 図形は最初の表示で1回だけ組み上がる（900ms 以内）。同じタブでの再表示（再読み込み・戻る）では再生せず、完成した図をすぐに出す（`public/hero-gate.js` が `html[data-hero-seen]` を付ける）
+- 図（装飾）と説明文（パネル）は別々に重ねる。切替時は説明文をすぐに切り替え、図だけを短くクロスフェードする（260ms）
 - JavaScript が無効のときはタブを出さず、3つの説明とリンクを縦に並べる（`@media (scripting: none)`）
+
+## お悩み別の開閉（`src/scripts/accordion.ts`）
+
+- WAI-ARIA のアコーディオンの構造。見出し（H3）の中の `button` が `aria-expanded` と `aria-controls` を持ち、パネルは見出しで名前を付けた `role="region"`
+- JavaScript が使えるときだけ見出しの文字を開閉ボタンに置き換え、先頭だけを開く。閉じたパネルは高さ 0 へ縮め、中身を `visibility: hidden` にして Tab 移動・読み上げから外す
+- JavaScript が無効のときは開閉ボタンを出さず、すべてを開いたまま表示する（標準状態＝完成形）
+
+## 装飾の動き
+
+- 時間差表示（`src/scripts/reveal.ts`）: 読み込み時に画面の外にある `[data-reveal]` の中の `[data-reveal-item]`（説明図・画面の絵だけ）を、画面に入ったとき1回、順に少し現れさせる。本文は隠さない
+- スクロール連動（CSS の `animation-timeline`）: 冒頭の図の奥行き（`.depth-float`）、考え方の一文の下線（`.scroll-highlight`）、ANOMについての図の線（`.draw-line`）、進め方の線（`.step-rail-fill`）。対応ブラウザーかつ動き低減の設定がないときだけ動き、それ以外は完成した状態で止まっている。`animation` の一括指定と並べると、ビルド時の圧縮で1つにまとめられてブラウザーが無効として扱うため、`animation-name` などの個別の指定だけで書く（動いていることは `tests/home.spec.ts` の「スクロールに連動する線」で確かめる）
+- ボタン・リンクの矢印は、ホバー・フォーカスで少し進む（`.arrow-nudge`）
 
 ## 下部バーと展開メニュー
 
 - 下部バー（`BottomNav`）は「サービス／相談する／メニュー」。画面下中央に固定し、PC は最大 440px
+- バーは濃紺（`--color-night`）。同じ濃紺の区画（お悩み・システム開発の枠）の上に重なっても形が分かるよう、内側の縁に細い明るい線を引く（`--color-night-edge`。濃紺とのコントラスト比 3:1 以上。内側に引くためバーの大きさは変わらない）
+- 横1段のときはラベルを折り返さない。画面幅 320px などバーの幅が `--container-bar-mark`（20rem）を下回るときは、「メニュー」の右の印（＋。装飾）を出さず、4文字のラベルを1行に収める
 - 「メニュー」は `<dialog>` を下から上へ開くボタン（`aria-expanded`・`aria-controls`）。JavaScript が無効のときは、フッターのサイト案内へのリンクになる
 - 展開メニュー（`MenuDialog`）は下記「モーダルとフォーカス」の仕組みを使う。開くと見出しへフォーカスし、背面のスクロールを止める（`html[data-scroll-locked]`）。項目が収まらない短い画面では項目の部分だけを縦にスクロールし、見出しと「閉じる」は常に見える
 - サイトの案内のため `role="menu"` は使わず、通常のナビゲーションのリンクにする
@@ -67,7 +88,7 @@ apps/v10/
 
 - `<form>` 要素を置かず、入力欄を `<fieldset>` でまとめる。送信ボタンは無効（`disabled`）で、理由を `aria-describedby` で読み上げる。JavaScript の有無にかかわらず、Enter やクリックで送信・ページ移動・通信が起きない（CSP も `form-action 'none'`）
 - サービス欄の相談ボタンは、通常の `#contact` へのリンクとして移動しつつ、相談分野だけを設定する。ほかの入力は変えず、変えたことを見出し直後の状態文（`role="status"`）で伝える
-- スマホ幅では、文字入力・選択欄にフォーカスしている間だけ下部バーを隠す（`visibility: hidden` のため Tab 順・読み上げからも外れる）。PC・タブレットでは表示したままにし、複数行の入力欄にフォーカスしたときは欄の全体がバーより上に見える位置へ移す
+- スマホ幅では、文字入力・選択欄にフォーカスしている間だけ下部バーを隠す（`visibility: hidden` のため Tab 順・読み上げからも外れる）。PC・タブレットでは表示したままにし、複数行の入力欄にフォーカスしたときは欄の全体がバーより上に見える位置へ移す。スマホ幅でも、Tab キーで複数行の入力欄へ移ったときは欄の全体を画面内に出す
 - 送信中・受付完了・送信失敗・入力不備の各状態は、部品の確認画面（`/kitchen-sink/#ks-form-states`）に「表示見本」として並べる。実際の送信結果としては表示しない
 
 ## 書体
@@ -75,7 +96,7 @@ apps/v10/
 - 和文は LINE Seed JP（見出し・操作ラベルは Bold 700、本文・入力値は Regular 400）、英字の補助ラベルと欧文の見出しは Outfit（可変フォント）
 - `public/fonts/` から自己配信し、外部へは接続しない。先読み（preload）はしない。`font-display: swap` で、読み込み前や失敗時は端末の標準書体で表示する。`font-synthesis: none` で、太字・斜体の擬似的な合成をしない
 - LINE Seed JP は、よく使う文字の順に太さごとに8ファイルへ分割し、`unicode-range` で必要なファイルだけを読み込む。各ファイルの収録文字と `unicode-range` は一致させ、元のフォントの全8,341文字をどれかのファイルに入れている（テストで WOFF2 の収録文字表を読んで確認）
-- 見出しは文節の途中で改行しない（H1 は `<wbr>` と `word-break: keep-all`、H2・H3 は `word-break: auto-phrase`）
+- 見出しは文節の途中で改行しない（H1 と考え方の一文は `<wbr>` と `word-break: keep-all`、ほかの H2・H3 は `word-break: auto-phrase`）。ボタンの文言と冒頭の説明文も文節で折り返す（`break-phrase`）
 
 ## 設計トークン
 
@@ -86,12 +107,12 @@ apps/v10/
 | 色 | `--color-ink`, `--color-brand`, `--color-danger` | `text-ink`, `bg-brand`, `border-danger` |
 | 図形の色 | `--color-shape`, `--color-shape-line`, `--color-shape-accent` など | 画面デモ・サービスの図の SVG（`fill-shape` など） |
 | 書体 | `--font-sans`（LINE Seed JP）, `--font-heading`（Outfit → LINE Seed JP）, `--font-latin`（Outfit） | `font-sans`, `font-latin` |
-| 文字サイズ | `--text-base` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-subheading`（行間付き） | `text-xl`, `text-display` など |
-| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 6.5em）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)` |
+| 文字サイズ | `--text-2xs` 〜 `--text-3xl`, `--text-display`（H1）, `--text-heading`（H2）, `--text-statement`（考え方の一文）, `--text-subheading`（H3）, `--text-feature`（サービスの枠の見出し。行間付き） | `text-xl`, `text-display`, `text-feature` など |
+| 幅（見出し・区画） | `--container-hero-title`（トップの H1 の最大幅 7.5em）, `--container-hero-visual`（冒頭の画面デモの最大幅 40rem）, `--container-split`（12列の区画を左右に分ける幅 56rem）, `--container-bar-stack`（下部バーを横1段に並べる最小の幅 16.25rem）, `--container-page-bar-stack`（同じ境目をフッターの幅で表したもの 18.25rem）, `--container-bar-mark`（「メニュー」の印まで横1段に収まるバーの幅 20rem）, `--container-footer-groups`（フッターの案内を4列に並べる幅 46rem） | `max-w-(--container-hero-title)`, `lg:@split:grid-cols-12`, `@max-bar-stack:grid-cols-1`, `@max-page-bar-stack:pb-(--bar-stack-extra)`, `@footer-groups:grid-cols-4` |
 | 余白 | `--spacing`（基準 0.25rem）, `--spacing-section`, `--spacing-tap`（押せる範囲の最小の高さ 44px） | `p-4`, `py-(--spacing-section)`, `min-h-tap` |
 | 幅 | `--container-content`, `--container-prose`, `--container-menu`, `--container-bar` | `.container-content`, `max-w-(--container-prose)` |
 | 角丸 | `--radius-control`, `--radius-card`, `--radius-demo`, `--radius-bar-stack`（縦に並べた下部バー） | `rounded-control`, `rounded-bar-stack` など |
-| 動き | `--duration-fast`, `--duration-base`, `--duration-build`, `--duration-switch`, `--duration-menu-open` / `-close`, `--ease-standard` | `duration-(--duration-base) ease-standard` |
+| 動き | `--duration-fast`, `--duration-base`, `--duration-build`, `--duration-switch`, `--duration-reveal`, `--duration-accordion-open` / `-close`, `--duration-menu-open` / `-close`, `--ease-standard`, `--ease-out`, `--ease-assemble` | `duration-(--duration-base) ease-standard` |
 | 下部バー | `--bar-height`（スクリプトが設定）, `--bar-height-row`・`--bar-height-stack`（初期値）, `--bar-offset`, `--bar-clearance`, `--bar-stack-extra`（`:root` の変数） | 固定位置・余白の計算 |
 | フォーカス表示 | `--color-focus`（輪郭）, `--color-focus-halo`（白の縁取り） | `:focus-visible` で自動適用（部品側の指定は不要） |
 
@@ -101,9 +122,12 @@ apps/v10/
 
 ### 文字サイズと文字の拡大
 
-- 文字サイズはすべて rem で指定し、見出し（`--text-display` / `--text-heading` / `--text-subheading` / `--text-3xl`）は画面幅の区切り（640 / 768 / 1024 / 1280px）ごとに段階で大きくします（値は `global.css` の `:root`）。画面幅（vw）や列幅（cqi）を混ぜないため、ブラウザーの文字サイズ設定を上げると見出しも本文と同じ比率で大きくなります。
-- 冒頭・ANOMの考え方・相談・フッターの12列の区画は、`@container` を付けたセクションの幅が `--container-split`（56rem）以上で、かつ画面幅 1024px 以上のときだけ左右に分けます。rem は文字サイズに比例するため、文字サイズ設定を大きくすると1列に戻り、大きな見出しを広い幅で折り返します（通常の文字サイズでは従来どおり 1024px 以上で左右）。
-- トップの H1「技術を、／仕事の力に。」は、最大幅（6.5em）で常に文節ごとの2行にします。後半の文節（約6em）は入り、2つの文節を合わせた長さ（字幅の狭い端末の書体でも約8.7em）は入らない幅のため、書体の読み込みの前後や端末の書体の違いで改行位置と高さが変わりません。
+- 文字サイズはすべて rem で指定し、見出し（`--text-display` / `--text-heading` / `--text-subheading` / `--text-feature` / `--text-3xl`）は画面幅の区切り（640 / 768 / 1024 / 1280px）ごとに段階で大きくします（値は `global.css` の `:root`）。どの画面幅でも H1 ＞ H2 ＞ H3 の順に大きくし、サービスの枠の見出し（H3。`--text-feature`: 24 → 28 → 32 → 40px）は区画の H2（`--text-heading`: 28 → 32 → 40 → 48px）より一段小さくします。画面幅（vw）や列幅（cqi）を混ぜないため、ブラウザーの文字サイズ設定を上げると見出しも本文と同じ比率で大きくなります。
+- 冒頭・考え方・ANOMについて・学びの計画・相談・フッターの12列の区画は、`@container` を付けたセクションの幅が `--container-split`（56rem）以上で、かつ画面幅 1024px 以上のときだけ左右に分けます。rem は文字サイズに比例するため、文字サイズ設定を大きくすると1列に戻り、大きな見出しを広い幅で折り返します（通常の文字サイズでは従来どおり 1024px 以上で左右）。お悩み別は見出しの列が細くなりすぎないよう、同じ条件で画面幅 1280px 以上のときだけ左右に分けます。
+- 本文の行間は 1.8 です（`html` に指定。`text-*` で文字サイズを指定しない段落・ラベルも同じ行間になります）。小さな注記（`text-sm`）は 1.7、見出しは各トークンの行間です。
+- 高さの低いスマホ（画面の高さ 600px 以下。320×568 など）では、冒頭の上の余白と行の間を詰め（`max-sm:short:`）、最初のボタンが下部バーの裏に隠れず最初の画面に入るようにします。
+- フッターの案内（4つのまとまり）は、案内の幅が `--container-footer-groups` 以上で4列、それより狭いとき（1024px 前後）は2列にし、項目が語の途中で折り返さないようにします。
+- トップの H1「仕事を、／もっと自由に。」は、最大幅（7.5em）で常に文節ごとの2行にします。後半の文節（約7em）は入り、2つの文節を合わせた長さ（約11em）は入らない幅のため、書体の読み込みの前後や端末の書体の違いで改行位置と高さが変わりません。冒頭の説明文も行を決めて書き（文字の列が広い幅は2行、狭い幅は3行）、書体が変わっても下のボタン・図を動かしません。
 
 ## セキュリティヘッダーと CSP
 
@@ -129,8 +153,8 @@ apps/v10/
 | HTTPステータス・ヘッダー・404・`_headers` 非公開、生成HTMLにインライン要素がない | `tests/pages.spec.ts` |
 | 320 / 360 / 390 / 768 / 1440px の横はみ出し（スクリーンショット保存） | `tests/pages.spec.ts` |
 | リンク・CSS・JS・画像の読み込み、表示中の通信がすべて同一オリジン | `tests/pages.spec.ts` |
-| トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、システム開発の並び順（スマホ: 本文→図→相談ボタン、PC: 左右）、下部バーとの重なり（Tab 全巡回・文字 200%: 見出しの実寸が2倍・はみ出し・重なり・区画の1列化・短い画面） | `tests/home.spec.ts` |
-| 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更、文字 200% の下部バー: ラベルが1行・文字が背景の丸い形の内側・縦並び・操作） | `tests/menu.spec.ts` |
+| トップ: 初回表示（動きを待たない）、サービスの扱い（AI・DX と Web が同じ構成・大きさ、システム開発の独立した入口、構想中の表示、実績・料金の表記なし）、アンカー・ハッシュ直開き・戻る／進む、画面デモのタブ（キーボード・連打・ずれなし）、相談フォーム（ラベル・送信しない・分野の引継ぎ・下部バーの一時非表示）、システム開発の並び順（スマホ: 本文→図→相談ボタン、PC: 左右）、下部バーとの重なり（Tab 全巡回・文字 200%: 見出しの実寸が2倍・はみ出し・重なり・区画の1列化・短い画面）、見出しの大小（H1 ＞ H2 ＞ H3）・本文の行間 1.8・画面デモの札と図の中の文字の重なり・320×568 の最初の画面・フッターの案内の折り返しと列数 | `tests/home.spec.ts` |
+| 下部バーと展開メニュー（マウス・タップ・キーボード・Esc・背景・ドラッグ・全リンクの移動先・戻る／進む・連打・短い画面・幅の変更、文字 200% の下部バー: ラベルが1行・文字が背景の丸い形の内側・縦並び・操作、通常の文字サイズでもラベルが1行・狭い幅では「＋」を出さない・縁の線のコントラスト） | `tests/menu.spec.ts` |
 | 書体（実際に描画された書体・外部通信なし・読み込み量・読み込めないときの表示・ライセンス・分割ファイルの収録文字・見出しの改行） | `tests/fonts.spec.ts` |
 | 表示のずれ（初回表示・デモ切替・メニュー）と操作の応答。通常と通信制限＋CPU 4倍遅延の両方で計測し、数値を添付。字幅の狭い端末の書体（Windows: Yu Gothic UI／Meiryo UI、Linux: IPA Pゴシック）で先に表示し、自己配信の書体に切り替わっても H1 の改行と高さが変わらないこと | `tests/loading.spec.ts` |
 | 部品見本: ナビ、モーダル（Tab・Shift+Tab で背景へ移らない・Esc とフォーカス復帰・内部のページ内リンク）、FAQ、フォームのラベルとエラー、Tab移動・本文へ移動 | `tests/interactions.spec.ts` |

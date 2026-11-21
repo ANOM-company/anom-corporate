@@ -9,11 +9,15 @@ const tags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-prac
 /**
  * 開閉・切替・組み上がりの動き（CSS の transition と animation）がすべて終わるまで待つ。
  * 動きの途中（例: 閉じかけて半透明のメニュー）の色や重なりを、静止した画面の指摘として扱わないため。
- * 判定の基準や対象は変えない。
+ * スクロールに連動する装飾の線は、時間では終わらず（スクロール位置で決まり、止まっている間は静止している）
+ * 待っても状態が変わらないため、待つ対象にしない。判定の基準や対象は変えない。
  */
 async function waitForMotionEnd(page: Page): Promise<void> {
   await page.waitForFunction(() =>
-    document.getAnimations().every((animation) => animation.playState !== 'running' && !animation.pending),
+    document
+      .getAnimations()
+      .filter((animation) => animation.timeline === document.timeline)
+      .every((animation) => animation.playState !== 'running' && !animation.pending),
   );
 }
 

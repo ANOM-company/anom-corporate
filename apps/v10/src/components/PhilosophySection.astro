@@ -1,0 +1,40 @@
+---
+/**
+ * 考え方（#philosophy）。冒頭の直後に、大きな一文と2行の説明で ANOM の考え方を示す。
+ * - 一文の強調部分は、スクロールに合わせて下の淡い青の線が伸びる（文字の色・読みやすさは変えない）。
+ *   標準状態は線が引き切られた完成形で、動き低減・未対応のブラウザーでもそのまま読める（global.css の .scroll-highlight）
+ * - 一文は「無駄を減らし、」で必ず改行し、残りは文節（emphasis の配列と after）の切れ目でだけ折り返す
+ *   （break-keep と <wbr>。読み上げの文字列に空白を入れない）
+ * - PC（1024px以上）は 英字ラベル3：本文9。狭い幅と、文字サイズの設定を大きくして左右に分ける幅が足りないときは縦に並べる
+ */
+type Props = {
+  eyebrow: string;
+  title: { before: string; emphasis: string[]; after: string };
+  body: string[];
+  link: { label: string; href: string };
+};
+
+const { eyebrow, title, body, link } = Astro.props;
+---
+
+<section id="philosophy" class="@container py-(--spacing-section)" aria-labelledby="philosophy-title">
+  <div class="container-content grid grid-cols-1 gap-6 lg:@split:grid-cols-12 lg:@split:gap-12">
+    <p class="font-latin text-sm font-semibold tracking-widest text-brand uppercase lg:@split:col-span-3 lg:@split:pt-3">{eyebrow}</p>
+    <div class="grid content-start gap-8 lg:@split:col-span-9">
+      <h2 id="philosophy-title" class="text-statement break-keep">
+        <span class="block">{title.before}</span><span class="scroll-highlight"
+          >{title.emphasis.map((phrase, index) => (index > 0 ? [<wbr />, phrase] : phrase))}</span
+        ><wbr />{title.after}
+      </h2>
+      <div class="grid max-w-(--container-prose) gap-3 text-lg text-ink-soft">
+        {body.map((sentence) => <p>{sentence}</p>)}
+      </div>
+      <p>
+        <a href={link.href} class="inline-flex min-h-11 items-center gap-2 font-bold">
+          {link.label}
+          <span aria-hidden="true" class="arrow-nudge arrow-nudge-down">↓</span>
+        </a>
+      </p>
+    </div>
+  </div>
+</section>

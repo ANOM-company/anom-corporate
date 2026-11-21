@@ -118,8 +118,8 @@ test.describe('フォーカス表示の計算値: 展開メニュー（深い青
       expectIndicator(info);
       expect(luminance(parseRgb(info.behind)), `深い青の地: ${info.label}`).toBeLessThan(0.05);
     }
-    // 9つのリンクと「閉じる」
-    expect(seen.size).toBe(10);
+    // 10のリンクと「閉じる」
+    expect(seen.size).toBe(11);
   });
 });
 

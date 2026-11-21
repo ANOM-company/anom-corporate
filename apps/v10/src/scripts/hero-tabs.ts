@@ -3,6 +3,7 @@
 // - Enter／Space またはクリック・タップで表示を切り替える（矢印での移動だけでは切り替えない）
 // - 選んでいないパネルは hidden（表示・読み上げ・Tab移動の対象外）。パネル自体は Tab で入れる
 // - 自動では切り替えない。連打しても最後の選択だけが表示され、動きは待ち行列にならない
+// - 選んだ画面の図は、部品の data-view を書き換えて切り替える（説明文はすぐ、図は短いクロスフェード。global.css の .demo-views）
 // HTML は最初から先頭が選ばれた見た目で出力しているため、このスクリプトの実行で表示は動かない。
 for (const root of document.querySelectorAll<HTMLElement>('[data-demo-tabs]')) {
   const tablist = root.querySelector<HTMLElement>('[data-demo-tablist]');
@@ -29,6 +30,8 @@ for (const root of document.querySelectorAll<HTMLElement>('[data-demo-tabs]')) {
       tab.toggleAttribute('data-selected', active);
       (panels[index] as HTMLElement).hidden = !active;
     });
+    const view = tabs[selected]?.dataset['demoView'];
+    if (view) root.dataset['view'] = view;
   };
   select(Math.max(0, tabs.findIndex((tab) => tab.hasAttribute('data-selected'))));
 

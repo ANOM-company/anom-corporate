@@ -1,0 +1,89 @@
+---
+/**
+ * お悩み別の入口（#challenges）。濃紺の地で場面を切り替え、「お悩み → できる支援 → 関連するサービス」を1組にして並べる。
+ * - 開閉は WAI のアコーディオン（src/scripts/accordion.ts）。見出しの中の button が aria-expanded と aria-controls を持つ
+ * - JavaScript 無効時は開閉ボタンを出さず、すべての内容を開いたまま表示する（標準状態＝完成形）。動かないボタンは残さない
+ * - 関連サービスへのリンクは開閉ボタンの外（パネルの中）に置く。どのお悩みにも当てはまらない人のために、相談への入口も常に置く
+ * - 広いPC（1280px以上）は 見出し5：開閉する一覧7。それより狭い幅と、文字サイズの設定を大きくして左右に分ける幅が
+ *   足りないときは縦に並べる（見出しが細い列で1〜2字ずつ折り返さないように）
+ */
+import Button from './Button.astro';
+import SectionHeading from './SectionHeading.astro';
+import type { ChallengeContent } from '../data/home';
+
+type Props = {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  supportLabel: string;
+  items: ChallengeContent[];
+  contact: { label: string; href: string };
+  href: (anchor: string) => string;
+};
+
+const { eyebrow, title, intro, supportLabel, items, contact, href } = Astro.props;
+---
+
+<section id="challenges" class="@container bg-night py-(--spacing-section) text-on-brand" aria-labelledby="challenges-title">
+  <div class="container-content grid gap-10 xl:@split:grid-cols-12 xl:@split:gap-12">
+    <div class="xl:@split:col-span-5">
+      <SectionHeading id="challenges-title" eyebrow={eyebrow} title={title} intro={intro} tone="dark" />
+    </div>
+    <div class="grid content-start gap-8 xl:@split:col-span-7">
+      <ul class="border-t border-night-line" data-accordion>
+        {
+          items.map((item) => (
+            <li class="border-b border-night-line" data-accordion-item>
+              <h3 id={`${item.id}-title`} class="text-xl">
+                <span class="block py-5" data-accordion-static>
+                  {item.title}
+                </span>
+                <button
+                  type="button"
+                  id={`${item.id}-button`}
+                  class="flex min-h-16 w-full cursor-pointer items-center justify-between gap-4 py-4 text-left transition-colors duration-(--duration-base) hover:text-on-brand-soft"
+                  aria-expanded="true"
+                  aria-controls={`${item.id}-panel`}
+                  hidden
+                  data-accordion-trigger
+                >
+                  <span>{item.title}</span>
+                  <span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full border border-night-line">
+                    <span class="accordion-icon font-latin text-xl leading-none">+</span>
+                  </span>
+                </button>
+              </h3>
+              <div id={`${item.id}-panel`} class="accordion-panel" role="region" aria-labelledby={`${item.id}-title`} data-accordion-panel>
+                <div>
+                  <div class="grid gap-3 pb-6">
+                    <p class="text-sm font-bold text-on-brand-soft">{supportLabel}</p>
+                    <p class="max-w-(--container-prose)">{item.support}</p>
+                    <p>
+                      <a
+                        href={href(item.link.anchor)}
+                        class="inline-flex min-h-11 items-center gap-2 font-bold text-on-brand underline decoration-on-brand-soft underline-offset-4 hover:text-on-brand hover:decoration-on-brand"
+                      >
+                        {item.link.label}
+                        <span aria-hidden="true" class="arrow-nudge arrow-nudge-down">↓</span>
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+      <div>
+        <Button href={contact.href} size="lg" variant="inverse">
+          {contact.label}
+          <span aria-hidden="true" class="arrow-nudge arrow-nudge-right">→</span>
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../scripts/accordion';
+</script>

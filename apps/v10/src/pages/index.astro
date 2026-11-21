@@ -1,71 +1,101 @@
 ---
 /**
- * トップ（/）: ANOM V10 の確認版。原稿は src/data/home.ts から渡す。
- * 読み順: 冒頭 → 主力2サービス → システム開発 → 支援のイメージ → 考え方 → 進め方 → 学びの計画 → 相談
+ * トップ（/）: ANOM コーポレートサイトの大幅改修案（確認版）。原稿は src/data/home.ts から渡す。
+ * 読み順: 冒頭 → 考え方 → 提供サービス（AI・DX／Web の2枠＋システム開発の独立枠）→ お悩み別 → 支援のイメージ
+ *        → ANOMについて → 進め方 → 学びの計画 → 相談
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeHero from '../components/HomeHero.astro';
+import PhilosophySection from '../components/PhilosophySection.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import ServiceFeature from '../components/ServiceFeature.astro';
 import SystemFeature from '../components/SystemFeature.astro';
+import ChallengesSection from '../components/ChallengesSection.astro';
 import WorkflowExample from '../components/WorkflowExample.astro';
 import AboutSection from '../components/AboutSection.astro';
 import ProcessSection from '../components/ProcessSection.astro';
 import LearningSection from '../components/LearningSection.astro';
 import ContactSection from '../components/ContactSection.astro';
-import { hero, services, system, examples, about, process, learning, contact, consultFields } from '../data/home';
+import {
+  hero,
+  philosophy,
+  services,
+  system,
+  challenges,
+  examples,
+  about,
+  process,
+  learning,
+  contact,
+  consultFields,
+} from '../data/home';
 
 const href = (anchor: string): string => `#${anchor}`;
 ---
 
-<BaseLayout title="技術を、仕事の力に。" description="AI・DX支援、Web制作・運用保守、システム開発のご相談（確認用プレビュー）。">
+<BaseLayout title="仕事を、もっと自由に。" description="AI・DX支援、Web制作・運用保守、システム開発のご相談（確認用プレビュー）。">
   <HomeHero
+    eyebrow={hero.eyebrow}
     title={hero.title}
     lead={hero.lead}
     primary={{ label: hero.primary.label, href: href(hero.primary.anchor) }}
+    secondary={{ label: hero.secondary.label, href: href(hero.secondary.anchor) }}
     demo={hero.demo}
     href={href}
   />
 
+  <PhilosophySection
+    eyebrow={philosophy.eyebrow}
+    title={philosophy.title}
+    body={philosophy.body}
+    link={{ label: philosophy.link.label, href: href(philosophy.link.anchor) }}
+  />
+
   <section id="services" class="pb-(--spacing-section)" aria-labelledby="services-title">
-    <div class="container-content grid gap-10">
+    <div class="container-content grid grid-cols-1 gap-10 lg:gap-14">
       <SectionHeading id="services-title" eyebrow={services.eyebrow} title={services.title} intro={services.intro} />
-      <div class="grid gap-6 md:grid-cols-2">
-        {
-          services.items.map((item) => (
-            <ServiceFeature
-              item={item}
-              audienceLabel={services.audienceLabel}
-              examplesLabel={services.examplesLabel}
-              examplesNote={services.examplesNote}
-              contactHref={href('contact')}
-            />
-          ))
-        }
+      <div class="grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {
+            services.items.map((item) => (
+              <ServiceFeature
+                item={item}
+                audienceLabel={services.audienceLabel}
+                examplesLabel={services.examplesLabel}
+                examplesNote={services.examplesNote}
+                contactHref={href('contact')}
+              />
+            ))
+          }
+        </div>
+        <SystemFeature
+          number={system.number}
+          label={system.label}
+          title={system.title}
+          body={system.body}
+          stepsLabel={system.stepsLabel}
+          steps={system.steps}
+          examplesLabel={system.examplesLabel}
+          examplesNote={system.examplesNote}
+          examples={system.examples}
+          cta={system.cta}
+          contactHref={href('contact')}
+        />
       </div>
-      <p>
-        <a href={href(services.systemLink.anchor)} class="inline-flex min-h-11 items-center gap-2 text-lg font-bold">
-          {services.systemLink.label}
-          <span aria-hidden="true">→</span>
-        </a>
-      </p>
     </div>
   </section>
 
-  <SystemFeature
-    eyebrow={system.eyebrow}
-    title={system.title}
-    body={system.body}
-    stepsLabel={system.stepsLabel}
-    steps={system.steps}
-    examplesLabel={system.examplesLabel}
-    examplesNote={system.examplesNote}
-    examples={system.examples}
-    cta={system.cta}
-    contactHref={href('contact')}
+  <ChallengesSection
+    eyebrow={challenges.eyebrow}
+    title={challenges.title}
+    intro={challenges.intro}
+    supportLabel={challenges.supportLabel}
+    items={challenges.items}
+    contact={{ label: challenges.contact.label, href: href(challenges.contact.anchor) }}
+    href={href}
   />
 
-  <WorkflowExample {...examples} />
+  <WorkflowExample {...examples} link={{ label: examples.link.label, href: href(examples.link.anchor) }} />
   <AboutSection {...about} />
   <ProcessSection {...process} />
   <LearningSection {...learning} />

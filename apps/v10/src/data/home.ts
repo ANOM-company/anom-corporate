@@ -1,6 +1,8 @@
 // トップページ（/）の原稿。部品は文言を持たず、ここからページ経由で渡す。
-// - 掲載前の確認用原稿。実績・数値・料金・お客様の声・未確定の会社情報は書かない
+// - 2026-11 の大幅改修の仮コピー。掲載前に事実と提供範囲を確認する
+// - 実績・数値・料金・お客様の声・未確定の会社情報は書かない
 // - 画面デモ・支援のイメージは説明用の見本であり、実案件や稼働中の製品ではない
+// 読み順: 冒頭 → 考え方 → 提供サービス（AI・DX／Web／システム開発）→ お悩み別 → 支援のイメージ → ANOMについて → 進め方 → 学び → 相談
 
 /** 相談分野（フォームの選択肢と、サービス欄のボタンから引き継ぐ値） */
 export const consultFields = [
@@ -18,56 +20,108 @@ export type DemoView = {
   title: string;
   caption: string;
   link: { label: string; anchor: string };
+  /** 画面の見出し（装飾。英字の補助ラベル） */
+  screenLabel: string;
+  /** 画面の中の3つの部品（装飾）。label は英字の補助ラベル、text は日本語 */
+  parts: { label: string; text: string }[];
+  /** 画面の左右に浮かぶ小さな札（装飾） */
+  notes: { from: { label: string; text: string }; to: { label: string; text: string } };
 };
 
 export const hero = {
+  /** 英字の補助ラベル（扱う3つの分野）。意味は説明文の日本語で伝える */
+  eyebrow: ['AI / DX', 'WEB', 'SYSTEM'],
   /** 文節ごとに分け、語の途中で改行しないようにする */
-  title: ['技術を、', '仕事の力に。'],
-  lead: ['AI・DX支援、Web制作、システム開発。', '無駄を減らし、伝わる形をつくり、人が力を発揮できる仕事へ。'],
-  primary: { label: '提供サービスを見る', anchor: 'services' },
+  title: ['仕事を、', 'もっと自由に。'],
+  /** 説明文。外側の配列が広い幅の行、内側の配列が狭い幅の行（書体が変わっても改行位置を変えない） */
+  lead: [['AI・DX支援、Web制作、', 'システム開発で、'], ['仕事と事業の可能性を広げる。']],
+  primary: { label: 'サービスを見る', anchor: 'services' },
+  secondary: { label: '相談する', anchor: 'contact' },
   demo: {
     label: '画面デモの切替',
-    badge: '説明用デモ',
+    badge: '説明用イメージ',
     views: [
       {
         id: 'ai',
         tab: 'AI・DX',
         title: 'AI・DXの画面イメージ',
-        caption: '情報と手順を整理して、仕事を進めやすく。',
+        caption: '散らばった情報と手順を整理し、仕事に使える流れへ。',
         link: { label: 'AI・DX支援を見る', anchor: 'service-ai' },
+        screenLabel: 'ANOM / WORKFLOW',
+        parts: [
+          { label: 'INPUT', text: '集める' },
+          { label: 'ORGANIZE', text: '整理する' },
+          { label: 'SHARE', text: '共有する' },
+        ],
+        notes: {
+          from: { label: '現場の情報', text: '必要な形へ整理' },
+          to: { label: '仕事に使える', text: '流れと手順' },
+        },
       },
       {
         id: 'web',
         tab: 'Web',
         title: 'Webの画面イメージ',
-        caption: '伝えたいことが届く、使いやすいWebへ。',
-        link: { label: 'Web制作を見る', anchor: 'service-web' },
+        caption: '伝えたいことを整理し、見る人に届くWebへ。',
+        link: { label: 'Web制作・運用保守を見る', anchor: 'service-web' },
+        screenLabel: 'ANOM / WEBSITE',
+        parts: [
+          { label: 'MESSAGE', text: '見出し' },
+          { label: 'VISUAL', text: '画像' },
+          { label: 'ACTION', text: '導線' },
+        ],
+        notes: {
+          from: { label: '伝えたいこと', text: '強みを言葉に' },
+          to: { label: '見る人に届く', text: 'Webサイト' },
+        },
       },
       {
         id: 'system',
-        tab: 'システム',
+        tab: 'System',
         title: 'システムの画面イメージ',
-        caption: '日々の仕事に合った、扱いやすい仕組みへ。',
+        caption: '日々の入力と確認を、一つの扱いやすい画面へ。',
         link: { label: 'システム開発を見る', anchor: 'service-system' },
+        screenLabel: 'ANOM / SYSTEM',
+        parts: [
+          { label: 'INPUT', text: '入力する' },
+          { label: 'LIST', text: '整理する' },
+          { label: 'CHECK', text: '確認する' },
+        ],
+        notes: {
+          from: { label: '日々の入力', text: '一か所に集める' },
+          to: { label: '状況が分かる', text: '業務の画面' },
+        },
       },
     ] satisfies DemoView[],
   },
 };
 
+export const philosophy = {
+  eyebrow: 'Philosophy',
+  /** 強調（スクロールに合わせて下線が伸びる部分）は emphasis。配列の区切りは文節（ここでだけ折り返す） */
+  title: { before: '無駄を減らし、', emphasis: ['人が', '力を発揮できる'], after: '仕事へ。' },
+  body: [
+    '散らばった情報や手間を整理し、技術とデザインで、人が本来の仕事に集中できる状態へつなぎます。',
+    '道具を増やす前に、まず今の仕事を見直すところから始めます。',
+  ],
+  link: { label: '考え方を読む', anchor: 'about' },
+};
+
 export type ServiceContent = {
   id: string;
+  number: string;
   label: string;
   title: string;
-  audience: string;
   body: string;
+  audience: string;
   examples: string[];
   cta: { label: string; field: ConsultField };
   figure: 'ai' | 'web';
 };
 
 export const services = {
-  eyebrow: 'Services',
-  title: '仕事を整える。価値を伝える。',
+  eyebrow: 'Our Services',
+  title: '技術とデザインで、仕事の可能性を広げる。',
   intro: '取り組みたいことに合わせて、AI・DX、Web、システム開発をご相談いただけます。',
   audienceLabel: '対象',
   examplesLabel: '相談例',
@@ -75,31 +129,33 @@ export const services = {
   items: [
     {
       id: 'service-ai',
+      number: '01',
       label: 'AI・DX支援',
-      title: '仕事の無駄を減らし、人が力を発揮できる現場へ。',
+      title: '業務を整える。',
+      body: '日々の仕事を見直し、人が力を発揮できる仕組みへ。今の仕事を整理し、AIやデジタルをどこで活かせるか、一緒に考えます。',
       audience: '中小企業の経営者・決裁者、企業の方',
-      body: '今の仕事を整理し、AIやデジタルをどこで活かせるか、一緒に考えます。',
       examples: ['手作業を見直したい', '情報を探しやすくしたい', 'AIの活用を考えたい'],
       cta: { label: 'AI・DX支援を相談する', field: 'ai' },
       figure: 'ai',
     },
     {
       id: 'service-web',
+      number: '02',
       label: 'Web制作・運用保守',
-      title: '伝わるWebをつくり、育てていく。',
+      title: '魅力を伝える。',
+      body: '事業の強みを整理し、伝わるWebサイトをつくる。伝える内容と使いやすさを整え、制作から運用保守管理まで支援します。',
       audience: '企業、サービス運営者、個人の方',
-      body: '伝える内容と使いやすさを整え、制作から運用保守管理まで支援します。',
       examples: ['会社やサービスを伝えたい', 'サイトを見直したい', '公開後の管理も相談したい'],
       cta: { label: 'Web制作・運用保守を相談する', field: 'web' },
       figure: 'web',
     },
   ] satisfies ServiceContent[],
-  systemLink: { label: 'システム開発も相談できます', anchor: 'service-system' },
 };
 
 export const system = {
-  eyebrow: 'System',
-  title: '自社の仕事に合う仕組みを、形に。',
+  number: '03',
+  label: 'システム開発',
+  title: '仕事に合う仕組みをつくる。',
   body: '日々の業務や情報の流れに合わせて、必要な画面・機能を考えます。システム開発単独のご相談にも対応します。',
   stepsLabel: '仕組みの流れ（説明図）',
   steps: ['入力する', '整理する', '確認する'],
@@ -109,31 +165,73 @@ export const system = {
   cta: { label: 'システム開発を相談する', field: 'system' as ConsultField },
 };
 
+export type ChallengeContent = {
+  id: string;
+  title: string;
+  support: string;
+  link: { label: string; anchor: string };
+};
+
+export const challenges = {
+  eyebrow: 'Challenges',
+  title: 'いま、こんなことに困っていませんか。',
+  intro: 'よくあるお悩みから、合う支援を探せます。どれにも当てはまらなくても、ご相談いただけます。',
+  supportLabel: 'できる支援',
+  items: [
+    {
+      id: 'challenge-transcribe',
+      title: '同じ情報を、何度も書き写している。',
+      support: '仕事の流れを整理し、転記や確認の手間を減らせるところを一緒に探します。',
+      link: { label: 'AI・DX支援を見る', anchor: 'service-ai' },
+    },
+    {
+      id: 'challenge-message',
+      title: '会社の魅力が、うまく伝わっていない。',
+      support: '伝えたいことと届けたい相手を整理し、伝わる形のWebをつくります。公開後の更新や管理も相談できます。',
+      link: { label: 'Web制作・運用保守を見る', anchor: 'service-web' },
+    },
+    {
+      id: 'challenge-tools',
+      title: '今のツールが、仕事に合っていない。',
+      support: '日々の業務や情報の流れに合わせて、必要な画面や機能を考えます。',
+      link: { label: 'システム開発を見る', anchor: 'service-system' },
+    },
+  ] satisfies ChallengeContent[],
+  contact: { label: 'まずは相談する', anchor: 'contact' },
+};
+
 export const examples = {
-  eyebrow: 'Example',
+  eyebrow: 'Work in Action',
   title: 'どんな変化をつくるのか。',
   demoTitle: '問い合わせの情報を、次の仕事につなげる',
-  badge: '説明用デモ',
-  stages: [
-    { title: 'Webで伝える', body: 'サービスの内容と相談の入口を、Webで分かりやすく示します。' },
-    { title: '相談を受け取る', body: '届いた相談の内容を、一か所で確認できるようにします。' },
-    { title: '対応を整理する', body: '対応の状態を「未確認／対応中／完了」で見分けられるようにします。' },
-  ],
+  badge: '説明用イメージ',
+  before: {
+    label: 'Before',
+    title: '情報が、あちこちに散らばっている',
+    body: 'メール、紙のメモ、表計算に同じ情報が分かれ、確認や書き写しに手間がかかる状態。',
+    sources: ['メール', '紙のメモ', '表計算'],
+  },
+  after: {
+    label: 'After',
+    title: '一つの画面で、状況が分かる',
+    body: '届いた相談を一か所にまとめ、対応の状態を「未確認／対応中／完了」で見分けられる状態。',
+  },
   sampleName: 'サンプル案件A',
-  sampleButton: '相談する',
   sampleOther: '見本',
   statuses: ['未確認', '対応中', '完了'],
   note: '機能を説明するための画面イメージです。実案件や稼働中の製品ではありません。',
+  link: { label: '支援の流れを見る', anchor: 'process' },
 };
 
 export const about = {
-  eyebrow: 'Approach',
-  title: '無駄を減らし、人の力を活かす。',
+  eyebrow: 'About ANOM',
+  title: '場所に関係なく、挑戦できる未来へ。',
   body: [
-    '道具を増やす前に、仕事を見直す。',
-    '人が力を発揮できる役割と時間をつくり、事業の前進につなげる。',
-    '秋田でも関東でも、必要な技術を使える機会を広げていきます。',
+    '住む場所によって、使える技術や挑戦の機会に差が生まれないように。',
+    '秋田と関東の機会の差を小さくしたい。その想いから、技術とデザインで仕事を支えます。',
   ],
+  /** 図の中の語（本文と同じ内容を示す装飾。2つの場所と、その間をつなぐもの） */
+  figure: { from: '秋田', to: '関東', bridge: '技術とデザイン' },
   flowLabel: '目指す流れ',
   flow: ['無駄を減らす', '人や時間を活かす', '売上の向上を目指す'],
 };
@@ -142,10 +240,10 @@ export const process = {
   eyebrow: 'Process',
   title: '今の状況を聞くところから。',
   steps: [
-    { number: '01', title: '聞く', body: '困っていること、実現したいこと、今のやり方を伺います。' },
-    { number: '02', title: '整理する', body: '優先順位と取り組む範囲を整理します。' },
-    { number: '03', title: '作る・整える', body: '必要な制作や仕組みづくりを進めます。' },
-    { number: '04', title: '確かめる', body: '使いながら確認し、次の改善につなげます。' },
+    { number: '01', title: '相談', body: '困っていること、実現したいこと、今のやり方を伺います。' },
+    { number: '02', title: '現状整理', body: '仕事の流れと課題を整理し、優先順位と取り組む範囲を決めます。' },
+    { number: '03', title: '提案', body: '必要な制作や仕組みづくりの進め方をご提案します。' },
+    { number: '04', title: '伴走', body: '制作や導入を進め、使いながら確かめて次の改善につなげます。' },
   ],
   note: '進め方や支援範囲は、ご相談内容に合わせてご案内します。',
 };
@@ -167,7 +265,7 @@ export const learning = {
 
 export const contact = {
   eyebrow: 'Contact',
-  title: 'まずは、今のことを聞かせてください。',
+  title: 'まずは、いまの悩みから。',
   body: '取り組む内容がまだ決まっていなくても、ご相談いただけます。困っていることや、実現したいことをお知らせください。',
   previewNotice: '確認用プレビューです。入力内容は送信されません。',
   requiredNote: '「必須」の項目は入力が必要です。「任意」の項目は空欄のままでもかまいません。',

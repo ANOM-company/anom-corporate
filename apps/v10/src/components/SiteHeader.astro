@@ -1,18 +1,48 @@
 ---
 /**
- * 画面上部の ANOM 表記（左上）。大きな固定メニューは置かず、移動は下部バーが担う。
- * - 承認済みのロゴ素材がそろうまでは、ロゴを描き直さず文字で表示する
+ * 画面上部（ロゴ＋ナビゲーション）。画面に固定しない（移動の近道は常設の下部バーが担う）。
+ * - PC（768px以上）: 左にロゴ、右に「サービス」「ANOMについて」と主要ボタン「相談する」
+ * - スマホ: ロゴと「相談する」だけ（下部バーとの重複を抑える）
+ * - ロゴは公式ロゴから書き出した画像（public/images/）。描き直さない
+ * - 文字を大きくして1行に収まらないときは、ロゴの下へ折り返す
  */
+import Button from './Button.astro';
+
 type Props = {
   siteName: string;
   homeHref: string;
+  nav: { label: string; links: { label: string; href: string }[]; contact: { label: string; href: string } };
 };
 
-const { siteName, homeHref } = Astro.props;
+const { siteName, homeHref, nav } = Astro.props;
 ---
 
-<header class="container-content flex min-h-16 items-center py-3">
-  <a href={homeHref} class="inline-flex min-h-11 items-center font-latin text-2xl font-bold tracking-wide text-ink no-underline hover:text-brand">
-    {siteName}
-  </a>
+<header class="border-b border-line">
+  <div class="container-content flex min-h-18 flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3">
+    <a href={homeHref} class="inline-flex min-h-11 items-center rounded-control no-underline">
+      <img src="/images/logo-horizontal.png" alt={siteName} width="355" height="96" class="block h-8 w-auto md:h-9" />
+    </a>
+    <nav aria-label={nav.label}>
+      <ul class="flex flex-wrap items-center gap-x-2 gap-y-1 md:gap-x-6">
+        {
+          nav.links.map((link) => (
+            <li class="max-md:hidden">
+              <a
+                href={link.href}
+                class="inline-flex min-h-11 items-center px-1 font-bold text-ink no-underline decoration-brand decoration-2 underline-offset-8 transition-colors duration-(--duration-base) hover:text-brand hover:underline"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <Button href={nav.contact.href} size="md">
+            {nav.contact.label}
+            <span aria-hidden="true" class="arrow-nudge arrow-nudge-right">→</span>
+          </Button>
+        </li>
+      </ul>
+    </nav>
+  </div>
 </header>
